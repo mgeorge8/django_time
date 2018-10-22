@@ -1,0 +1,185 @@
+{% extends "timepiece/base.html" %}
+
+{% load static %}
+{% load timepiece_tags %}
+
+
+{% block title %}Dashboard{% endblock title %}
+
+{% block bodyid %}dashboard{% endblock bodyid %}
+
+{% block breadcrumb %}{% endblock breadcrumb %}
+
+{% block extrajs %}
+    
+    <script charset="utf-8" src="{% static "timepiece/js/permanent_tabs.js" %}"></script>
+
+    <script>
+        // The largest number of hours worked or assigned on any project.
+        var max_hours = {% get_max_hours %};
+    </script>
+    <script charset="utf-8" src="{% static "timepiece/js/dashboard.js" %}"></script>
+    <script charset="utf-8" src="{% static "timepiece/js/prevent_double_click.js" %}"></script>
+    <script>
+    $(document).ready(function(){
+        $('[data-toggle="popover"]').popover();
+    });
+    </script>
+{% endblock extrajs %}
+
+{% block content %}
+    {% if perms.entries.can_clock_in %}
+        <h3> Timesheet </h3>
+
+        <div  class="container-fluid">
+            <div class="row">
+
+                <div class="btn-group-sm">
+                    
+                        
+                        {% if active_entry %}
+                            <a class="btn btn-primary" href="{% url 'clock_out' %}">Clock Out</a>
+                            <a class="btn btn-primary" href="{% url 'edit_entry' active_entry.pk %}">Edit</a>
+                        {% endif %}
+			<a class="btn btn-primary" href="{% url 'clock_in' %}">
+                            {% if active_entry %}Switch{% else %}Clock In{% endif %}
+                        </a>
+                    
+                        <a class="btn btn-primary" href="{% url 'create_entry' %}" title="Add Entry">Add Entry</a>
+                   </div>
+                </div>
+<div class="container-fluid">
+                <div id="active-text">
+		<p>
+                    {% if active_entry %}
+                        You have been clocked into
+                        <strong> {{ active_entry.project }}</strong>
+                        since {{ active_entry.start_time|time }}
+                        {% ifnotequal active_entry.start_time.date today %}
+                            {% if active_entry.start_time.date < week_start or active_entry.start_time.date > week_end %}
+                                on {{ active_entry.start_time|date:'M j' }}
+                            {% else %}
+                                on {{ active_entry.start_time|date:"l" }}
+                            {% endif %}
+                        {% endifnotequal %}
+                        ({{ active_entry.get_total_seconds|humanize_seconds }} time clocked{% if active_entry.seconds_paused or active_entry.is_paused %} and {{ active_entry.get_paused_seconds|humanize_seconds }} paused{% endif %}).
+    
+
+                    {% else %}
+                        You are not currently clocked into a project.
+                    {% endif %}
+</p>
+                </div>
+            </div>
+        
+        
+	<div>
+            <form class="form-horizontal" method="post" action="" accept-charset="utf-8">
+
+               {% csrf_token %} 
+		{{ form.as_p }}
+                <input class="btn btn-primary btn-sm" type='submit' name='submit' value="Save" />
+                
+            </form>
+        </div>
+<hr>
+    
+        <div>
+<p>
+            <ul class="nav nav-pills">
+                <li style="width: 17%"> <a href="{% url 'dashboard' %}?week_start={{ prev_week|date:'Y-m-d' }}">&larr; Prev Week</a></li>
+                <li style="width: 17%"><a href="{% url 'dashboard' %}?week_start={{ next_week|date:'Y-m-d' }}">Next Week &rarr;</a></li>
+            </ul>
+</p>
+        </div>
+ 
+        <div class="tab-content">
+<h3>Hours for the Week of {{ week|date:'M j' }}</h3>
+            <div>
+                {% if week_entries %}
+                    {% url 'dashboard' as next_url %}
+                    {% regroup week_entries by start_time|date:'l, F j' as daily_entries %}
+                    <table class="table table-bordered">
+                        
+                            <tr class="table-secondary">
+                                <th style="width: 25%">Project</th>
+                                <th style="width: 15%">From</th>
+                                <th style="width: 15%">To</th>
+                                <th style="width: 15%">Total Time</th>
+                                <th style="width: 23%">Activities</th>
+				  
+                            </tr>
+                        
+                        <tbody>
+                            {% for day in daily_entries %}
+                                {% sum_hours day.list as daily_total %}
+                                <tr class="table-secondary">
+                                    <th colspan="3">{{ day.grouper }}</th>
+                                    
+                                    <th colspan="2">{{ daily_total|humanize_seconds:"{hours:02d}:{minutes:02d}:{seconds:02d}" }}</th>
+                                    
+                                </tr>
+                                {% for entry in day.list %}
+                                    <tr>
+                                        <td>
+                                            <p class="mb-0">
+                                            {{ entry.project }} </p>
+<small class="text-muted">
+                                                <a href="{% url 'edit_entry' entry.id %}?next={{ next_url|add_parameters:request.GET|urlencode }}">Edit</a>
+                                                <a href="{% url 'delete_entry' entry.id %}?next={{ next_url|add_parameters:request.GET|urlencode }}">Delete</a>
+                                        </td>
+                                        
+                                        <td class="align-middle">{{ entry.start_time|time }}</td>
+                                        <td class="align-middle">
+                                            {% if entry.end_time %}
+                                                {{ entry.end_time|time }}
+                                            {% else %}
+                                                current
+                                            {% endif %}
+                                        </td>
+                                        <td class="align-middle">{{ entry.get_total_seconds|humanize_seconds:"{hours:02d}:{minutes:02d}:{seconds:02d}" }}</td>
+                                        <td class="align-middle">
+                                                {{ entry.activities }}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+				    
+
+                            {% endfor %}
+  <tr class="totals">
+                                <td colspan="3"><strong>Overall total for the period:</strong></td>
+                                <td class="align-middle" colspan="2">{{ total_worked|humanize_hours:"{hours:02d}:{minutes:02d}:{seconds:02d}" }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                {% else %}
+                    <p>No entries exist for this week.</p>
+                {% endif %}
+            
+                            <div>
+                                <h3>Project Summary</h3>
+{% if week_entries %}
+                                <table class="table table-bordered">
+                                    <thead>
+                                        <tr class="table-secondary">
+                                            <th>Project</th>
+                                            <th>Hours</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for data in project_progress %}
+                                            <tr>
+                                                <td>{{ data.project}} </td>
+                                                <td class="hours">{{ data.worked|humanize_hours:"{hours:02d}:{minutes:02d}:{seconds:02d}" }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+{% else %}
+<p>No entries exist for this week.</p>
+{% endif %}
+                            </div>
+		</div>		
+        </div>
+    {% endif %}
+{% endblock content %}

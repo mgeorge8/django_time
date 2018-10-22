@@ -1,0 +1,27 @@
+Engimusing users guide for admins on the emus-mrp herokuapp for managing time and assets.
+
+
+Adding a project:
+Click the +Add button next to projects under the Management section of https://emus-mrp.herokuapp.com/.
+
+This is much easier than trying to add a project from the emus-mrp dashboard since it allows you to add new entries to the drop downs directly.
+
+Specify the Name.
+Click next to save and assign users to project. You can select one user or multiple using Control for Windows or Command for Mac. Click add to add users to project. All users added to project will now be able to click into that project.
+
+Adding a user:
+Users need to be added on the admin site which can be accessed by going to https://emus-mrp.herokuapp.com/admin or clicking on admin under the Management section of https://emus-mrp.herokuapp.com/.
+Click the +Add button next to Users under the Authentication and Authorization section on the admin page.
+ 
+Create the username and password, and enter the last four of the Social Security number and title. Then save the user.
+It will then allow you to enter in additional information for the user. 
+Go ahead and select all permissions for all users and mark the user as staff if they need access to the admin site or the management section of https://emus-mrp.herokuapp.com/.
+
+View user summary of work for week and project summary:
+Under the Users section of Management you can click "View Time Sheet" for each user. Once in the time sheet view, you can use the dropdown box to select a different user to view.
+
+CSV:
+Under the Users section of Management there is a "Weekly Report" button at the top that takes you to a screen that displays what will be on the spread sheet and lets you toggle through the weeks. Click "download CSV" to download the CSV document.
+
+ 
+ 

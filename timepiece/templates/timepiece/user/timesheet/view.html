@@ -1,0 +1,117 @@
+{% extends "timepiece/user/base.html" %}
+
+{% load static %}
+{% load timepiece_tags %}
+
+{% block title %}
+    {{ timesheet_user.get_name_or_username }}
+    - Time Sheet for {{ from_date|date:'M Y' }}
+{% endblock title %}
+
+{% block bodyid %}user-timesheet{% endblock bodyid %}
+
+{% block breadcrumb %}{% endblock breadcrumb %}
+
+{% block extrajs %}
+    <script>
+        var basePath = "{% url 'view_user_timesheet' timesheet_user.pk %}",
+            tabIds = ['overview', 'all-entries', 'daily-summary'],
+            defaultTab = 'overview';
+    </script>
+    <script charset="utf-8" src="{% static "timepiece/js/permanent_tabs.js" %}"></script>
+{% endblock extrajs %}
+
+{% block content %}
+    <h2>{{ timesheet_user.get_name_or_username }} - Time Sheet for {{ from_date|date:'M Y' }}</h2>
+
+    <div class="container-fluid">
+        <div class="span12" id="header">
+            <div id="options-buttons">
+               
+                    <a class="" href="{% url 'view_user' timesheet_user.pk %}">View/Edit User</a>
+               
+            </div>
+<br>
+            {# We have to duplicate the form so the hidden fields are not in the same form #}
+            <form class="form-horizontal" method="get" action="" accept-charset="utf-8">
+                {{ year_month_form}}
+                <input type="submit" name="yearmonth" class="btn btn-primary btn-sm" value="Update" />
+            </form>
+            
+        </div>
+    </div>
+<hr>
+    <div class="container-fluid">
+        <div class="span12">
+            <div class="tab-content">
+                <div class="span6 active">
+                    {% if grouped_totals %}
+<h3>Weekly Hours</h3>
+                        <table class="table table-bordered table-condensed">
+
+			 {% for week, week_totals, days in grouped_totals %}	
+ 	
+				<thead>
+                                <tr class="ledger_header table-secondary">
+                                    <th colspan="1">Week of {{ week|date:'M j, Y'}}</th>
+                                    <th> </th>
+                                </tr>
+				</thead>
+				<tbody>
+ 				
+					     
+				<tr>
+                                    <td>Totals for this week:</td>
+                                    <td class="hours">{{ week_totals.total|humanize_hours:"{hours:02d}:{minutes:02d}:{seconds:02d}" }}</td>
+                                </tr>                    
+                                    </tbody>
+ 			{% endfor %}
+
+                            
+                            <tr class="totals">
+                                <td colspan="1"><strong>Overall total for the period:</strong></td>
+                                <td class="hours">{{ summary.total|humanize_hours:"{hours:02d}:{minutes:02d}:{seconds:02d}" }}</td>
+                            </tr>
+                        </table>
+                    {% else %}
+                        <p>No entries exist for this time sheet.</p>
+                    {% endif %}
+                </div>
+<div class="span6 active">
+                    {% if grouped_totals %}
+<h3>Project Summary</h3>
+                        <table class="table table-bordered table-condensed">
+
+
+ {% for entry2 in month2_projects %}	 
+				
+				<thead>
+                                <tr class="ledger_header table-secondary">
+{% if entry2 %}
+                                    <th colspan="1">Week of {{ entry2.week5 }}</th>
+                                    <th>Total </th>
+                                </tr>
+				</thead>
+				<tbody>
+ 				
+					     {% for entry in entry2 %}
+                                            <tr>
+                                                <td>{{ entry.project__name }} </td>
+
+                                                <td class="hours">{{ entry.sum|humanize_hours:"{hours:02d}:{minutes:02d}" }} </td>
+				
+                                            </tr>
+					    {% endfor %}
+{% endif %}				 
+                                    </tbody>
+ 
+ {% endfor %}
+                        </table>
+                    {% else %}
+                        <p>No entries exist for this time sheet.</p>
+                    {% endif %}
+                </div>
+           
+        </div>
+    </div>
+{% endblock content %}

@@ -1,0 +1,72 @@
+
+{% extends "timepiece/base.html" %}
+
+{% load static %}
+{% load timepiece_tags %}
+
+
+{% block title %}Dashboard{% endblock title %}
+
+{% block bodyid %}dashboard{% endblock bodyid %}
+
+{% block breadcrumb %}{% endblock breadcrumb %}
+
+    
+    
+{% block content %}
+        <h2> Timesheet </h2>
+       
+<div class="row-fluid">
+        <div class="span12">
+            <ul class="nav nav-pills">
+                <li style="width: 17%"><a href="{% url 'week_timesheet' %}?week_start={{ prev_week|date:'Y-m-d' }}">&larr; Prev Week</a></li>
+                <li style="width: 17%"><a href="{% url 'week_timesheet' %}?week_start={{ next_week|date:'Y-m-d' }}">Next Week &rarr;</a></li>
+		 <li><a href="{% url 'timesheet_csv' week|date:'Y-m-d' %}?">Download CSV</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="container-fluid">
+        <div class="tab-content">
+<h3>Hours for the Week of {{ week|date:'M j' }}</h3>
+
+            <div>
+                {% if week_entry %}
+                    {% url 'weektimesheet' as next_url %}
+                    
+                    <table class="table table-hover table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Last Name</th>
+                                
+                                <th>First Name</th>
+                                <th>SSN</th>
+                                <th>Title</th>
+                                <th>Hours</th>
+				  
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for entry in user_entry %}
+                                
+                                    <tr rel="tooltip" title="{{ entry.comments|escape }}">
+                                        <td class="align-middle">{{ entry.last_name }}</td>
+                                        
+                                        <td class="align-middle">{{ entry.first_name }}</td>
+                                        <td class="align-middle">{{ entry.ssn }}</td>
+                                        <td class="align-middle">{{ entry.title }}</td>
+					  
+                                        <td class="align-middle">{{ entry.hours|humanize_hours:"{hours:02d}:{minutes:02d}" }}</td>
+                                    </tr>
+                                
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <p>No entries exist for this week.</p>
+                {% endif %}
+            </div>
+		
+        </div>
+    
+{% endblock content %}

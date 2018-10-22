@@ -1,0 +1,53 @@
+{% extends "timepiece/project/base.html" %}
+{% load timepiece_tags %}
+
+{% block title %}{{ object }}{% endblock title %}
+
+{% block crumbs %}
+    {{ block.super }}
+    <li><span class="divider">/</span> <a href="">{{ object }}</a></li>
+{% endblock crumbs %}
+
+{% block content %}
+    <div class="container-fluid">
+        <div class="span12">
+            <h2>{{ object }}</h2>
+
+            <ul class="nav nav-pills">
+                    <li style="width: 5%"><a href="{% url 'edit_project' object.id %}">Edit</a></li>
+                    <li style="width: 7%"><a href="{% url 'delete_project' object.id %}">Delete</a></li>
+                    <li><a href="{% url 'view_project_timesheet' object.id %}">View Time Sheet</a></li>
+               
+
+            </ul>
+        </div>
+    </div>
+<hr>
+    <div class="container-fluid">
+        
+        <div class="span4 offset2">
+            {% url 'view_project' object.id as next_url %}
+            <h5>Users</h5>
+            <ul class="users">
+                {% for user in object.users.all %}
+                    <li>
+                        {{ user.get_name_or_username }}
+                        
+                            {% with caption="Remove "|add:user.get_name_or_username|add:" from "|add:object.name %}
+                                <a title="{{ caption }}" href="{% url 'delete_relationship' %}?project_id={{ object.id }}&user_id={{ user.id }}&next={{ next_url|add_parameters:request.GET|urlencode }}"><i alt="{{ caption }}" class="fas fa-trash-alt"></i></a>
+                            {% endwith %}
+                       
+                    </li>
+                {% endfor %}
+            </ul>
+            
+                <form class="form-horizontal" action="{% url 'create_relationship' %}?project_id={{ object.id }}&next={{ next_url|add_parameters:request.GET|urlencode }}" method="post" accept-charset="utf-8">
+                    {% csrf_token %}
+                    {{ add_user_form.as_p }}
+                    <input class="btn btn-primary btn-sm" type="submit" value="Add" />
+                </form>
+            
+        </div>
+    </div>
+{% endblock content %}
+

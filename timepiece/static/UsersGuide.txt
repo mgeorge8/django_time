@@ -1,0 +1,29 @@
+Engimusing users guide on the emus-mrp herokuapp for managing time and assets.
+
+If you need help with the system contact Melissa G. at melissag@engimusing.com.
+
+Go to https://emus-mrp.herokuapp.com/ and login using the username and temporary password provided to you (password).
+Change your password by clicking Change Password in the dropdown menu on the right side of the site.
+
+Go back to the homepage. https://emus-mrp.herokuapp.com/time
+
+Time can be recorded either by clocking in and clocking out or just adding an entry at the end of the day. Note: Time is in military time. (2:00 PM is 14:00, 4:00 PM is 16:00, etc.)
+
+Clockin/out. On the main page there is a clock in button on the left side of the screen.
+Click the clock in button.
+Select the project you are working on.
+Type a short activity description you are doing for the project. 
+If the project or activity is missing let an admin know so they can add it for you.
+Click the Clock in button.
+
+Clocking out. At the end of the day or when you are switching projects you can use the clock out buttons on the homepage that are there when you are clocked in.
+Click clock out. 
+Adjust time to match your actual clock out time if needed.
+
+If you want to just add a full time entry click the clock menu on the left side of the top toolbar.
+Then click the Add Entry... menu item.
+Select the project for the entry.
+Then set the start and end times.
+Type a short description for the activities you completed.
+click save.
+
