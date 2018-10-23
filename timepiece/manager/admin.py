@@ -5,10 +5,25 @@ from django.contrib.auth.models import User
 from timepiece.manager.models import (
     Project, Profile)
 
+from import_export import resources
 
-class ProjectAdmin(admin.ModelAdmin):
-    list_display = ('name', 'inactive')
-    search_fields = ('name', 'inactive') 
+
+class ProjectResource(resources.ModelResource):
+
+    class Meta:
+        model = Project
+        fields = ('id', 'name', 'inactive')
+
+from import_export.admin import ImportExportModelAdmin
+        
+class ProjectAdmin(ImportExportModelAdmin):
+   # list_display = ('name',)
+    #search_fields = ('name',)
+    resource_class = ProjectResource
+
+##class ProjectAdmin(admin.ModelAdmin):
+##    list_display = ('name', 'inactive')
+##    search_fields = ('name', 'inactive') 
 
 
 class UserProfileInline(admin.StackedInline):

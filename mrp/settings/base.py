@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'timepiece.apps.TimepieceConfig',
     'timepiece.manager',
     'timepiece.entries',
+    'import_export',
 ]
 
 MIDDLEWARE = [
