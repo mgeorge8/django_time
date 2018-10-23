@@ -1,5 +1,5 @@
 
-{% extends "timepiece/base.html" %}
+{% extends "timepiece/user/base.html" %}
 
 {% load static %}
 {% load timepiece_tags %}
@@ -9,8 +9,10 @@
 
 {% block bodyid %}dashboard{% endblock bodyid %}
 
-{% block breadcrumb %}{% endblock breadcrumb %}
-
+{% block crumbs %}
+    {{ block.super }}
+    <li><span class="divider">/</span> <a href="">{{ object.get_name_or_username }}</a></li>
+{% endblock crumbs %}
     
     
 {% block content %}
@@ -25,10 +27,10 @@
             </ul>
         </div>
     </div>
-
+<br> <br>
     <div class="container-fluid">
         <div class="tab-content">
-<h3>Hours for the Week of {{ week|date:'M j' }}</h3>
+<h4>Hours for the Week of {{ week|date:'M j' }}</h4>
 
             <div>
                 {% if week_entry %}
