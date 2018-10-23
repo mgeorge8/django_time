@@ -72,6 +72,19 @@
       </div>
     </li>
 {% endif %}
+<li class="nav-item dropdown">
+      <a class="nav-link dropdown-toggle" href="#" id="navbardrop" data-toggle="dropdown">
+        Help
+      </a>
+      <div class="dropdown-menu">
+        <a class="dropdown-item" href="{% static "UsersGuide.txt" %}">Users Guide</a>
+{% if user.is_staff %}            
+<a class="dropdown-item" href="{% static "UsersGuideAdmin.txt" %}">Users Guide Admin</a>
+{% endif %}
+      </div>
+    </li>
+
+
 </ul>
 {% if user.is_authenticated %}
 <ul class="navbar-nav ml-auto">
