@@ -5,15 +5,13 @@
 {% block content %}
     <div class="container-fluid">
         <div class="span12">
-            <h2>Projects</h2>
+            <h2>Projects</h2> <hr>
             <ul class="nav nav-pills">
-            {% if perms.crm.add_project %}
-                <li><a href='{% url 'create_project' %}'>Create Project</a></li>
-            {% endif %}
+                <li><a href='{% url 'create_project' %}'>Create Project</a></li> 
             </ul>
         </div>
     </div>
-<br>
+<br> <br>
     <div class="container-fluid">
         <div class="span12">
 

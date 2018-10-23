@@ -29,11 +29,9 @@
 
 {% block content %}
     {% if perms.entries.can_clock_in %}
-        <h3> Timesheet </h3>
-
+       <br> <h4> Timesheet </h4><hr>
         <div  class="container-fluid">
             <div class="row">
-
                 <div class="btn-group-sm">
                     
                         
@@ -48,7 +46,7 @@
                         <a class="btn btn-primary" href="{% url 'create_entry' %}" title="Add Entry">Add Entry</a>
                    </div>
                 </div>
-<div class="container-fluid">
+
                 <div id="active-text">
 		<p>
                     {% if active_entry %}
@@ -69,10 +67,8 @@
                         You are not currently clocked into a project.
                     {% endif %}
 </p>
-                </div>
-            </div>
-        
-        
+                </div>        
+        <br>
 	<div>
             <form class="form-horizontal" method="post" action="" accept-charset="utf-8">
 

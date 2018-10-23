@@ -10,7 +10,10 @@
 
 {% block bodyid %}user-timesheet{% endblock bodyid %}
 
-{% block breadcrumb %}{% endblock breadcrumb %}
+{% block crumbs %}
+    {{ block.super }}
+    <li><span class="divider">/</span> <a href="">{{ object.get_name_or_username }}</a></li>
+{% endblock crumbs %}
 
 {% block extrajs %}
     <script>
@@ -22,7 +25,7 @@
 {% endblock extrajs %}
 
 {% block content %}
-    <h2>{{ timesheet_user.get_name_or_username }} - Time Sheet for {{ from_date|date:'M Y' }}</h2>
+    <h2>{{ timesheet_user.get_name_or_username }} - Time Sheet for {{ from_date|date:'M Y' }}</h2> <hr>
 
     <div class="container-fluid">
         <div class="span12" id="header">
