@@ -284,6 +284,8 @@ class Entry(models.Model):
 
         if self.end:
             end2 = self.end
+        else:
+            end2 = start + relativedelta(seconds=1)
 
         entries = self.user.timepiece_entries.filter(
             end_time__gt=start, start_time__lte=end)
