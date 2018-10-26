@@ -125,7 +125,7 @@
                                                 <a href="{% url 'delete_entry' entry.id %}?next={{ next_url|add_parameters:request.GET|urlencode }}">Delete</a>
                                         </td>
                                         
-                                        <td class="align-middle">{{ entry.start_time|time }}{{ entry.start_time|date }}</td>
+                                        <td class="align-middle">{{ entry.start_time|time }}</td>
                                         <td class="align-middle">
                                             {% if entry.end_time %}
                                                 {{ entry.end_time|time }}
