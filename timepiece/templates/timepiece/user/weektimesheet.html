@@ -16,18 +16,115 @@
     
     
 {% block content %}
-        <h2> Timesheet </h2>
+        <h2> Timesheet for {{ user.first_name }}</h2>
        
 <div class="row-fluid">
         <div class="span12">
             <ul class="nav nav-pills">
-                <li style="width: 17%"><a href="{% url 'week_timesheet' %}?week_start={{ prev_week|date:'Y-m-d' }}">&larr; Prev Week</a></li>
-                <li style="width: 17%"><a href="{% url 'week_timesheet' %}?week_start={{ next_week|date:'Y-m-d' }}">Next Week &rarr;</a></li>
+                <li style="width: 17%"><a href="{% url 'week_timesheet' user_id %}?week_start={{ prev_week|date:'Y-m-d' }}">&larr; Prev Week</a></li>
+                <li style="width: 17%"><a href="{% url 'week_timesheet' user_id %}?week_start={{ next_week|date:'Y-m-d' }}">Next Week &rarr;</a></li>
 		 <li><a href="{% url 'timesheet_csv' week|date:'Y-m-d' %}?">Download CSV</a></li>
             </ul>
         </div>
     </div>
+
+<form class="form-horizontal" method="post" action="" accept-charset="utf-8">
+
+               {% csrf_token %} 
+		{{ form.as_p }}
+                <input class="btn btn-primary btn-sm" type='submit' name='submit' value="Save" />
+                
+            </form>
 <br> <br>
+<h3>Hours for the Week of {{ week|date:'M j' }} </h3>
+
+            <div>
+                {% if week_entries %}
+                    {% url 'week_timesheet' user_id as next_url %}
+                  {% regroup week_entries by start_time|date:'l, F j' as daily_entries %}
+                    <table class="table table-bordered">
+                        
+                            <tr class="table-secondary">
+                                <th style="width: 25%">Project</th>
+                                <th style="width: 15%">From</th>
+                                <th style="width: 15%">To</th>
+                                <th style="width: 15%">Total Time</th>
+                                <th style="width: 23%">Activities</th>
+				  
+                            </tr>
+                        
+                        <tbody>
+                            {% for day in daily_entries %}
+                                {% sum_hours day.list as daily_total %}
+                                <tr class="table-secondary">
+                                    <th colspan="3">{{ day.grouper }}</th>
+                                    
+                                    <th colspan="2">{{ daily_total|humanize_seconds:"{hours:02d}:{minutes:02d}:{seconds:02d}" }}</th>
+                                    
+                                </tr>
+                                {% for entry in day.list %}
+                                    <tr>
+                                        <td>
+                                            <p class="mb-0">
+                                            {{ entry.project }} </p>
+<small class="text-muted">
+                                                <a href="{% url 'edit_entry' entry.id %}?next={{ next_url|add_parameters:request.GET|urlencode }}">Edit</a>
+                                                <a href="{% url 'delete_entry' entry.id %}?next={{ next_url|add_parameters:request.GET|urlencode }}">Delete</a>
+                                        </td>
+                                        
+                                        <td class="align-middle">{{ entry.start_time|time }}</td>
+                                        <td class="align-middle">
+                                            {% if entry.end_time %}
+                                                {{ entry.end_time|time }}
+                                            {% else %}
+                                                current
+                                            {% endif %}
+                                        </td>
+                                        <td class="align-middle">{{ entry.get_total_seconds|humanize_seconds:"{hours:02d}:{minutes:02d}:{seconds:02d}" }}</td>
+                                        <td class="align-middle">
+                                                {{ entry.activities }}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+				    
+
+                            {% endfor %}
+  <tr class="totals">
+                                <td colspan="3"><strong>Overall total for the period:</strong></td>
+                                <td class="align-middle" colspan="2">{{ hours|humanize_hours:"{hours:02d}:{minutes:02d}:{seconds:02d}" }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                {% else %}
+                    <p>No entries exist for this week.</p>
+                {% endif %}
+               <div>
+                                <h3>Project Summary</h3>
+{% if week_entries %}
+                                <table class="table table-bordered">
+                                    <thead>
+                                        <tr class="table-secondary">
+                                            <th>Project</th>
+                                            <th>Hours</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for project in project_entries %}
+                                            <tr>
+                                                <td>{{ project.project__name}} </td>
+                                                <td class="hours">{{ project.sum|humanize_hours:"{hours:02d}:{minutes:02d}:{seconds:02d}" }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+{% else %}
+<p>No entries exist for this week.</p>
+{% endif %}
+                            </div>
+ 
+           
+
+{% comment %}
     <div class="container-fluid">
         <div class="tab-content">
 <h4>Hours for the Week of {{ week|date:'M j' }}</h4>
@@ -70,5 +167,5 @@
             </div>
 		
         </div>
-    
+  {% endcomment %}  
 {% endblock content %}

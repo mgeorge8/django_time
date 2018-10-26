@@ -17,7 +17,7 @@ from django.views.generic import (
 from django.views.generic.list import ListView
 
 from timepiece import utils
-from timepiece.forms import YearMonthForm, UserYearMonthForm
+from timepiece.forms import YearMonthForm, UserYearMonthForm, UserForm
 from timepiece.templatetags.timepiece_tags import seconds_to_hours
 #from timepiece.utils.csv import CSVViewMixin
 #from timepiece.utils.search import SearchListView
@@ -31,19 +31,6 @@ from timepiece.manager.forms import (
 from timepiece.manager.models import Project, ProjectRelationship, Profile
 from timepiece.manager.utils import grouped_totals
 from timepiece.entries.models import Entry
-
-
-
-##@cbv_decorator(login_required)
-##class QuickSearch(FormView):
-##    form_class = QuickSearchForm
-##    template_name = 'timepiece/quick_search.html'
-##
-##    def form_valid(self, form):
-##        return HttpResponseRedirect(form.get_result())
-
-
-# User timesheets
 
 
 @login_required
@@ -305,45 +292,88 @@ class WeekTimesheetMixin(object):
 
 class WeekTimesheet(WeekTimesheetMixin, TemplateView):
     template_name = 'timepiece/user/weektimesheet.html'
+
+    def post(self, request, *args, **kwargs):
+        context = self.get_context_data()
+        if context['form'].is_valid():
+            print ('yes done')
+            entry = context['form'].save()
+            
+            url = reverse('week_timesheet', args=[entry.pk])
+            #url = request.GET.get('next', reverse('dashboard'))
+            return HttpResponseRedirect(url)
+            #return redirect('week_timesheet', user_id=entry.pk)
+        return super(WeekTimesheet, self).render_to_response(context)
+    
     def get_context_data(self, *args, **kwargs):
         context = super(WeekTimesheet, self).get_context_data(**kwargs)
         week_start = self.week_start
         week_end = week_start + relativedelta(days=7)
-        current_date = datetime.date.today()
-        
-        all_users = User.objects.all().select_related('profile')
-        week_entry = Entry.objects.filter().timespan(week_start, span='week')
-     
-        user_entry = []
-        for use1 in all_users:
-            last_name = use1.last_name
-            first_name = use1.first_name
-            ssn = use1.profile.ssn
-            title = use1.profile.title
-            week_entries = Entry.objects.filter(user=use1).timespan(week_start, span='week')
-            user_entries = week_entries.order_by().values('user__first_name', 'user__last_name')
-            user_entries = user_entries.annotate(sum=Sum('hours')).order_by('-sum')
-            if user_entries:
-                hours = sum(entries['sum'] for entries in user_entries)
-            else:
-                hours = 0
 
-            user_entry.append({'last_name': last_name, 'first_name': first_name, 'ssn': ssn,
-                               'title': title, 'hours': hours})
-            
-                
+        form = UserForm(self.request.POST or None)
+        
+        user_id = self.kwargs['user_id']
+        user = User.objects.get(id=user_id)
+        
+        
+        week_entry = Entry.objects.filter(user=user_id)
+        week_entry = week_entry.timespan(week_start, span='week')
+        week_entries = week_entry.select_related('project')
+        user_entries = week_entry.order_by().values('user__first_name', 'user__last_name')
+        user_entries = user_entries.annotate(sum=Sum('hours')).order_by('-sum')    
+        if user_entries:
+            hours = sum(entries['sum'] for entries in user_entries)
+        else:
+            hours = 0
+        #weekq = Entry.timespan(loop_date, span='week')
+        project_entries = week_entry.order_by().values('project__name').annotate(sum=Sum('hours')).order_by('-sum')
+
         context.update({
-            'all_users': all_users,
+            'user': user,
+            'hours': hours,
+            'form': form,
+            'project_entries': project_entries,
+            'week_entries': week_entries,
             'week': self.week_start,
-            'week_end': week_end,
-            'all_users': all_users,
-            'week_entry': week_entry,
-            'user_entry': user_entry,
-            'current_date': current_date,
             'prev_week': self.week_start - relativedelta(days=7),
             'next_week': self.week_start + relativedelta(days=7),
-        })
+            })
         return context
+                                                         
+        
+##        all_users = User.objects.all().select_related('profile')
+##        week_entry = Entry.objects.filter().timespan(week_start, span='week')
+##     
+##        user_entry = []
+##        for use1 in all_users:
+##            last_name = use1.last_name
+##            first_name = use1.first_name
+##            ssn = use1.profile.ssn
+##            title = use1.profile.title
+##            week_entries = Entry.objects.filter(user=use1).timespan(week_start, span='week')
+##            user_entries = week_entries.order_by().values('user__first_name', 'user__last_name')
+##            user_entries = user_entries.annotate(sum=Sum('hours')).order_by('-sum')
+##            if user_entries:
+##                hours = sum(entries['sum'] for entries in user_entries)
+##            else:
+##                hours = 0
+##
+##            user_entry.append({'last_name': last_name, 'first_name': first_name, 'ssn': ssn,
+##                               'title': title, 'hours': hours})
+##            
+##                
+##        context.update({
+##            'all_users': all_users,
+##            'week': self.week_start,
+##            'week_end': week_end,
+##            'all_users': all_users,
+##            'week_entry': week_entry,
+##            'user_entry': user_entry,
+##            'current_date': current_date,
+##            'prev_week': self.week_start - relativedelta(days=7),
+##            'next_week': self.week_start + relativedelta(days=7),
+##        })
+##        return context
 
 
 class ViewUser(DetailView):

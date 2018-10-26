@@ -44,7 +44,7 @@
         </div>
     </div>
 <hr>
-    <div class="container-fluid">
+<div class="container-fluid">
         <div class="span12">
             <div class="tab-content">
                 <div class="span6 active">
@@ -76,9 +76,10 @@
                                 <td class="hours">{{ summary.total|humanize_hours:"{hours:02d}:{minutes:02d}:{seconds:02d}" }}</td>
                             </tr>
                         </table>
-                    {% else %}
+		     {% else %}
                         <p>No entries exist for this time sheet.</p>
                     {% endif %}
+                    
                 </div>
 <div class="span6 active">
                     {% if grouped_totals %}
@@ -110,8 +111,6 @@
  
  {% endfor %}
                         </table>
-                    {% else %}
-                        <p>No entries exist for this time sheet.</p>
                     {% endif %}
                 </div>
            

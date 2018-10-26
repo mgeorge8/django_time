@@ -107,4 +107,15 @@ class UserYearMonthForm(YearMonthForm):
         from_date, to_date = super(UserYearMonthForm, self).save()
         return (from_date, to_date, self.cleaned_data.get('user', None))
 
+class UserForm(forms.Form):
+    user = UserModelChoiceField(label='', queryset=None, required=False)
+
+    def __init__(self, *args, **kwargs):
+        super(UserForm, self).__init__(*args, **kwargs)
+        queryset = User.objects.order_by('first_name')
+        self.fields['user'].queryset = queryset
+
+    def save(self):
+        return (self.cleaned_data.get('user', None))
+
 

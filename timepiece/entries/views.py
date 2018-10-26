@@ -75,18 +75,6 @@ class Dashboard(DashboardMixin, TemplateView):
         form = EntryDashboardForm(self.request.GET, initial=initial, user=self.user, acting_user=self.user)
         return super(Dashboard, self).dispatch(request, *args, **kwargs)
 
-##    def get(self, request, *args, **kwargs):
-##        initial = dict([(k, request.GET[k]) for k in request.GET.keys()])
-##        form = AddUpdateEntryForm(instance=None,
-##                                  user=request.user,
-##                                  initial=initial,
-##                                  acting_user=request.user)
-##        #initial = dict([(k, request.GET[k]) for k in request.GET.keys()])
-##        #form = EntryDashboardForm(user=request.user, initial=initial, acting_user=request.user)
-##        return render(request, 'timepiece/dashboard.html', {
-##        'form': form,   
-##    })
-
     def post(self, request, *args, **kwargs):
         context = self.get_context_data()
         if context['form'].is_valid():
@@ -100,12 +88,16 @@ class Dashboard(DashboardMixin, TemplateView):
         context = super(Dashboard, self).get_context_data(**kwargs)
         week_start = self.week_start
         week_end = week_start + relativedelta(days=7)
-        initial = {'start_time': datetime.datetime.now()}
+        #initial = {'start_time': datetime.datetime.now(), 'end_time': datetime.datetime.now()}
+        #initial = {}
         #initial = dict([(k, request.GET[k]) for k in request.GET.keys()])
         #form = ProjectHoursSearchForm(initial=initial)
         
         entry = utils.get_active_entry(self.user)
-        
+        if(entry == None):
+            initial = {'start_time': datetime.datetime.now()}
+        else:
+            initial = {'end_time': datetime.datetime.now()}
         form = EntryDashboardForm(self.request.POST or None, instance=entry, initial=initial, user=self.user, acting_user=self.user)
 
         # Query for the user's active entry if it exists.

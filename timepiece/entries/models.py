@@ -185,14 +185,16 @@ class Entry(models.Model):
       #  on_delete=models.SET_NULL)
 ##    status = models.CharField(
 ##        max_length=24, choices=STATUSES.items(), default=UNVERIFIED)
-
+    
     start_time = models.DateTimeField()
     end_time = models.DateTimeField(blank=True, null=True, db_index=True)
+    end = models.TimeField(blank=True, null=True)
     #seconds_paused = models.PositiveIntegerField(default=0)
     #pause_time = models.DateTimeField(blank=True, null=True)
     activities = models.CharField(max_length=50, blank=False)
     #comments = models.TextField(blank=True, null=True)
     date_updated = models.DateTimeField(auto_now=True)
+    #clock_out = models.
 
     hours = models.DecimalField(max_digits=11, decimal_places=5, default=0)
 
@@ -280,6 +282,9 @@ class Entry(models.Model):
         else:
             end = start + relativedelta(seconds=1)
 
+        if self.end:
+            end2 = self.end
+
         entries = self.user.timepiece_entries.filter(
             end_time__gt=start, start_time__lte=end)
 
@@ -290,7 +295,8 @@ class Entry(models.Model):
             entry_data = {
                 'project': entry.project,
                 'start_time': entry.start_time,
-                'end_time': entry.end_time #- relativedelta(seconds=1)
+                'end_time': entry.end_time, #- relativedelta(seconds=1)
+                'endTime': entry.end,
             }
             # Conflicting saved entries
             if entry.end_time:
@@ -310,9 +316,22 @@ class Entry(models.Model):
                     raise ValidationError(
                         'Start time overlaps with {project} '
                         'from {start_time} to {end_time}.'.format(**entry_data))
+            elif entry.end:
+                entry_data['start_time'] = entry.start_time.strftime(
+                    '%H:%M:%S')
+                entry_data['endTime'] = entry.end.strftime(
+                    '%H:%M:%S')
+                raise ValidationError('Start time overlaps with '
+                                      '{project} from {start_time} to '
+                                      '{endTime}.'.format(**entry_data))
+                
+                
         
         if end <= start:
             raise ValidationError('Ending time must exceed the starting time')
+        if end2 <= start.time():
+            raise ValidationError('Ending time must exceed the starting time')
+            
         delta = (end - start)
         delta_secs = (delta.seconds + delta.days * 24 * 60 * 60)
         limit_secs = 60 * 60 * 12
@@ -431,7 +450,7 @@ class Entry(models.Model):
 
     @property
     def is_editable(self):
-        return self.status == Entry.UNVERIFIED
+        return True
 
     @property
     def delete_key(self):

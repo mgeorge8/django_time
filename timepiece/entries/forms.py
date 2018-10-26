@@ -119,7 +119,7 @@ class AddUpdateEntryForm(forms.ModelForm):
 
     class Meta:
         model = Entry
-        exclude = ('user', 'site', 'hours')
+        exclude = ('user', 'site', 'hours', 'end')
         
 
     def __init__(self, *args, **kwargs):
@@ -176,12 +176,19 @@ class AddUpdateEntryForm(forms.ModelForm):
         return self.cleaned_data
 
 class EntryDashboardForm(forms.ModelForm):
-    start_time = TimepieceSplitDateTimeField(initial=datetime.datetime.now())
-    end_time = TimepieceSplitDateTimeField(required=False)
+    start_time = TimepieceSplitDateTimeField()
+    #end_time = TimepieceSplitDateTimeField(required=False)
+    #end = forms.TimeField(required=False)
 
     class Meta:
         model = Entry
-        exclude = ('user', 'site', 'hours')
+        exclude = ('user', 'site', 'hours', 'end_time')
+        labels = {
+            'end': 'End time',
+        }
+        help_texts = {
+            'end': '(Just time, no date)',
+        }
         
 
     def __init__(self, *args, **kwargs):
@@ -195,10 +202,11 @@ class EntryDashboardForm(forms.ModelForm):
         self.instance.user = self.user
         self.fields['project'].queryset = Project.objects.filter(
             users=self.user)
-        #initial = kwargs.get('initial', {})
+        initial = kwargs.get('initial', {})
         #self.fields['start_time'].initial = datetime.datetime.now()
         # If editing the active entry, remove the end_time field.
         if self.instance.start_time and not self.instance.end_time:
+            #self.fields['end_time'].initial = datetime.datetime.now()
             self.fields.pop('start_time')
 
     def clean(self):
@@ -208,8 +216,14 @@ class EntryDashboardForm(forms.ModelForm):
         """
         active = utils.get_active_entry(self.user)
         start_time = self.cleaned_data.get('start_time', None)
-        end_time = self.cleaned_data.get('end_time', None)
-
+        end = self.cleaned_data.get('end', None)
+        #hours = end_time - start_time.time
+        if(end != None and active != None):
+            end_time = datetime.datetime.combine(active.start_time.date(), end)
+        elif (end != None and active == None):
+            end_time = datetime.datetime.combine(start_time.date(), end)
+        else:
+            end_time = None
         if active and active.pk != self.instance.pk:
             if (start_time and start_time > active.start_time) or \
                     (end_time and end_time > active.start_time):
@@ -237,6 +251,14 @@ class EntryDashboardForm(forms.ModelForm):
 ##                raise forms.ValidationError(message)
 
         return self.cleaned_data
+
+    def save(self, commit=True):
+        entry = super(EntryDashboardForm, self).save(commit=False)
+        if(entry.end != None):
+            entry.end_time = datetime.datetime.combine(entry.start_time.date(), entry.end)
+        if commit:
+            entry.save()
+        return entry
 
 
 class ProjectHoursForm(forms.ModelForm):
