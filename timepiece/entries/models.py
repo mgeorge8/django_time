@@ -285,7 +285,7 @@ class Entry(models.Model):
         if self.end:
             end2 = self.end
         else:
-            end2 = start + relativedelta(seconds=1)
+            end2 = start.time()
 
         entries = self.user.timepiece_entries.filter(
             end_time__gt=start, start_time__lte=end)
@@ -331,7 +331,7 @@ class Entry(models.Model):
         
         if end <= start:
             raise ValidationError('Ending time must exceed the starting time')
-        if end2 <= start.time():
+        if end2 < start.time():
             raise ValidationError('Ending time must exceed the starting time')
             
         delta = (end - start)
