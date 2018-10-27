@@ -25,7 +25,7 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', '@muayu7vm$(i0ebd1ox7#eh#njglb2
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['time-mrp.herokuapp.com']
+ALLOWED_HOSTS = ['emus-mrp.herokuapp.com']
 
 
 # Application definition
