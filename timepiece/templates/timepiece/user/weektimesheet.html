@@ -32,8 +32,9 @@
 
                {% csrf_token %} 
 		{{ form.as_p }}
+{% comment %}
                 <input class="btn btn-primary btn-sm" type='submit' name='submit' value="Save" />
-                
+                {% endcomment %}
             </form>
 <br> <br>
 <h3>Hours for the Week of {{ week|date:'M j' }} </h3>

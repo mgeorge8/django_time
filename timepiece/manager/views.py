@@ -18,6 +18,7 @@ from django.views.generic.list import ListView
 
 from timepiece import utils
 from timepiece.forms import YearMonthForm, UserYearMonthForm, UserForm
+from django.forms.models import inlineformset_factory
 from timepiece.templatetags.timepiece_tags import seconds_to_hours
 #from timepiece.utils.csv import CSVViewMixin
 #from timepiece.utils.search import SearchListView
@@ -26,8 +27,8 @@ from timepiece.entries.views import DashboardMixin, Dashboard
 
 from timepiece.manager.forms import (
     CreateEditProjectForm, EditUserSettingsForm, EditUserForm,
-    CreateUserForm, ProfileForm,
-    SelectMultipleUserForm)
+    CreateUserForm, ProfileForm, EditProjectRelationshipForm,
+    ProjectRelationshipFormSet, SelectMultipleUserForm)
 from timepiece.manager.models import Project, ProjectRelationship, Profile
 from timepiece.manager.utils import grouped_totals
 from timepiece.entries.models import Entry
@@ -434,6 +435,7 @@ class ListProjects(ListView):
     #redirect_if_one_result = True
     #search_fields = ['name__icontains']
     template_name = 'timepiece/project/list.html'
+    queryset = Project.objects.filter(inactive=False)
 
     def get_context_data(self, **kwargs):
         context = super(ListProjects, self).get_context_data(**kwargs)
@@ -445,6 +447,10 @@ class ListProjects(ListView):
 ##            queryset = queryset.filter(status=status)
 ##        return queryset
 
+class ListInactiveProjects(ListView):
+    model = Project
+    template_name = 'timepiece/project/inactive_list.html'
+    queryset = Project.objects.filter(inactive=True)
 
 class ViewProject(DetailView):
     model = Project
@@ -456,21 +462,90 @@ class ViewProject(DetailView):
         return super(ViewProject, self).get_context_data(**kwargs)
 
 
-def CreateProject(request, **kwargs):
-    if request.method == 'POST':
-        project_form = CreateEditProjectForm(request.POST)
-        if project_form.is_valid():
-            instance = project_form.save()
-            messages.success(request, ('Your project was successfully created!'))
-            return redirect('view_project', instance.id,)
-        else:
-            messages.error(request, ('Please correct the error below.'))
-    else:
-        project_form = CreateEditProjectForm()
-    return render(request, 'timepiece/project/createproject.html', {
-        'user_form': project_form,
-    })
+##def CreateProject(request, **kwargs):
+##    if request.method == 'POST':
+##        project_form = CreateEditProjectForm(request.POST)
+##        if project_form.is_valid():
+##            instance = project_form.save()
+##            messages.success(request, ('Your project was successfully created!'))
+##            return redirect('view_project', instance.id,)
+##        else:
+##            messages.error(request, ('Please correct the error below.'))
+##    else:
+##        project_form = CreateEditProjectForm()
+##    return render(request, 'timepiece/project/createproject.html', {
+##        'user_form': project_form,
+##    })
 
+class CreateProject(CreateView):
+    form_class = CreateEditProjectForm
+    template_name = 'timepiece/project/createproject.html'
+    success_url = reverse_lazy('list_projects')
+
+    def get(self, request, *args, **kwargs):
+        self.object = None
+        form_class = self.get_form_class()
+        form = self.get_form(form_class)
+        project_formset = ProjectRelationshipFormSet()
+        return self.render_to_response(
+            self.get_context_data(form=form, project_formset=project_formset))
+
+    def post(self, request, *args, **kwargs):
+        self.object = None
+        form_class = self.get_form_class()
+        form = self.get_form(form_class)
+        project_formset = ProjectRelationshipFormSet(request.POST)
+        if (form.is_valid() and project_formset.is_valid()):
+            return self.form_valid(form, project_formset)
+        else:
+            return self.form_invalid(form, project_formset)
+
+    def form_valid(self, form, project_formset):
+        self.object = form.save()
+        project_formset.instance = self.object
+        project_formset.save()
+        return super(CreateProject, self).form_valid(form)
+
+    def form_invalid(self, form, part_formset):
+        return self.render_to_response(
+            self.get_context_data(form=form,project_formset=project_formset))
+
+##class EditProject(UpdateView):
+##    form_class = CreateEditProjectForm
+##    template_name = 'timepiece/project/createproject.html'
+##    pk_url_kwarg = 'project_id'
+##
+##    success_url = reverse_lazy('list_projects')
+##
+##    def get(self, request, *args, **kwargs):
+##        #self.object = None
+##        #self.object = self.get_object()
+##        form_class = self.get_form_class()
+##        form = self.get_form(form_class)
+##        project_formset = ProjectRelationshipFormSet()
+##        return self.render_to_response(
+##            self.get_context_data(form=form, project_formset=project_formset))
+##
+##    def post(self, request, *args, **kwargs):
+##        #self.object = None
+##        form_class = self.get_form_class()
+##        form = self.get_form(form_class)
+##        project_formset = ProjectRelationshipFormSet(request.POST)
+##        if (form.is_valid() and project_formset.is_valid()):
+##            return self.form_valid(form, project_formset)
+##        else:
+##            return self.form_invalid(form, project_formset)
+##
+##    def form_valid(self, form, project_formset):
+##        self.object = form.save()
+##        project_formset.instance = self.object
+##        project_formset.save()
+##        return super(CreateProject, self).form_valid(form)
+##
+##    def form_invalid(self, form, part_formset):
+##        return self.render_to_response(
+##            self.get_context_data(form=form,project_formset=project_formset))
+##
 
 
 class DeleteProject(DeleteView):

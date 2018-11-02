@@ -47,7 +47,7 @@ class ClockInForm(forms.ModelForm):
         super(ClockInForm, self).__init__(*args, **kwargs)
 
         self.fields['start_time'].initial = datetime.datetime.now()
-        self.fields['project'].queryset = Project.objects.filter(
+        self.fields['project'].queryset = Project.trackable.filter(
             users=self.user)
         if not self.active:
             self.fields.pop('active_comment')
@@ -132,7 +132,7 @@ class AddUpdateEntryForm(forms.ModelForm):
         self.acting_user = kwargs.pop('acting_user')
         super(AddUpdateEntryForm, self).__init__(*args, **kwargs)
         self.instance.user = self.user
-        self.fields['project'].queryset = Project.objects.filter(
+        self.fields['project'].queryset = Project.trackable.filter(
             users=self.user)
         # If editing the active entry, remove the end_time field.
         if self.instance.start_time and not self.instance.end_time:
@@ -200,7 +200,7 @@ class EntryDashboardForm(forms.ModelForm):
         self.acting_user = kwargs.pop('acting_user')
         super(EntryDashboardForm, self).__init__(*args, **kwargs)
         self.instance.user = self.user
-        self.fields['project'].queryset = Project.objects.filter(
+        self.fields['project'].queryset = Project.trackable.filter(
             users=self.user)
         initial = kwargs.get('initial', {})
         #self.fields['start_time'].initial = datetime.datetime.now()

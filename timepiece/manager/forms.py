@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
 from django.contrib.auth.models import User
+from django.forms.models import inlineformset_factory
 
 #from selectable import forms as selectable
 
@@ -33,12 +34,30 @@ class ProfileForm(forms.ModelForm):
         model = Profile
         fields = ('ssn', 'title')
 
-##class EditProjectRelationshipForm(forms.ModelForm):
+class EditProjectRelationshipForm(forms.ModelForm):
+    #user = forms.ModelMultipleChoiceField(widget=forms.CheckboxSelectMultiple(), queryset=User.objects.all())
+    class Meta:
+        model = ProjectRelationship
+        exclude = ('project',)
+
+ProjectRelationshipFormSet = inlineformset_factory(Project,
+                                                   ProjectRelationship,
+                                                   form=EditProjectRelationshipForm, extra=1)
 ##
-##    class Meta:
-##        model = ProjectRelationship
-##        fields = ('types',)
+##class SelectMultipleUserForm(forms.Form):
+##    user = UserModelMultipleChoiceField(label='', queryset=None, required=False)
 ##
+##    def __init__(self, *args, **kwargs):
+##        super(SelectMultipleUserForm, self).__init__(*args, **kwargs)
+##        queryset = User.objects.order_by('first_name')
+##        self.fields['user'].queryset = queryset
+##
+##    def get_user(self):
+##        users = []
+##        user1 = self.cleaned_data['user'] if self.is_valid() else None
+##        for user in user1:
+##            users.append(user)
+##        return users
 ##    def __init__(self, *args, **kwargs):
 ##        super(EditProjectRelationshipForm, self).__init__(*args, **kwargs)
 ##        self.fields[].widget = forms.CheckboxSelectMultiple(

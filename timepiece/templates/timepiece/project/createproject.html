@@ -5,12 +5,13 @@
 {% endblock title %}
 
 {% block content %}
-    <div class="row-fluid">
+    <div class="container-fluid">
         <div class="span12">
             <h2>Create Project</h2>
 <form class="form-horizontal" action="" method="post" accept-charset="utf-8">
   {% csrf_token %}
-  {{ user_form.as_p }}
+  {{ form.as_p }}
+  {{ project_formset.as_p }}
   
 
   <div class="form-actions">

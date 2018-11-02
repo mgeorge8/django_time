@@ -176,7 +176,7 @@ class Entry(models.Model):
 ##    ))
 
     user = models.ForeignKey(User, related_name='timepiece_entries', on_delete=models.CASCADE,)
-    project = models.CharField(max_length=50, blank=False)
+   # project = models.CharField(max_length=50, blank=False)
     project = models.ForeignKey('manager.Project', related_name='entries', on_delete=models.CASCADE,)
     #activity = models.ForeignKey(Activity, related_name='entries', blank=True, null=True, on_delete=models.CASCADE,)
     #location = models.ForeignKey(Location, blank=True, null=True, related_name='entries', on_delete=models.CASCADE,)
