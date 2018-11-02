@@ -42,7 +42,7 @@ class EditProjectRelationshipForm(forms.ModelForm):
 
 ProjectRelationshipFormSet = inlineformset_factory(Project,
                                                    ProjectRelationship,
-                                                   form=EditProjectRelationshipForm, extra=1)
+                                                   form=EditProjectRelationshipForm, extra=5)
 ##
 ##class SelectMultipleUserForm(forms.Form):
 ##    user = UserModelMultipleChoiceField(label='', queryset=None, required=False)
