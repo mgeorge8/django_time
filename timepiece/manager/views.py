@@ -506,45 +506,48 @@ class CreateProject(CreateView):
         project_formset.save()
         return super(CreateProject, self).form_valid(form)
 
-    def form_invalid(self, form, part_formset):
+    def form_invalid(self, form, project_formset):
         return self.render_to_response(
             self.get_context_data(form=form,project_formset=project_formset))
 
-##class EditProject(UpdateView):
-##    form_class = CreateEditProjectForm
-##    template_name = 'timepiece/project/createproject.html'
-##    pk_url_kwarg = 'project_id'
-##
-##    success_url = reverse_lazy('list_projects')
-##
-##    def get(self, request, *args, **kwargs):
-##        #self.object = None
-##        #self.object = self.get_object()
-##        form_class = self.get_form_class()
-##        form = self.get_form(form_class)
-##        project_formset = ProjectRelationshipFormSet()
-##        return self.render_to_response(
-##            self.get_context_data(form=form, project_formset=project_formset))
-##
-##    def post(self, request, *args, **kwargs):
-##        #self.object = None
-##        form_class = self.get_form_class()
-##        form = self.get_form(form_class)
-##        project_formset = ProjectRelationshipFormSet(request.POST)
-##        if (form.is_valid() and project_formset.is_valid()):
-##            return self.form_valid(form, project_formset)
-##        else:
-##            return self.form_invalid(form, project_formset)
-##
-##    def form_valid(self, form, project_formset):
-##        self.object = form.save()
-##        project_formset.instance = self.object
-##        project_formset.save()
-##        return super(CreateProject, self).form_valid(form)
-##
-##    def form_invalid(self, form, part_formset):
-##        return self.render_to_response(
-##            self.get_context_data(form=form,project_formset=project_formset))
+class EditProject(UpdateView):
+    model = Project
+    form_class = CreateEditProjectForm
+    template_name = 'timepiece/project/editproject.html'
+    pk_url_kwarg = 'project_id'
+
+    success_url = reverse_lazy('list_projects')
+
+    def get(self, request, *args, **kwargs):
+        #self.object = None
+        self.object = self.get_object()
+        form_class = self.get_form_class()
+        form = self.get_form(form_class)
+        project_formset = ProjectRelationshipFormSet(instance = self.object)
+        return self.render_to_response(
+            self.get_context_data(form=form, project_formset=project_formset))
+
+    def post(self, request, *args, **kwargs):
+        #self.object = None
+        self.object = self.get_object()
+        form_class = self.get_form_class()
+        form = self.get_form(form_class)
+        project_formset = ProjectRelationshipFormSet(self.request.POST, instance=self.object)
+        if (form.is_valid() and project_formset.is_valid()):
+            return self.form_valid(form, project_formset)
+        else:
+            return self.form_invalid(form, project_formset)
+
+    def form_valid(self, form, project_formset):
+        self.object = form.save()
+        project_formset.instance = self.object
+        project_formset.save()
+        return HttpResponseRedirect(self.get_success_url())
+        #return super(CreateProject, self).form_valid(form)
+
+    def form_invalid(self, form, project_formset):
+        return self.render_to_response(
+            self.get_context_data(form=form, project_formset=project_formset))
 ##
 
 
@@ -555,11 +558,11 @@ class DeleteProject(DeleteView):
     template_name = 'timepiece/delete_object.html'
 
 
-class EditProject(UpdateView):
-    model = Project
-    form_class = CreateEditProjectForm
-    template_name = 'timepiece/project/create_edit.html'
-    pk_url_kwarg = 'project_id'
+##class EditProject(UpdateView):
+##    model = Project
+##    form_class = CreateEditProjectForm
+##    template_name = 'timepiece/project/create_edit.html'
+##    pk_url_kwarg = 'project_id'
 
 
 ##@cbv_decorator(permission_required('crm.add_projectrelationship'))

@@ -1,20 +1,20 @@
 {% extends "timepiece/project/base.html" %}
 {% load timepiece_tags %}
 
-{% block title %} Create Project
+{% block title %} Edit Project
 {% endblock title %}
 
 {% block content %}
     <div class="container-fluid">
         <div class="span12">
-            <h2>Create Project</h2>
+            <h2>Edit Project</h2>
 <form class="form-horizontal" action="" method="post" accept-charset="utf-8">
   {% csrf_token %}
   {{ form.as_p }}
 {{ project_formset.management_form }}
 {% for form in project_formset %}
 <div class ="form-horizontal">
- <label>User:</label> {{ form.user }}
+  {{ form }}
 </div>
   {% endfor %}
 
