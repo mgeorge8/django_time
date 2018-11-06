@@ -6,7 +6,7 @@ from django.db.models import Q
 
 from timepiece import utils
 from timepiece.manager.models import Project, ProjectRelationship
-from timepiece.entries.models import Entry, ProjectHours
+from timepiece.entries.models import Entry, ProjectHours, ToDo
 from timepiece.forms import (
     INPUT_FORMATS, TimepieceSplitDateTimeField, TimepieceDateInput)
 
@@ -260,6 +260,10 @@ class EntryDashboardForm(forms.ModelForm):
             entry.save()
         return entry
 
+class TodoListForm(forms.ModelForm):
+    class Meta:
+        model = ToDo
+        fields = '__all__'
 
 class ProjectHoursForm(forms.ModelForm):
 

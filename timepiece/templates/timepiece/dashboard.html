@@ -4,7 +4,7 @@
 {% load timepiece_tags %}
 
 
-{% block title %}Dashboard{% endblock title %}
+{% block title %}Home{% endblock title %}
 
 {% block bodyid %}dashboard{% endblock bodyid %}
 
@@ -29,7 +29,7 @@
 
 {% block content %}
     {% if perms.entries.can_clock_in %}
-       <br> <h4> Timesheet </h4><hr>
+       <br> <h3> Timesheet </h3><hr>
         <div  class="container-fluid">
             <div class="row">
                 <div class="btn-group-sm">

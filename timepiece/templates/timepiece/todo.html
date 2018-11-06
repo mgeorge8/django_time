@@ -1,0 +1,51 @@
+{% extends "timepiece/base.html" %}
+
+{% block title %} To-Do List
+{% endblock title %}
+
+{% block content %}
+
+    <div class="container-fluid">
+            <h2>To-Do List</h2>
+<ul class="nav nav-pills">
+		 <li><a href='{% url 'todo_complete' %}'>Completed To-Do's</a></li>
+            </ul>
+{% if todos %}
+<br>
+<form class="form-horizontal" action="" method="post" accept-charset="utf-8">
+<table class="table">
+  {% csrf_token %}
+
+<tr>
+<th>Priority</th>
+<th>Description</th>
+<th>Mark</th>
+</tr>
+{% for todo in todos %}
+<tr> 
+<td>{{ todo.priority }}</td>
+<td>{{ todo.description }}</td>
+<td><button class="btn btn-primary btn-sm" type="submit" name="taskComplete" formnovalidate="" value="{{ todo.id }}" id="{{todo.id}}">Done</button></td>
+</tr>
+{% endfor %}
+</table>
+</form>
+{% endif %}
+<hr><br>
+<h4>Add Item</h4>
+<br>
+<form class="form-horizontal" action="" method="post" accept-charset="utf-8">
+  {% csrf_token %}
+<div class="form-group">
+<label for="priority">Priority: </label>
+<input type="number" id="priority" name="priority" required>
+<label for="description">Description: </label>
+<input type="text" id="description" name="description" required>
+
+                    <button class="btn btn-primary" type="submit" value="Add" name="taskAdd">Add</button>
+ 
+</div>
+</form>
+
+</div>
+{% endblock content %}

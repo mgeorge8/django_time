@@ -18,7 +18,7 @@ from django.db.models import Q, Sum
 from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.shortcuts import redirect, render
 from django.utils.decorators import method_decorator
-from django.views.generic import TemplateView, View
+from django.views.generic import ListView, TemplateView, View
 from django.views.generic.edit import FormMixin
 
 from timepiece import utils
@@ -29,8 +29,8 @@ from timepiece.utils.views import cbv_decorator
 from timepiece.manager.models import Project, Profile
 from timepiece.entries.forms import (
     ClockInForm, ClockOutForm, AddUpdateEntryForm, EntryDashboardForm, ProjectHoursForm,
-    ProjectHoursSearchForm)
-from timepiece.entries.models import Entry, ProjectHours
+    ProjectHoursSearchForm, TodoListForm)
+from timepiece.entries.models import Entry, ProjectHours, ToDo
 
 class DashboardMixin(object):
 
@@ -170,6 +170,50 @@ class Dashboard(DashboardMixin, TemplateView):
         project_progress = sorted(project_data.values(), key=key)
 
         return project_progress
+
+def to_do(request):
+    user = request.user
+    todos = ToDo.objects.filter(user=user, completed=False)
+    if request.method == "POST":
+        if "taskAdd" in request.POST:
+            priority = request.POST["priority"]
+            description = request.POST["description"]
+            Todo = ToDo(priority=priority, description=description, user=user)
+            Todo.save()
+            return redirect('todo')
+        if "taskComplete" in request.POST:
+            todo_id = request.POST["taskComplete"]            
+            todo = ToDo.objects.get(id=int(todo_id))
+            todo.completed = True
+            todo.save()
+            messages.success(request, "Task '{}' has been marked completed".
+                             format(todo.description))
+          #  return redirect('TodoList')
+    return render(request, "timepiece/todo.html", {"todos": todos})
+
+def todo_completed(request):
+    user = request.user
+    todos = ToDo.objects.filter(completed=True,)
+    return render(request, "timepiece/todo-complete.html", {"todos": todos})
+
+def todo_admin_create(request):
+    data = request.POST or None
+    form = TodoListForm(data)
+    if form.is_valid():
+        todo = form.save()
+        messages.success(request, "'{}' has been added for '{}'".
+                        format(todo.description, todo.user))
+    return render(request, "timepiece/todo-create.html", {'form': form})
+
+
+class TodoAdminListView(ListView):
+    queryset = ToDo.objects.filter(completed=False)
+    template_name = "timepiece/todo-list.html"
+
+
+class TodoCompletedListView(ListView):
+    queryset = ToDo.objects.filter(completed=True)
+    template_name = "timepiece/todo-complete-all.html"
 
 @permission_required('entries.can_clock_in')
 @transaction.atomic

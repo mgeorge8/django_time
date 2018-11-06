@@ -27,4 +27,12 @@ urlpatterns = [
         views.delete_entry,
         name='delete_entry'),
 
+    url(r'^todo/$', views.to_do, name="todo"),
+    url(r'^todo/completed/$', views.todo_completed, name="todo_complete"),
+    url(r'^todo/create/$', views.todo_admin_create, name="todo_create"),
+    url(r'^todo/list/$', views.TodoAdminListView.as_view(), name="todo_list"),
+    url(r'^todo/list/completed/$',
+        views.TodoCompletedListView.as_view(),
+        name="todo_complete_all"),
+
 ]

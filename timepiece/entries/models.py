@@ -120,27 +120,7 @@ class EntryManager(models.Manager):
         # in Django)
         # in other words: do not remove!
         str(qs.query)
-
         return qs
-
-##        import django
-##        if django.VERSION >= (1, 8):
-##            # extra() is slowly but surely being deprecated.
-##            # Newer Django versions have powerful F expressions to replace it.
-##            # An entry is billable if both its project and activity are billable.
-##            # We make use of a Django internal function to force the
-##            # query to use the logical rather than bitwise conjunction operator.
-##            project_billable = F('project__type__billable')
-##            activity_billable = F('activity__billable')
-##            logical_and = 'AND'  # bitwise would be '&'
-##            billable = project_billable._combine(activity_billable, logical_and, False)
-##            qs = qs.annotate(billable=billable)
-##        else:
-##            qs = qs.extra({
-##                'billable': 'timepiece_activity.billable AND '
-##                            'timepiece_attribute.billable',
-##            })
-       
 
     def date_trunc(self, key='month', extra_values=()):
         return self.get_queryset().date_trunc(key, extra_values)
@@ -148,54 +128,35 @@ class EntryManager(models.Manager):
     def timespan(self, from_date, to_date=None, span='month'):
         return self.get_queryset().timespan(from_date, to_date, span)
 
+#class TrackableToDoManager(models.Manger):
 
-##class EntryWorkedManager(models.Manager):
-##
-##    def get_queryset(self):
-##        qs = EntryQuerySet(self.model)
-##        projects = utils.get_setting('TIMEPIECE_PAID_LEAVE_PROJECTS')
-##        return qs.exclude(project__in=projects.values())
-##
+class ToDo(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE,)
+    priority = models.IntegerField()
+    description = models.CharField(max_length=50, blank=False)
+    completed = models.BooleanField(blank=False, default=False)
+
+    class Meta:
+        ordering = ["user", "priority"]
+
+    def __str__(self):
+        return self.description
 
 @python_2_unicode_compatible
 class Entry(models.Model):
-##    """
-##    This class is where all of the time logs are taken care of
-##    """
-##    UNVERIFIED = 'unverified'
-##    VERIFIED = 'verified'
-##    APPROVED = 'approved'
-##    INVOICED = 'invoiced'
-##    NOT_INVOICED = 'not-invoiced'
-##    STATUSES = OrderedDict((
-##        (UNVERIFIED, 'Unverified'),
-##        (VERIFIED, 'Verified'),
-##        (APPROVED, 'Approved'),
-##        (INVOICED, 'Invoiced'),
-##        (NOT_INVOICED, 'Not Invoiced'),
-##    ))
+    """
+    This class is where all of the time logs are taken care of
+    """
+
 
     user = models.ForeignKey(User, related_name='timepiece_entries', on_delete=models.CASCADE,)
    # project = models.CharField(max_length=50, blank=False)
-    project = models.ForeignKey('manager.Project', related_name='entries', on_delete=models.CASCADE,)
-    #activity = models.ForeignKey(Activity, related_name='entries', blank=True, null=True, on_delete=models.CASCADE,)
-    #location = models.ForeignKey(Location, blank=True, null=True, related_name='entries', on_delete=models.CASCADE,)
-    #entry_group = models.ForeignKey(
-     #   'contracts.EntryGroup', blank=True, null=True, related_name='entries',
-      #  on_delete=models.SET_NULL)
-##    status = models.CharField(
-##        max_length=24, choices=STATUSES.items(), default=UNVERIFIED)
-    
+    project = models.ForeignKey('manager.Project', related_name='entries', on_delete=models.CASCADE,)    
     start_time = models.DateTimeField()
     end_time = models.DateTimeField(blank=True, null=True, db_index=True)
     end = models.TimeField(blank=True, null=True)
-    #seconds_paused = models.PositiveIntegerField(default=0)
-    #pause_time = models.DateTimeField(blank=True, null=True)
     activities = models.CharField(max_length=50, blank=False)
-    #comments = models.TextField(blank=True, null=True)
     date_updated = models.DateTimeField(auto_now=True)
-    #clock_out = models.
-
     hours = models.DecimalField(max_digits=11, decimal_places=5, default=0)
 
     objects = EntryManager()
@@ -337,7 +298,7 @@ class Entry(models.Model):
         delta = (end - start)
         delta_secs = (delta.seconds + delta.days * 24 * 60 * 60)
         limit_secs = 60 * 60 * 12
-        if delta_secs > limit_secs: # or self.seconds_paused > limit_secs:
+        if delta_secs > limit_secs: 
             err_msg = 'Ending time exceeds starting time by 12 hours or more '\
                 'for {0} on {1} at {2} to {3} at {4}.'.format(
                     self.project,
@@ -364,32 +325,11 @@ class Entry(models.Model):
         start = self.start_time
         end = self.end_time
         if not end:
-##            if self.is_paused:
-##                end = self.pause_time
-##            else:
             end = timezone.now()
         delta = end - start
-##        if self.is_paused:
-##            # get_paused_seconds() takes elapsed time into account, which we do not want
-##            # in this case, so subtract seconds_paused instead to account for previous pauses
-##            seconds = delta.seconds - self.seconds_paused
-##        else:
-        seconds = delta.seconds #- self.get_paused_seconds()
+        seconds = delta.seconds
         return seconds + (delta.days * 86400)
 
-##    def get_paused_seconds(self):
-##        """
-##        Returns the total seconds that this entry has been paused. If the
-##        entry is currently paused, then the additional seconds between
-##        pause_time and now are added to seconds_paused. If pause_time is in
-##        the future, no extra pause time is added.
-##        """
-##        if self.is_paused:
-##            date = timezone.now()
-##            delta = date - self.pause_time
-##            extra_pause = max(0, delta.seconds + (delta.days * 24 * 60 * 60))
-##            return self.seconds_paused + extra_pause
-##        return self.seconds_paused
 
     @property
     def total_hours(self):
@@ -408,40 +348,6 @@ class Entry(models.Model):
         Determine whether or not this entry is paused
         """
         return False
-##
-##    def pause(self):
-##        """
-##        If this entry is not paused, pause it.
-##        """
-##        if not self.is_paused:
-##            self.pause_time = timezone.now()
-##
-##    def pause_all(self):
-##        """
-##        Pause all open entries
-##        """
-##        entries = self.user.timepiece_entries.filter(end_time__isnull=True)
-##        for entry in entries:
-##            entry.pause()
-##            entry.save()
-##
-##    def unpause(self, date=None):
-##        if self.is_paused:
-##            if not date:
-##                date = timezone.now()
-##            delta = date - self.pause_time
-##            self.seconds_paused += delta.seconds
-##            self.pause_time = None
-##
-##    def toggle_paused(self):
-##        
-##        """Toggle the paused state of this entry.  If the entry is already paused,
-##        it will be unpaused; if it is not paused, it will be paused."""
-##        
-##        if self.is_paused:
-##            self.unpause()
-##        else:
-##            self.pause()
 
     @property
     def is_closed(self):
@@ -480,39 +386,14 @@ class Entry(models.Model):
         be added to the summary separately using the dictionary key set in
         TIMEPIECE_PAID_LEAVE_PROJECTS.
         """
-        #projects = utils.get_setting('TIMEPIECE_PAID_LEAVE_PROJECTS')
         entries = user.timepiece_entries.filter(
             end_time__gt=date, end_time__lt=end_date)
         data = {
-##            'billable': Decimal('0'), 'non_billable': Decimal('0'),
-##            'invoiced': Decimal('0'), 'uninvoiced': Decimal('0'),
            'total': Decimal('0'),
            }
-##        invoiced = entries.filter(
-##            status=Entry.INVOICED).aggregate(i=Sum('hours'))['i']
-##        uninvoiced = entries.exclude(
-##            status=Entry.INVOICED).aggregate(uninv=Sum('hours'))['uninv']
         total = entries.aggregate(s=Sum('hours'))['s']
-##        if invoiced:
-##            data['invoiced'] = invoiced
-##        if uninvoiced:
-##            data['uninvoiced'] = uninvoiced
         if total:
             data['total'] = total
-##        billable = entries.exclude(project__in=projects.values())
-##        billable = billable.values(
-##            'billable',
-##        ).annotate(s=Sum('hours'))
-##        for row in billable:
-##            if row['billable']:
-##                data['billable'] += row['s']
-##            else:
-##                data['non_billable'] += row['s']
-##        data['total_worked'] = data['billable'] + data['non_billable']
-##        data['paid_leave'] = {}
-##        for name, pk in projects.items():
-##            qs = entries.filter(project=projects[name])
-##            data['paid_leave'][name] = qs.aggregate(s=Sum('hours'))['s']
         return data
 
 
