@@ -16,7 +16,7 @@ from django.urls import reverse
 from django.db import transaction
 from django.db.models import Q, Sum
 from django.http import HttpResponse, HttpResponseRedirect, Http404
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.decorators import method_decorator
 from django.views.generic import ListView, TemplateView, View
 from django.views.generic.edit import FormMixin
@@ -29,7 +29,7 @@ from timepiece.utils.views import cbv_decorator
 from timepiece.manager.models import Project, Profile
 from timepiece.entries.forms import (
     ClockInForm, ClockOutForm, AddUpdateEntryForm, EntryDashboardForm, ProjectHoursForm,
-    ProjectHoursSearchForm, TodoListForm)
+    ProjectHoursSearchForm, TodoListForm, TodoForm)
 from timepiece.entries.models import Entry, ProjectHours, ToDo
 
 class DashboardMixin(object):
@@ -196,6 +196,20 @@ def todo_completed(request):
     todos = ToDo.objects.filter(completed=True,)
     return render(request, "timepiece/todo-complete.html", {"todos": todos})
 
+def todo_edit(request, todo_id):
+    user = request.user
+    todo = get_object_or_404(ToDo, id=todo_id)
+    if request.method == "POST": 
+        form = TodoForm(request.POST, instance=todo)
+        if form.is_valid():
+            todo = form.save(commit=False)
+            todo.user = request.user
+            todo.save()
+            return redirect('todo')
+    else:
+        form = TodoForm(instance=todo)
+    return render(request, "timepiece/todo-edit.html", {'form': form})
+
 def todo_admin_create(request):
     data = request.POST or None
     form = TodoListForm(data)
@@ -204,6 +218,17 @@ def todo_admin_create(request):
         messages.success(request, "'{}' has been added for '{}'".
                         format(todo.description, todo.user))
     return render(request, "timepiece/todo-create.html", {'form': form})
+
+def todo_admin_edit(request, todo_id):
+    todo = get_object_or_404(ToDo, id=todo_id)
+    if request.method == "POST": 
+        form = TodoListForm(request.POST, instance=todo)
+        if form.is_valid():
+            form.save()
+            return redirect('todo_list')
+    else:
+        form = TodoListForm(instance=todo)
+    return render(request, "timepiece/todo-edit.html", {'form': form})
 
 
 class TodoAdminListView(ListView):

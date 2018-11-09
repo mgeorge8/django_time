@@ -29,7 +29,11 @@ urlpatterns = [
 
     url(r'^todo/$', views.to_do, name="todo"),
     url(r'^todo/completed/$', views.todo_completed, name="todo_complete"),
+    url(r'^todo/(?P<todo_id>\d+)/$',
+        views.todo_edit,
+        name="todo_edit"),
     url(r'^todo/create/$', views.todo_admin_create, name="todo_create"),
+    url(r'^todo/edit/(?P<todo_id>\d+)/$', views.todo_admin_edit, name="todo_admin_edit"),
     url(r'^todo/list/$', views.TodoAdminListView.as_view(), name="todo_list"),
     url(r'^todo/list/completed/$',
         views.TodoCompletedListView.as_view(),

@@ -1,0 +1,18 @@
+{% extends "timepiece/base.html" %}
+
+{% block title %} To-Do List
+{% endblock title %}
+
+{% block content %}
+
+    <div class="container-fluid">
+<h4>Edit Item</h4>
+<br>
+<form class="form-horizontal" action="" method="post" accept-charset="utf-8">
+  {% csrf_token %}
+{{ form.as_p }}
+                    <button class="btn btn-primary" type="submit">Save</button>
+ </form>
+
+</div>
+{% endblock content %}

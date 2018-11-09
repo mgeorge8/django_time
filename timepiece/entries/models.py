@@ -16,54 +16,6 @@ from timepiece import utils
 from timepiece.manager.models import Project
 
 
-##@python_2_unicode_compatible
-##class Activity(models.Model):
-##    """
-##    Represents different types of activity: debugging, developing,
-##    brainstorming, QA, etc...
-##    """
-##    code = models.CharField(
-##        max_length=5, unique=True,
-##        help_text='Enter a short code to describe the type of activity that took place.')
-##    name = models.CharField(
-##        max_length=50,
-##        help_text='Now enter a more meaningful name for the activity.')
-##    billable = models.BooleanField(default=True)
-##
-##    def __str__(self):
-##        return self.name
-##
-##    class Meta:
-##        db_table = 'timepiece_activity'  # Using legacy table name
-##        ordering = ('name',)
-##        verbose_name_plural = 'activities'
-##
-##
-##@python_2_unicode_compatible
-##class ActivityGroup(models.Model):
-##    """Activities that are allowed for a project"""
-##    name = models.CharField(max_length=255, unique=True)
-##    activities = models.ManyToManyField(Activity, related_name='activity_group')
-##
-##    class Meta:
-##        db_table = 'timepiece_activitygroup'  # Using legacy table
-##
-##    def __str__(self):
-##        return self.name
-##
-##
-##@python_2_unicode_compatible
-##class Location(models.Model):
-##    name = models.CharField(max_length=255, unique=True, blank=True, null=True)
-##    slug = models.CharField(max_length=255, unique=True, blank=True, null=True)
-##
-##    class Meta:
-##        db_table = 'timepiece_location'  # Using legacy table name
-##
-##    def __str__(self):
-##        return self.name
-##
-##
 class EntryQuerySet(models.query.QuerySet):
     """QuerySet extension to provide filtering by billable status"""
 
@@ -308,6 +260,71 @@ class Entry(models.Model):
                     end.strftime('%H:%M:%S')
                 )
             raise ValidationError(err_msg)
+
+##        if self.end:
+##            end2 = self.end
+##        else:
+##            end2 = start.time()
+##        entries = self.user.timepiece_entries.filter(
+##            end_time__gt=start, start_time__lte=end)
+##
+##        # An entry can not conflict with itself so remove it from the list
+##        if self.id:
+##            entries = entries.exclude(pk=self.id)
+##        for entry in entries:
+##            entry_data = {
+##                'project': entry.project,
+##                'start_time': entry.start_time,
+##                'end_time': entry.end_time, #- relativedelta(seconds=1)
+##                'endTime': entry.end,
+##            }
+##            # Conflicting saved entries
+##            if entry.end_time:
+##                if entry.start_time.date() == start.date() and entry.end_time.date() == end.date():
+##                    entry_data['start_time'] = entry.start_time.strftime(
+##                        '%H:%M:%S')
+##                    entry_data['end_time'] = entry.end_time.strftime(
+##                        '%H:%M:%S')
+##                    raise ValidationError('Start time overlaps with '
+##                                          '{project} from {start_time} to '
+##                                          '{end_time}.'.format(**entry_data))
+##                else:
+##                    entry_data['start_time'] = entry.start_time.strftime(
+##                        '%H:%M:%S on %m\%d\%Y')
+##                    entry_data['end_time'] = entry.end_time.strftime(
+##                        '%H:%M:%S on %m\%d\%Y')
+##                    raise ValidationError(
+##                        'Start time overlaps with {project} '
+##                        'from {start_time} to {end_time}.'.format(**entry_data))
+##            elif entry.end:
+##                entry_data['start_time'] = entry.start_time.strftime(
+##                    '%H:%M:%S')
+##                entry_data['endTime'] = entry.end.strftime(
+##                    '%H:%M:%S')
+##                raise ValidationError('Start time overlaps with '
+##                                      '{project} from {start_time} to '
+##                                      '{endTime}.'.format(**entry_data))
+##                
+##                
+##        
+##        if end <= start:
+##            raise ValidationError('Ending time must exceed the starting time')
+##        if end2 < start.time():
+##            raise ValidationError('Ending time must exceed the starting time')
+##            
+##        delta = (end - start)
+##        delta_secs = (delta.seconds + delta.days * 24 * 60 * 60)
+##        limit_secs = 60 * 60 * 12
+##        if delta_secs > limit_secs: 
+##            err_msg = 'Ending time exceeds starting time by 12 hours or more '\
+##                'for {0} on {1} at {2} to {3} at {4}.'.format(
+##                    self.project,
+##                    start.strftime('%m/%d/%Y'),
+##                    start.strftime('%H:%M:%S'),
+##                    end.strftime('%m/%d/%Y'),
+##                    end.strftime('%H:%M:%S')
+##                )
+##            raise ValidationError(err_msg)
 
         return True
 

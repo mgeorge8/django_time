@@ -244,12 +244,6 @@ class EntryDashboardForm(forms.ModelForm):
         )
         entry = self.instance
 
-##        if not self.acting_user.is_superuser:
-##            if (entries.exists() and not entry.id or entry.id and entry.status == Entry.INVOICED):
-##                message = 'You cannot add/edit entries after a timesheet has been ' \
-##                    'approved or invoiced. Please correct the start and end times.'
-##                raise forms.ValidationError(message)
-
         return self.cleaned_data
 
     def save(self, commit=True):
@@ -259,11 +253,18 @@ class EntryDashboardForm(forms.ModelForm):
         if commit:
             entry.save()
         return entry
+    
 
 class TodoListForm(forms.ModelForm):
     class Meta:
         model = ToDo
         fields = '__all__'
+
+class TodoForm(forms.ModelForm):
+    class Meta:
+        model = ToDo
+        fields = ['priority', 'description']
+        exclude = ['user']
 
 class ProjectHoursForm(forms.ModelForm):
 

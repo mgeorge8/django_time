@@ -48,14 +48,18 @@ urlpatterns = [
     url(r'^project/inactive$',
         views.ListInactiveProjects.as_view(),
         name='inactive_projects'),
+##    url(r'^project/create/$',
+##        views.CreateProject.as_view(),
+##        name='create_project'),
     url(r'^project/create/$',
-        views.CreateProject.as_view(),
+        views.ProjectCreate,
         name='create_project'),
     url(r'^project/(?P<project_id>\d+)/$',
         views.ViewProject.as_view(),
         name='view_project'),
     url(r'^project/(?P<project_id>\d+)/edit/$',
-        views.EditProject.as_view(),
+        #views.EditProject.as_view(),
+        views.ProjectEdit,
         name='edit_project'),
     url(r'^project/(?P<project_id>\d+)/delete/$',
         views.DeleteProject.as_view(),
@@ -73,7 +77,7 @@ urlpatterns = [
     url(r'^relationship/delete/$',
         views.DeleteRelationship.as_view(),
         name='delete_relationship'),
-    
+
     ]     
 
 

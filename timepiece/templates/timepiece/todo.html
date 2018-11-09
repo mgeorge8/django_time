@@ -20,12 +20,14 @@
 <th>Priority</th>
 <th>Description</th>
 <th>Mark</th>
+<th>Edit</th>
 </tr>
 {% for todo in todos %}
 <tr> 
 <td>{{ todo.priority }}</td>
 <td>{{ todo.description }}</td>
 <td><button class="btn btn-primary btn-sm" type="submit" name="taskComplete" formnovalidate="" value="{{ todo.id }}" id="{{todo.id}}">Done</button></td>
+<td><a class="btn btn-primary btn-sm" href="{% url 'todo_edit' todo.id %}"> Edit</a>
 </tr>
 {% endfor %}
 </table>
@@ -41,7 +43,6 @@
 <input type="number" id="priority" name="priority" required>
 <label for="description">Description: </label>
 <input type="text" id="description" name="description" required>
-
                     <button class="btn btn-primary" type="submit" value="Add" name="taskAdd">Add</button>
  
 </div>

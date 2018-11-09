@@ -21,16 +21,18 @@
 
 <th>Priority</th>
 <th>Description</th>
+<th>Edit</th>
 </tr>
 {% regroup object_list by user as user_todos %}
 {% for user in user_todos %}
 <tr> 
-<th colspan="2"> {{ user.grouper.first_name }}</th>
+<th colspan="3"> {{ user.grouper.first_name }}</th>
 </tr><tr>
 {% for todo in user.list %}
 
 <td>{{ todo.priority }}</td>
 <td>{{ todo.description }}</td>
+<td><a class="btn btn-primary btn-sm" href="{% url 'todo_admin_edit' todo.id %}"> Edit</a></td>
 </tr>
 {% endfor %}
 {% endfor %}

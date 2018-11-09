@@ -35,7 +35,7 @@ class ProfileForm(forms.ModelForm):
         fields = ('ssn', 'title')
 
 class EditProjectRelationshipForm(forms.ModelForm):
-    #user = forms.ModelMultipleChoiceField(widget=forms.CheckboxSelectMultiple(), queryset=User.objects.all())
+    user = forms.ModelMultipleChoiceField(widget=forms.CheckboxSelectMultiple(), queryset=User.objects.all())
     class Meta:
         model = ProjectRelationship
         exclude = ('project',)
@@ -43,26 +43,13 @@ class EditProjectRelationshipForm(forms.ModelForm):
 ProjectRelationshipFormSet = inlineformset_factory(Project,
                                                    ProjectRelationship,
                                                    form=EditProjectRelationshipForm,
-                                                   extra=6, max_num=6)
-##
-##class SelectMultipleUserForm(forms.Form):
-##    user = UserModelMultipleChoiceField(label='', queryset=None, required=False)
-##
-##    def __init__(self, *args, **kwargs):
-##        super(SelectMultipleUserForm, self).__init__(*args, **kwargs)
-##        queryset = User.objects.order_by('first_name')
-##        self.fields['user'].queryset = queryset
-##
-##    def get_user(self):
-##        users = []
-##        user1 = self.cleaned_data['user'] if self.is_valid() else None
-##        for user in user1:
-##            users.append(user)
-##        return users
-##    def __init__(self, *args, **kwargs):
-##        super(EditProjectRelationshipForm, self).__init__(*args, **kwargs)
-##        self.fields[].widget = forms.CheckboxSelectMultiple(
-##            choices=self.fields['types'].choices)
+                                                   extra=1)
+
+class ProjectCreateForm(forms.Form):
+    name = forms.CharField(label='Name', max_length=60)
+    inactive = forms.BooleanField(required=False)
+    users = forms.ModelMultipleChoiceField(widget=forms.CheckboxSelectMultiple,
+                                           queryset=User.objects.order_by('first_name'), required=False)
 
 
 class EditUserForm(UserChangeForm):
@@ -116,39 +103,6 @@ class EditUserSettingsForm(forms.ModelForm):
         super(EditUserSettingsForm, self).__init__(*args, **kwargs)
         for name in self.fields:
             self.fields[name].required = True
-
-
-##class ProjectSearchForm(SearchForm):
-##    #status = forms.ChoiceField(required=False, choices=[], label='')
-##
-##    def __init__(self, *args, **kwargs):
-##        super(ProjectSearchForm, self).__init__(*args, **kwargs)
-##        #statuses = Attribute.statuses.all()
-##        #choices = [('', 'Any Status')] + [(a.pk, a.label) for a in statuses]
-##        #self.fields['status'].choices = choices
-##
-##class QuickSearchForm(forms.Form):
-##    quick_search = selectable.AutoCompleteSelectField(QuickLookup, required=False)
-##    quick_search.widget.attrs['placeholder'] = 'Search'
-##
-##    def clean_quick_search(self):
-##        item = self.cleaned_data['quick_search']
-##        if not item:
-##            msg = 'No user, business, or project matches your query.'
-##            raise forms.ValidationError(msg)
-##        return item
-##
-##    def get_result(self):
-##        return self.cleaned_data['quick_search'].get_absolute_url()
-##
-##
-##class SelectProjectForm(forms.Form):
-##    project = selectable.AutoCompleteSelectField(ProjectLookup, label='')
-##    project.widget.attrs['placeholder'] = 'Add Project'
-##
-##    def get_project(self):
-##        return self.cleaned_data['project'] if self.is_valid() else None
-
 
 
 class SelectMultipleUserForm(forms.Form):

@@ -28,7 +28,7 @@ from timepiece.entries.views import DashboardMixin, Dashboard
 from timepiece.manager.forms import (
     CreateEditProjectForm, EditUserSettingsForm, EditUserForm,
     CreateUserForm, ProfileForm, EditProjectRelationshipForm,
-    ProjectRelationshipFormSet, SelectMultipleUserForm)
+    ProjectRelationshipFormSet, ProjectCreateForm, SelectMultipleUserForm)
 from timepiece.manager.models import Project, ProjectRelationship, Profile
 from timepiece.manager.utils import grouped_totals
 from timepiece.entries.models import Entry
@@ -339,43 +339,7 @@ class WeekTimesheet(WeekTimesheetMixin, TemplateView):
             'prev_week': self.week_start - relativedelta(days=7),
             'next_week': self.week_start + relativedelta(days=7),
             })
-        return context
-                                                         
-        
-##        all_users = User.objects.all().select_related('profile')
-##        week_entry = Entry.objects.filter().timespan(week_start, span='week')
-##     
-##        user_entry = []
-##        for use1 in all_users:
-##            last_name = use1.last_name
-##            first_name = use1.first_name
-##            ssn = use1.profile.ssn
-##            title = use1.profile.title
-##            week_entries = Entry.objects.filter(user=use1).timespan(week_start, span='week')
-##            user_entries = week_entries.order_by().values('user__first_name', 'user__last_name')
-##            user_entries = user_entries.annotate(sum=Sum('hours')).order_by('-sum')
-##            if user_entries:
-##                hours = sum(entries['sum'] for entries in user_entries)
-##            else:
-##                hours = 0
-##
-##            user_entry.append({'last_name': last_name, 'first_name': first_name, 'ssn': ssn,
-##                               'title': title, 'hours': hours})
-##            
-##                
-##        context.update({
-##            'all_users': all_users,
-##            'week': self.week_start,
-##            'week_end': week_end,
-##            'all_users': all_users,
-##            'week_entry': week_entry,
-##            'user_entry': user_entry,
-##            'current_date': current_date,
-##            'prev_week': self.week_start - relativedelta(days=7),
-##            'next_week': self.week_start + relativedelta(days=7),
-##        })
-##        return context
-
+        return context                            
 
 class ViewUser(DetailView):
     model = User
@@ -409,6 +373,7 @@ def CreateUser(request):
     })
 
 
+
 @cbv_decorator(permission_required('auth.delete_user'))
 class DeleteUser(DeleteView):
     model = User
@@ -430,22 +395,13 @@ class EditUser(UpdateView):
 
 class ListProjects(ListView):
     model = Project
-    #form_class = ProjectSearchForm
-    #paginate_by = 3
-    #redirect_if_one_result = True
-    #search_fields = ['name__icontains']
     template_name = 'timepiece/project/list.html'
     queryset = Project.objects.filter(inactive=False)
 
     def get_context_data(self, **kwargs):
         context = super(ListProjects, self).get_context_data(**kwargs)
         return context
-##    def filter_form_valid(self, form, queryset):
-##        queryset = super(ListProjects, self).filter_form_valid(form, queryset)
-##        status = form.cleaned_data['status']
-##        if status:
-##            queryset = queryset.filter(status=status)
-##        return queryset
+
 
 class ListInactiveProjects(ListView):
     model = Project
@@ -461,54 +417,84 @@ class ViewProject(DetailView):
         kwargs.update({'add_user_form': SelectMultipleUserForm()})
         return super(ViewProject, self).get_context_data(**kwargs)
 
+def ProjectCreate(request):
+    users = User.objects.all()
+    if request.method == "POST":
+        form = ProjectCreateForm(request.POST)
+        if form.is_valid():
+            name = form.cleaned_data['name']
+            inactive = form.cleaned_data['inactive']
+            users = form.cleaned_data['users']
+            project = Project(name=name, inactive=inactive)
+            project.save()
+            project_id = get_object_or_404(Project, pk=project.id)
+            for user in users:
+                ProjectRelationship.objects.get_or_create(user=user, project=project_id)
+            return redirect(reverse('list_projects'))
+    else:
+        form = ProjectCreateForm()
+    return render(request, "timepiece/projectcreate.html", {"form": form, "users": users})
 
-##def CreateProject(request, **kwargs):
-##    if request.method == 'POST':
-##        project_form = CreateEditProjectForm(request.POST)
-##        if project_form.is_valid():
-##            instance = project_form.save()
-##            messages.success(request, ('Your project was successfully created!'))
-##            return redirect('view_project', instance.id,)
+def ProjectEdit(request, project_id):
+    project_instance = get_object_or_404(Project, pk=project_id)
+    if request.method == "POST":
+        form = ProjectCreateForm(request.POST)
+        if form.is_valid():
+            project_instance.name = form.cleaned_data['name']
+            project_instance.inactive = form.cleaned_data['inactive']
+            users = form.cleaned_data['users']
+            #project = Project(name=name, inactive=inactive)
+            project_instance.save()
+            #project_id = get_object_or_404(Project, pk=project_insance.id)
+            for user in project_instance.users.all():
+                if user not in users:
+                    rel = ProjectRelationship.objects.filter(user=user, project=project_instance)
+                    try:
+                        relation = rel.get()
+                        relation.delete()
+                    except:
+                        raise ValidationError(_('Could not delete relationship'),)
+            for user in users:
+                ProjectRelationship.objects.update_or_create(user=user, project=project_instance)
+            return redirect(reverse('list_projects'))
+    else:
+        form = ProjectCreateForm(initial={'name': project_instance.name,
+                                          'inactive': project_instance.inactive,
+                                          'users': project_instance.users.all()})
+    return render(request, "timepiece/projectcreate.html", {"form": form})
+    
+##class CreateProject(CreateView):
+##    form_class = CreateEditProjectForm
+##    template_name = 'timepiece/project/createproject.html'
+##    success_url = reverse_lazy('list_projects')
+##
+##    def get(self, request, *args, **kwargs):
+##        self.object = None
+##        form_class = self.get_form_class()
+##        form = self.get_form(form_class)
+##        project_formset = ProjectRelationshipFormSet()
+##        return self.render_to_response(
+##            self.get_context_data(form=form, project_formset=project_formset))
+##
+##    def post(self, request, *args, **kwargs):
+##        self.object = None
+##        form_class = self.get_form_class()
+##        form = self.get_form(form_class)
+##        project_formset = ProjectRelationshipFormSet(request.POST)
+##        if (form.is_valid() and project_formset.is_valid()):
+##            return self.form_valid(form, project_formset)
 ##        else:
-##            messages.error(request, ('Please correct the error below.'))
-##    else:
-##        project_form = CreateEditProjectForm()
-##    return render(request, 'timepiece/project/createproject.html', {
-##        'user_form': project_form,
-##    })
-
-class CreateProject(CreateView):
-    form_class = CreateEditProjectForm
-    template_name = 'timepiece/project/createproject.html'
-    success_url = reverse_lazy('list_projects')
-
-    def get(self, request, *args, **kwargs):
-        self.object = None
-        form_class = self.get_form_class()
-        form = self.get_form(form_class)
-        project_formset = ProjectRelationshipFormSet()
-        return self.render_to_response(
-            self.get_context_data(form=form, project_formset=project_formset))
-
-    def post(self, request, *args, **kwargs):
-        self.object = None
-        form_class = self.get_form_class()
-        form = self.get_form(form_class)
-        project_formset = ProjectRelationshipFormSet(request.POST)
-        if (form.is_valid() and project_formset.is_valid()):
-            return self.form_valid(form, project_formset)
-        else:
-            return self.form_invalid(form, project_formset)
-
-    def form_valid(self, form, project_formset):
-        self.object = form.save()
-        project_formset.instance = self.object
-        project_formset.save()
-        return super(CreateProject, self).form_valid(form)
-
-    def form_invalid(self, form, project_formset):
-        return self.render_to_response(
-            self.get_context_data(form=form,project_formset=project_formset))
+##            return self.form_invalid(form, project_formset)
+##
+##    def form_valid(self, form, project_formset):
+##        self.object = form.save()
+##        project_formset.instance = self.object
+##        project_formset.save()
+##        return super(CreateProject, self).form_valid(form)
+##
+##    def form_invalid(self, form, project_formset):
+##        return self.render_to_response(
+##            self.get_context_data(form=form,project_formset=project_formset))
 
 class EditProject(UpdateView):
     model = Project
@@ -548,7 +534,7 @@ class EditProject(UpdateView):
     def form_invalid(self, form, project_formset):
         return self.render_to_response(
             self.get_context_data(form=form, project_formset=project_formset))
-##
+
 
 
 class DeleteProject(DeleteView):
@@ -558,16 +544,6 @@ class DeleteProject(DeleteView):
     template_name = 'timepiece/delete_object.html'
 
 
-##class EditProject(UpdateView):
-##    model = Project
-##    form_class = CreateEditProjectForm
-##    template_name = 'timepiece/project/create_edit.html'
-##    pk_url_kwarg = 'project_id'
-
-
-##@cbv_decorator(permission_required('crm.add_projectrelationship'))
-##@cbv_decorator(csrf_exempt)
-##@cbv_decorator(transaction.atomic)
 class CreateRelationship(View):
 
     def post(self, request, *args, **kwargs):
@@ -604,17 +580,6 @@ class RelationshipObjectMixin(object):
         return self.request.GET.get('next', self.object.project.get_absolute_url())
 
 
-##@cbv_decorator(permission_required('crm.change_projectrelationship'))
-##@cbv_decorator(transaction.atomic)
-##class EditRelationship(RelationshipObjectMixin, UpdateView):
-##    model = ProjectRelationship
-##    template_name = 'timepiece/relationship/edit.html'
-##    form_class = EditProjectRelationshipForm
-
-
-##@cbv_decorator(permission_required('crm.delete_projectrelationship'))
-##@cbv_decorator(csrf_exempt)
-##@cbv_decorator(transaction.atomic)
 class DeleteRelationship(RelationshipObjectMixin, DeleteView):
     model = ProjectRelationship
     template_name = 'timepiece/relationship/delete.html'

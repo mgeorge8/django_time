@@ -1,0 +1,42 @@
+{% extends "timepiece/base.html" %}
+
+{% block title %} Create Project
+{% endblock title %}
+
+{% block crumbs %}
+{{ block.super }}
+<li span class="divider">/</span><a href="{% url 'list_projects' %}">Projects</a></li>
+{% endblock crumbs %}
+
+{% block content %}
+<div class="container-fluid">
+<h2>Create Project</h2>
+<br>
+    <form class="form-horizontal" action="" method="post" accept-charset="utf-8">
+  {% csrf_token %}
+{{ form.as_p }}
+{% comment %}
+<div class="form-group">
+<label for="name"> Name: </label>
+<input type="text" id="name" name="name" required>
+</div>
+<div class="form-group">
+<label for="inactive"> Inactive: </label>
+<input type="checkbox" id="inactive" name="inactive">
+</div>
+{% if users %}
+<p>Users:</p>
+{% for user in users %}
+<div class="form-group">
+<input type="checkbox" name="user" id="user{{ forloop.counter }}" value="{{ user.id }}">
+<label for="user">{{ user.first_name }}</label>
+</div>
+{% endfor %}
+{% endif %}
+
+{% endcomment %}
+
+<input type="submit" value="Save">
+</form>
+</div>
+{% endblock content %}
