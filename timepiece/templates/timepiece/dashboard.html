@@ -26,6 +26,7 @@
     });
     </script>
 
+
 {% endblock extrajs %}
 
 {% block content %}
@@ -76,23 +77,64 @@
                {% csrf_token %} 
 		{{ form.as_p }}
 		
-                <input class="btn btn-primary btn-sm" type='submit' name='submit' value="Save" />
+                <input class="btn btn-primary btn-sm" type='submit' name='entryAdd' value="Save" />
                 
             </form>
         </div>
 <hr>
-    
+<h3>To-Do List</h3>
+<ul class="nav nav-pills">
+		 <li><a href='{% url 'todo_complete' %}'>Completed To-Do's</a></li>
+            </ul>
+<br>
+{% if todos %}
+<form class="form-horizontal" action="{% url 'todo' %}" method="post" accept-charset="utf-8">
+<table class="table">
+  {% csrf_token %}
+
+<tr>
+<th>Priority</th>
+<th>Description</th>
+<th>Mark</th>
+<th>Edit</th>
+</tr>
+{% for todo in todos %}
+<tr> 
+<td>{{ todo.priority }}</td>
+<td>{{ todo.description }}</td>
+<td><button class="btn btn-primary btn-sm" type="submit" name="taskComplete" formnovalidate="" value="{{ todo.id }}" id="{{todo.id}}">Done</button></td>
+<td><a class="btn btn-primary btn-sm" href="{% url 'todo_edit' todo.id %}"> Edit</a>
+</tr>
+{% endfor %}
+</table>
+</form>
+<br>
+{% endif %}
+<h4>Add Item</h4>
+<br>
+<form class="form-horizontal" action="{% url 'todo' %}" method="post" accept-charset="utf-8">
+  {% csrf_token %}
+<div class="form-group">
+<label for="priority">Priority: </label>
+<input type="number" id="priority" name="priority" required>
+<label for="description">Description: </label>
+<input type="text" id="description" name="description" required>
+                    <button class="btn btn-primary" type="submit" value="Add" name="taskAdd">Add</button>
+</div>
+</form>
+
+   <hr> 
         <div>
+<h3>Hours for the Week of {{ week|date:'M j' }}</h3>
+
 <p>
             <ul class="nav nav-pills">
-                <li style="width: 17%"> <a href="{% url 'dashboard' %}?week_start={{ prev_week|date:'Y-m-d' }}">&larr; Prev Week</a></li>
-                <li style="width: 17%"><a href="{% url 'dashboard' %}?week_start={{ next_week|date:'Y-m-d' }}">Next Week &rarr;</a></li>
+                <li> <a href="{% url 'dashboard' %}?week_start={{ prev_week|date:'Y-m-d' }}">&larr; Prev Week</a></li> &nbsp;&nbsp;&nbsp;
+                <li><a href="{% url 'dashboard' %}?week_start={{ next_week|date:'Y-m-d' }}">Next Week &rarr;</a></li>
             </ul>
 </p>
         </div>
  
-        <div class="tab-content">
-<h3>Hours for the Week of {{ week|date:'M j' }}</h3>
             <div>
                 {% if week_entries %}
                     {% url 'dashboard' as next_url %}
@@ -176,7 +218,6 @@
 {% else %}
 <p>No entries exist for this week.</p>
 {% endif %}
-                            </div>
 		</div>		
         </div>
     {% endif %}

@@ -39,4 +39,8 @@ urlpatterns = [
         views.TodoCompletedListView.as_view(),
         name="todo_complete_all"),
 
+##    url(r'^add/$',
+##        views.entryForm,
+##        name="entryAdd"),
+
 ]

@@ -60,7 +60,7 @@ class DashboardMixin(object):
 
         return ProjectHours.objects.filter(
             week_start__gte=week_start, week_start__lt=week_end)
-
+    
 
 class Dashboard(DashboardMixin, TemplateView):
     template_name = 'timepiece/dashboard.html'
@@ -77,9 +77,18 @@ class Dashboard(DashboardMixin, TemplateView):
 
     def post(self, request, *args, **kwargs):
         context = self.get_context_data()
-        if context['form'].is_valid():
-            print ('yes done')
-            entry = context['form'].save()
+##        if "entryAdd" in request.POST:
+##            if context['form'].is_valid():
+##                entry = context['form'].save()
+        entry = context['form']
+        
+        #if "entryNoEnd" in request.POST:
+##            updated_data = request.POST.copy()
+##            updated_data.update({'end_time': None}) 
+##            entry = EntryDashboardForm(data=updated_data, user=self.user, acting_user=self.user)
+##            #entry.end_time= None   
+        if entry.is_valid():
+            entry.save()
             url = request.GET.get('next', reverse('dashboard'))
             return HttpResponseRedirect(url)
         return super(Dashboard, self).render_to_response(context)
@@ -95,7 +104,7 @@ class Dashboard(DashboardMixin, TemplateView):
         
         entry = utils.get_active_entry(self.user)
         if(entry == None):
-            initial = {'start_time': datetime.datetime.now()}
+            initial = {'start_time': datetime.datetime.now(), 'end_time': datetime.datetime.now()}
         else:
             initial = {'end_time': datetime.datetime.now()}
         form = EntryDashboardForm(self.request.POST or None, instance=entry, initial=initial, user=self.user, acting_user=self.user)
@@ -123,6 +132,8 @@ class Dashboard(DashboardMixin, TemplateView):
         project_entries = week_entries.order_by().values(
         'project__name').annotate(sum=Sum('hours')).order_by('-sum')
 
+        todos = ToDo.objects.filter(user=self.user, completed=False)
+
         context.update({
             #'active_tab': self.active_tab,
             'form': form,
@@ -134,6 +145,7 @@ class Dashboard(DashboardMixin, TemplateView):
             'week': self.week_start,
             'prev_week': self.week_start - relativedelta(days=7),
             'next_week': self.week_start + relativedelta(days=7),
+            'todos': todos,
         })
         return context
     def process_progress(self, entries, assignments):
@@ -171,6 +183,31 @@ class Dashboard(DashboardMixin, TemplateView):
 
         return project_progress
 
+##def entryForm(request):
+##    if request.method == "POST":
+##        entry = utils.get_active_entry(request.user)
+##        if(entry == None):
+##            initial = {'start_time': datetime.datetime.now(), 'end_time': datetime.datetime.now()}
+##        else:
+##            initial = {'end_time': datetime.datetime.now()}
+##        form = EntryDashboardForm(request.POST or None, instance=entry, initial=initial, user=request.user, acting_user=request.user)
+##        #form = EntryDashboardForm(request.POST, user=request.user)
+##        if form.is_valid():
+##            if "entryNoEnd" in request.POST:
+##                entry = form.save(commit=False)
+##                entry.end_time = None
+##                #entry.user = request.user
+##                entry.save()
+##                return redirect('/')
+##            if "entryAdd" in request.POST:
+##                entry = form.save(commit=False)
+##                #entry.user = request.user
+##                entry.save()
+##                return redirect('/')
+##    else:
+##        form = EntryDashboardForm()
+##    return redirect(reverse('dashboard')#, "timepiece/dashboard.html", {'form': form})
+
 def to_do(request):
     user = request.user
     todos = ToDo.objects.filter(user=user, completed=False)
@@ -180,7 +217,7 @@ def to_do(request):
             description = request.POST["description"]
             Todo = ToDo(priority=priority, description=description, user=user)
             Todo.save()
-            return redirect('todo')
+            return redirect('/')
         if "taskComplete" in request.POST:
             todo_id = request.POST["taskComplete"]            
             todo = ToDo.objects.get(id=int(todo_id))
@@ -188,6 +225,7 @@ def to_do(request):
             todo.save()
             messages.success(request, "Task '{}' has been marked completed".
                              format(todo.description))
+            return redirect('/')
           #  return redirect('TodoList')
     return render(request, "timepiece/todo.html", {"todos": todos})
 
@@ -205,7 +243,7 @@ def todo_edit(request, todo_id):
             todo = form.save(commit=False)
             todo.user = request.user
             todo.save()
-            return redirect('todo')
+            return redirect('/')
     else:
         form = TodoForm(instance=todo)
     return render(request, "timepiece/todo-edit.html", {'form': form})
