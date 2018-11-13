@@ -32,10 +32,10 @@ class RedirectFallbackMiddleware(MiddlewareMixin):
         #cache.delete(REDIRECT_KEY)
         r = None
         try:
-            r = cache.get(current_site)
+            r = cache.get(full_path)
             if r is None:
                 r = Redirect.objects.get(site=current_site, old_path=full_path)
-                cache.set(current_site, r, 7200)
+                cache.set(full_path, r, 7200)
         except Redirect.DoesNotExist:
             pass
         if r is None and settings.APPEND_SLASH and not request.path.endswith('/'):
