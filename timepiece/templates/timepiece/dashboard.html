@@ -25,6 +25,22 @@
         $('[data-toggle="popover"]').popover();
     });
     </script>
+<script>
+    $(#id_end_time).click(function(){
+	 var end_time = new Date();
+	 $('end_time').val(time);
+        $('[data-toggle="popover"]').popover();
+    });
+    </script>
+<script>
+function myFunction() {
+var d = new Date();
+var date = d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate();
+var currentDate = date.format;
+document.getElementById("id_end_date").value = date;
+}
+</script>
+
 
 
 {% endblock extrajs %}
@@ -73,11 +89,12 @@
         <br>
 	<div>
             <form class="form-horizontal" method="post" action="" accept-charset="utf-8">
-
+{{ form.non_field_errors }}
                {% csrf_token %} 
-		{{ form.as_p }}
-		
-                <input class="btn btn-primary btn-sm" type='submit' name='entryAdd' value="Save" />
+		<p>{{ form.project.errors }}{{ form.project.label_tag }}{{ form.project }}</p><p>{{ form.start_time.errors }}{{ form.start_time.label_tag }}{{ form.start_time }}</p>
+		<p> {{ form.end_date.errors }}{{ form.end_date.label_tag }}{{ form.end_date }}{{ form.time_end.errors }}{{ form.time_end }} <a id="demo" onclick=myFunction() href="#"> Today</a></p><p>{{ form.activities.errors }}{{ form.activities.label_tag }}{{ form.activities }}</p>
+		 
+                <input class="btn btn-primary btn-sm" type='submit' value="Save" />
                 
             </form>
         </div>

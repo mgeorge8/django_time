@@ -195,10 +195,10 @@ class Entry(models.Model):
         else:
             end = start + relativedelta(seconds=1)
 
-        if self.end:
-            end2 = self.end
-        else:
-            end2 = start.time()
+##        if self.end:
+##            end2 = self.end
+##        else:
+##            end2 = start.time()
 
         entries = self.user.timepiece_entries.filter(
             end_time__gt=start, start_time__lte=end)
@@ -231,21 +231,21 @@ class Entry(models.Model):
                     raise ValidationError(
                         'Start time overlaps with {project} '
                         'from {start_time} to {end_time}.'.format(**entry_data))
-            elif entry.end:
-                entry_data['start_time'] = entry.start_time.strftime(
-                    '%H:%M:%S')
-                entry_data['endTime'] = entry.end.strftime(
-                    '%H:%M:%S')
-                raise ValidationError('Start time overlaps with '
-                                      '{project} from {start_time} to '
-                                      '{endTime}.'.format(**entry_data))
+##            elif entry.end:
+##                entry_data['start_time'] = entry.start_time.strftime(
+##                    '%H:%M:%S')
+##                entry_data['endTime'] = entry.end.strftime(
+##                    '%H:%M:%S')
+##                raise ValidationError('Start time overlaps with '
+##                                      '{project} from {start_time} to '
+##                                      '{endTime}.'.format(**entry_data))
                 
                 
         
         if end <= start:
             raise ValidationError('Ending time must exceed the starting time')
-        if end2 < start.time():
-            raise ValidationError('Ending time must exceed the starting time')
+##        if end2 < start.time():
+##            raise ValidationError('Ending time must exceed the starting time')
             
         delta = (end - start)
         delta_secs = (delta.seconds + delta.days * 24 * 60 * 60)

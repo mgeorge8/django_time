@@ -82,11 +82,13 @@ class Dashboard(DashboardMixin, TemplateView):
 ##                entry = context['form'].save()
         entry = context['form']
         
-        #if "entryNoEnd" in request.POST:
-##            updated_data = request.POST.copy()
-##            updated_data.update({'end_time': None}) 
-##            entry = EntryDashboardForm(data=updated_data, user=self.user, acting_user=self.user)
-##            #entry.end_time= None   
+       # if "entryNoEnd" in request.POST:
+##        updated_data = request.POST.copy()
+##        updated_data['end_time'] = None
+##        #updated_data.update({'end_time': None})
+##        request.POST = updated_data
+            #entry = EntryDashboardForm(data=updated_data, user=self.user, acting_user=self.user)
+            #entry.end_time= None   
         if entry.is_valid():
             entry.save()
             url = request.GET.get('next', reverse('dashboard'))
@@ -104,7 +106,7 @@ class Dashboard(DashboardMixin, TemplateView):
         
         entry = utils.get_active_entry(self.user)
         if(entry == None):
-            initial = {'start_time': datetime.datetime.now(), 'end_time': datetime.datetime.now()}
+            initial = {'start_time': datetime.datetime.now(),}# 'end_time': datetime.datetime.now()}
         else:
             initial = {'end_time': datetime.datetime.now()}
         form = EntryDashboardForm(self.request.POST or None, instance=entry, initial=initial, user=self.user, acting_user=self.user)
