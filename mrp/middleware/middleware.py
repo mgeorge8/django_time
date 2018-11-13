@@ -7,7 +7,7 @@ from django.http import HttpResponseGone, HttpResponsePermanentRedirect
 from django.utils.deprecation import MiddlewareMixin
 from django.core.cache import cache
 
-REDIRECT_KEY = "redirect"
+#REDIRECT_KEY = "redirect"
 
 class RedirectFallbackMiddleware(MiddlewareMixin):
     # Defined as class-level attributes to be subclassing-friendly.
@@ -29,13 +29,13 @@ class RedirectFallbackMiddleware(MiddlewareMixin):
 
         full_path = request.get_full_path()
         current_site = get_current_site(request)
-
+        #cache.delete(REDIRECT_KEY)
         r = None
         try:
-            r = cache.get(REDIRECT_KEY)
+            r = cache.get(current_site)
             if r is None:
                 r = Redirect.objects.get(site=current_site, old_path=full_path)
-                cache.set(REDIRECT_KEY, r, 7200)
+                cache.set(current_site, r, 7200)
         except Redirect.DoesNotExist:
             pass
         if r is None and settings.APPEND_SLASH and not request.path.endswith('/'):
