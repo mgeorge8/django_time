@@ -89,44 +89,16 @@ def view_user_timesheet(request, user_id):
         project2_entries = weekq.order_by().values('project__name').annotate(sum=Sum('hours')).order_by('-sum')
         project2_entries.week5 = loop_date.strftime('%b %e, %Y')
         month2_projects.append(project2_entries)
-        
-    # If the month of the first week starts in the previous
-    # month and we dont have entries in that previous ISO
-    # week, then update the first week to start at the first
-    # of the actual month
-    #if not intersection and first_week.month < from_date.month:
-     #   grouped_qs = entries_qs.timespan(from_date, to_date=to_date)
     
     totals = grouped_totals(grouped_qs) if month_entries else '' 
     project_entries = week_qs.order_by().values('project__name').annotate(sum=Sum('hours')).order_by('-sum')
     month_projects = week2_qs.order_by().values('project__name').annotate(sum=Sum('hours')).order_by('-sum')
     summary = Entry.summary(user, from_date, to_date)
 
-##    show_approve = show_verify = False
-##    can_change = request.user.has_perm('entries.change_entry')
-##    can_approve = request.user.has_perm('entries.approve_timesheet')
-##    if can_change or can_approve or user == request.user:
-##        statuses = list(month_qs.values_list('status', flat=True))
-##        total_statuses = len(statuses)
-##        unverified_count = statuses.count(Entry.UNVERIFIED)
-##        verified_count = statuses.count(Entry.VERIFIED)
-##        approved_count = statuses.count(Entry.APPROVED)
-##    if can_change or user == request.user:
-##        show_verify = unverified_count != 0
-##    if can_approve:
-##        show_approve = all([
-##            verified_count + approved_count == total_statuses,
-##            verified_count > 0,
-##            total_statuses != 0,
-##        ])
-
     return render(request, 'timepiece/user/timesheet/view.html', {
-        #'active_tab': active_tab or 'overview',
         'year_month_form': form,
         'from_date': from_date,
         'to_date': to_date - relativedelta(days=1),
-##        'show_verify': show_verify,
-##        'show_approve': show_approve,
         'timesheet_user': user,
         'entries': month_entries,
         'grouped_totals': totals,

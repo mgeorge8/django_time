@@ -108,7 +108,8 @@ class Dashboard(DashboardMixin, TemplateView):
         if(entry == None):
             initial = {'start_time': datetime.datetime.now(),}# 'end_time': datetime.datetime.now()}
         else:
-            initial = {'end_time': datetime.datetime.now()}
+            initial = None
+            #initial = {'end_time': datetime.datetime.now()}
         form = EntryDashboardForm(self.request.POST or None, instance=entry, initial=initial, user=self.user, acting_user=self.user)
 
         # Query for the user's active entry if it exists.
@@ -219,6 +220,8 @@ def to_do(request):
             description = request.POST["description"]
             Todo = ToDo(priority=priority, description=description, user=user)
             Todo.save()
+            messages.success(request, "Task '{}' has been added.".
+                        format(Todo.description))
             return redirect('/')
         if "taskComplete" in request.POST:
             todo_id = request.POST["taskComplete"]            
@@ -228,7 +231,13 @@ def to_do(request):
             messages.success(request, "Task '{}' has been marked completed".
                              format(todo.description))
             return redirect('/')
-          #  return redirect('TodoList')
+        if "taskDelete" in request.POST:
+            todo_id = request.POST["taskDelete"]
+            todo = ToDo.objects.get(id=int(todo_id))
+            todo.delete()
+            messages.success(request, "Task '{}' has been deleted.".
+                        format(todo.description))
+            return redirect('/')
     return render(request, "timepiece/todo.html", {"todos": todos})
 
 def todo_completed(request):
@@ -250,6 +259,12 @@ def todo_edit(request, todo_id):
         form = TodoForm(instance=todo)
     return render(request, "timepiece/todo-edit.html", {'form': form})
 
+def todo_delete(request, todo_id):
+    todo = get_object_or_404(ToDo, id=todo_id)
+    todo.delete()
+        #return redirect('/')
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
+
 def todo_admin_create(request):
     data = request.POST or None
     form = TodoListForm(data)
@@ -257,6 +272,7 @@ def todo_admin_create(request):
         todo = form.save()
         messages.success(request, "'{}' has been added for '{}'".
                         format(todo.description, todo.user))
+        return redirect('todo_list')
     return render(request, "timepiece/todo-create.html", {'form': form})
 
 def todo_admin_edit(request, todo_id):

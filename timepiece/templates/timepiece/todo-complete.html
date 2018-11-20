@@ -20,11 +20,13 @@
 
 <th>Priority</th>
 <th>Description</th>
+<th>Delete</th>
 </tr>
 
 {% for todo in todos %}
 <td>{{ todo.priority }}</td>
 <td>{{ todo.description }}</td>
+<td><a class="btn btn-primary btn-sm" href="{% url 'todo_delete' todo.id %}"> Delete</a></td>
 </tr>
 {% endfor %}
             </table>

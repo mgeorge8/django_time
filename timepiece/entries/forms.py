@@ -123,11 +123,6 @@ class AddUpdateEntryForm(forms.ModelForm):
         
 
     def __init__(self, *args, **kwargs):
-        #kwargs['initial'] = kwargs.get('initial', None) or {}
-        #kwargs['initial']['start_time'] = datetime.datetime.now()
-        #kwargs['initial']['end_time'] = datetime.datetime.now()
-        #initial = kwargs.get('initial', {})
-        #self.fields['start_time'].initial = datetime.datetime.now()
         self.user = kwargs.pop('user')
         self.acting_user = kwargs.pop('acting_user')
         super(AddUpdateEntryForm, self).__init__(*args, **kwargs)
@@ -178,13 +173,13 @@ class AddUpdateEntryForm(forms.ModelForm):
 class EntryDashboardForm(forms.ModelForm):
     start_time = TimepieceSplitDateTimeField()
     #end_time = TimepieceSplitDateTimeField(required=False)
-    #end = forms.TimeField(required=False)
-    end_date = forms.DateField(required=False, label="End time:")
-    time_end = forms.TimeField(required=False, label="")
+    end = forms.TimeField(required=False)
+##    end_date = forms.DateField(required=False, label="End time:")
+##    time_end = forms.TimeField(required=False, label="")
 
     class Meta:
         model = Entry
-        exclude = ('user', 'site', 'hours', 'end', 'end_time')
+        exclude = ('user', 'site', 'hours', 'end_time')
         
         
 
@@ -207,11 +202,6 @@ class EntryDashboardForm(forms.ModelForm):
             #self.fields['end_time'].initial = datetime.datetime.now()
             self.fields.pop('start_time')
 
-##    def clean_end_time(self):
-##        data = self.cleaned_data.get('end_time', None)
-##        if data:
-##            data = None
-##        return data
 
     def clean(self):
         """
@@ -220,24 +210,24 @@ class EntryDashboardForm(forms.ModelForm):
         """
         active = utils.get_active_entry(self.user)
         start_time = self.cleaned_data.get('start_time', None)
-        time_end = self.cleaned_data.get('time_end', None)
-        end_date = self.cleaned_data.get('end_date', None)
-        if end_date and (time_end is None):
-            raise forms.ValidationError("Must enter an end time.")
-        if time_end and (end_date is None):
-            raise forms.ValidationError("Must enter an end date.")
-        if end_date and time_end:
-            self.instance.end_time = datetime.datetime.combine(end_date, time_end)
-        else:
-            self.instance.end_time = None
-        end_time = self.cleaned_data.get('end_time')
-        #hours = end_time - start_time.time
-##        if(end != None and active != None):
-##            end_time = datetime.datetime.combine(active.start_time.date(), end)
-##        elif (end != None and active == None):
-##            end_time = datetime.datetime.combine(start_time.date(), end)
+##        time_end = self.cleaned_data.get('time_end', None)
+##        end_date = self.cleaned_data.get('end_date', None)
+##        if end_date and (time_end is None):
+##            raise forms.ValidationError("Must enter an end time.")
+##        if time_end and (end_date is None):
+##            raise forms.ValidationError("Must enter an end date.")
+##        if end_date and time_end:
+##            self.instance.end_time = datetime.datetime.combine(end_date, time_end)
 ##        else:
-##            end_time = None
+##            self.instance.end_time = None
+        end = self.cleaned_data.get('end', None)
+        #hours = end - start_time.time
+        if(end != None and active != None):
+            end_time = datetime.datetime.combine(active.start_time.date(), end)
+        elif (end != None and active == None):
+            end_time = datetime.datetime.combine(start_time.date(), end)
+        else:
+            end_time = None
         if active and active.pk != self.instance.pk:
             if (start_time and start_time > active.start_time) or \
                     (end_time and end_time > active.start_time):
@@ -262,8 +252,8 @@ class EntryDashboardForm(forms.ModelForm):
 
     def save(self, commit=True):
         entry = super(EntryDashboardForm, self).save(commit=False)
-##        if(entry.end != None):
-##            entry.end_time = datetime.datetime.combine(entry.start_time.date(), entry.end)
+        if(entry.end != None):
+            entry.end_time = datetime.datetime.combine(entry.start_time.date(), entry.end)
         if commit:
             entry.save()
         return entry

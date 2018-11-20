@@ -89,10 +89,13 @@ document.getElementById("id_end_date").value = date;
         <br>
 	<div>
             <form class="form-horizontal" method="post" action="" accept-charset="utf-8">
-{{ form.non_field_errors }}
                {% csrf_token %} 
+		{{ form.as_p }}
+{% comment %}
+{{ form.non_field_errors }}
 		<p>{{ form.project.errors }}{{ form.project.label_tag }}{{ form.project }}</p><p>{{ form.start_time.errors }}{{ form.start_time.label_tag }}{{ form.start_time }}</p>
 		<p> {{ form.end_date.errors }}{{ form.end_date.label_tag }}{{ form.end_date }}{{ form.time_end.errors }}{{ form.time_end }} <a id="demo" onclick=myFunction() href="#"> Today</a></p><p>{{ form.activities.errors }}{{ form.activities.label_tag }}{{ form.activities }}</p>
+{% endcomment %}
 		 
                 <input class="btn btn-primary btn-sm" type='submit' value="Save" />
                 
@@ -114,13 +117,15 @@ document.getElementById("id_end_date").value = date;
 <th>Description</th>
 <th>Mark</th>
 <th>Edit</th>
+<th>Delete</th>
 </tr>
 {% for todo in todos %}
 <tr> 
 <td>{{ todo.priority }}</td>
 <td>{{ todo.description }}</td>
 <td><button class="btn btn-primary btn-sm" type="submit" name="taskComplete" formnovalidate="" value="{{ todo.id }}" id="{{todo.id}}">Done</button></td>
-<td><a class="btn btn-primary btn-sm" href="{% url 'todo_edit' todo.id %}"> Edit</a>
+<td><a class="btn btn-primary btn-sm" href="{% url 'todo_edit' todo.id %}"> Edit</a></td>
+<td><a class="btn btn-primary btn-sm" href="{% url 'todo_delete' todo.id %}"> Delete</a></td>
 </tr>
 {% endfor %}
 </table>
