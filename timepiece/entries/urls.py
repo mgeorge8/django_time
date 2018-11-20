@@ -27,6 +27,8 @@ urlpatterns = [
         views.delete_entry,
         name='delete_entry'),
 
+    
+    url(r'^todo/$', views.to_do, name="todo"),
     url(r'^todo/completed/$', views.todo_completed, name="todo_complete"),
     url(r'^todo/(?P<todo_id>\d+)/$',
         views.todo_edit,
