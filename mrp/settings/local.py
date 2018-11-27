@@ -89,7 +89,7 @@ WSGI_APPLICATION = 'mrp.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'test',
+        'NAME': 'mrp',
         'USER': 'mrp',
         'PASSWORD': 'emusmrp$$%%',
         'HOST': '127.0.0.1',
