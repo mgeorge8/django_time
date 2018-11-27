@@ -21,7 +21,7 @@ from django.utils.decorators import method_decorator
 from django.views.generic import ListView, TemplateView, View
 from django.views.generic.edit import FormMixin
 from django.core.cache import cache
-from django.cntrib.redirects.models import Redirect
+from django.contrib.redirects.models import Redirect
 
 from timepiece import utils
 from timepiece.forms import DATE_FORM_FORMAT
