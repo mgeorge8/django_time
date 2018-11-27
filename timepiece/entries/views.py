@@ -20,8 +20,6 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.decorators import method_decorator
 from django.views.generic import ListView, TemplateView, View
 from django.views.generic.edit import FormMixin
-from django.core.cache import cache
-from django.contrib.redirects.models import Redirect
 
 from timepiece import utils
 from timepiece.forms import DATE_FORM_FORMAT
@@ -243,8 +241,6 @@ def to_do(request):
     return render(request, "timepiece/todo.html", {"todos": todos})
 
 def todo_completed(request):
-    r = Redirect.objects.get(old_path="/processor_modules")
-    cache.set("/processor_modules", r)
     user = request.user
     todos = ToDo.objects.filter(completed=True,)
     return render(request, "timepiece/todo-complete.html", {"todos": todos})

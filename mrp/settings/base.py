@@ -34,7 +34,7 @@ INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
-    'django.contrib.redirects',
+    #'django.contrib.redirects',
     'django.contrib.sessions',
     'django.contrib.sites',
     'django.contrib.messages',
@@ -55,7 +55,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     #'django.contrib.redirects.middleware.RedirectFallbackMiddleware',
-    'mrp.middleware.middleware.RedirectFallbackMiddleware',
+    #'mrp.middleware.middleware.RedirectFallbackMiddleware',
 
 ]
 
