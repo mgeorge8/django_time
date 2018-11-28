@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'timepiece.manager',
     'timepiece.entries',
     'redirect.apps.RedirectConfig',
+    'import_export',
 ]
 
 MIDDLEWARE = [
