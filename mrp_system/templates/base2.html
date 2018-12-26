@@ -1,0 +1,130 @@
+<!doctype html>
+
+{% load static %}
+<html>
+<head>
+    <title>MRP: {% block title %}{% endblock title %}</title>
+    <link rel="icon" type="image/png" href="{% static "images/icons/timepiece.png" %}">
+<link href="https://fonts.googleapis.com/css?family=Bitter" rel="stylesheet">                 
+    <link rel="stylesheet" href="{% static 'css/app.css' %}">
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css" integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU" crossorigin="anonymous">
+    
+	{% block stylesheet %}{% endblock %}
+
+    {% block javascript %}
+    <script charset="utf-8" src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+    {% comment %}
+    .button() is in both bootstrap & jqueryui. Selectable depends on
+    jqueryui's, and bootstrap's is not currently used, so we'll load
+    jqueryui last so that it has precedence.
+    {% endcomment %}
+    <script charset="utf-8" src="{% static "bootstrap/js/bootstrap.min.js" %}"></script>
+    <script charset="utf-8" src="//ajax.googleapis.com/ajax/libs/jqueryui/1.8.18/jquery-ui.min.js"></script>
+    <script charset="utf-8" src="{% static "selectable/js/jquery.dj.selectable.js" %}"></script>
+    {% endblock javascript %}
+    <script charset="utf-8" src="{% static "timepiece/js/widgets.js" %}"></script>
+
+
+    {% block css %}
+        <link type="text/css" rel="stylesheet"
+                href="//ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/smoothness/jquery-ui.css" />
+    {% endblock css %}
+
+    
+
+    {% block extracss %}
+    {% endblock extracss %}
+</head>
+
+<body id="{% block bodyid %}{% endblock bodyid %}">
+
+<nav class="navbar navbar-expand-sm bg-dark navbar-dark">
+  
+  <a class="navbar-brand" href="{% url 'list_types' %}">MRP</a>
+<ul class="navbar-nav">
+<li class="nav-item dropdown">
+      <a class="nav-link dropdown-toggle" href="#" id="navbardrop" data-toggle="dropdown">Parts
+      </a>
+      <div class="dropdown-menu">
+        <a class="dropdown-item" href="{% url 'create_type' %}">Create Type</a>
+<a class="dropdown-item" href="{% url 'list_types' %}">List</a>
+<a class="dropdown-item" href="{% url 'enter_part' %}">Add Part Digi-Key</a>
+      </div>
+    </li>
+<li class="nav-item dropdown">
+      <a class="nav-link dropdown-toggle" href="#" id="navbardrop" data-toggle="dropdown"> Manufacturers </a>
+      <div class="dropdown-menu">
+        <a class="dropdown-item" href="{% url 'create_manufacturer' %}">Create Manufacturer</a>
+<a class="dropdown-item" href="{% url 'list_manufacturers' %}">Manufacturer List</a>
+      </div>
+    </li>
+<li class="nav-item dropdown">
+      <a class="nav-link dropdown-toggle" href="#" id="navbardrop" data-toggle="dropdown">Locations</a>
+      <div class="dropdown-menu">
+        <a class="dropdown-item" href="{% url 'create_location' %}">Create Location</a>
+<a class="dropdown-item" href="{% url 'list_locations' %}">Location List</a>
+      </div>
+    </li>
+{% if user.is_staff %}
+    <li class="nav-item dropdown">
+      <a class="nav-link dropdown-toggle" href="#" id="navbardrop" data-toggle="dropdown">
+        Management
+      </a>
+      <div class="dropdown-menu">
+        <a class="dropdown-item" href="{% url 'admin:index' %}">Admin</a>
+      </div>
+    </li>
+{% endif %}
+
+</ul>
+{% if user.is_authenticated %}
+<ul class="navbar-nav ml-auto">
+
+<li class="nav-item dropdown">
+      <a class="nav-link dropdown-toggle" href="#" id="navbardrop" data-toggle="dropdown">
+       {{ user.first_name }}
+      </a>
+      <div class="dropdown-menu dropdown-menu-right">
+        <a class="dropdown-item" href="{% url 'edit_settings' %}">Settings</a>
+            <a class="dropdown-item" href="{% url 'change_password' %}">Change Password</a>
+            <div class="dropdown-divider"></div>
+            <a class="dropdown-item" href="{% url 'auth_logout' %}">Log out</a>
+      </div>
+    </li>
+  </ul>
+{% else %}
+<a href="{% url 'auth_login' %}" class="btn btn-outline-secondary">Log in</a>
+{% endif %}
+</nav>
+
+<br> <br>
+
+    <div id="content" class="container-fluid">
+            {% block breadcrumb %}
+                <ul class="breadcrumb">
+                    {% block crumbs %}
+                        <li><a href="{% url 'list_types' %}">Home</a></li>
+                    {% endblock crumbs %}
+                </ul>
+            {% endblock breadcrumb %}
+        {% block content %}
+        {% endblock content %}
+    </div>
+
+    {% block footer %}
+        <footer class="footer">
+            <div class="container-fluid">
+            </div>
+        </footer>
+    {% endblock footer %}
+
+    <script charset="utf-8" src="{% static "timepiece/js/sticky_table_header.js" %}"></script>
+<script src="{% static 'js/jquery-3.2.1.min.js' %}"></script>
+    <script src="{% static 'js/popper.min.js' %}"></script>
+    <script src="{% static 'js/bootstrap.min.js' %}"></script>
+    {% block extrajs %}
+    {% endblock extrajs %}
+</body>
+
+</html>

@@ -6,3 +6,7 @@ psycopg2>=2.7.5,<=2.7.6.1
 whitenoise==4.1
 django-import-export==1.1.0
 pylibmc==1.5.2
+django-storages==1.7.1
+boto3==1.9.59
+requests==2.21.0
+beautifulsoup4==4.6.3

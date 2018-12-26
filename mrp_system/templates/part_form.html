@@ -1,0 +1,92 @@
+{% extends "base2.html" %}
+
+
+{% block title %}Parts{% endblock title %}
+{% comment %}
+{% block extrajs %}
+<script>
+$(document).ready(function() {
+    $('.add-item').click(function(ev) {
+        ev.preventDefault();
+        var count = $('#items-form-container').children().length;
+        var tmplMarkup = $('#item-template').html();
+        var compiledTmpl = tmplMarkup.replace(/__prefix__/g, count);
+        $('div#items-form-container').append(compiledTmpl);
+
+        // update form count
+        $('#id_item_items-TOTAL_FORMS').attr('value', count+1);
+
+        // some animate to scroll to view our new form
+        $('html, body').animate({
+                scrollTop: $("#add-item-button").position().top-200
+            }, 800);
+    });
+});
+</script>
+{% endblock extrajs %}
+{% endcomment %}
+{% block content %}
+<div class="container-fluid">
+<h3> Create New {{ partType }}</h3>
+<a href="{% url 'create_manufacturer' %}">New Manufacturer</a> &nbsp;&nbsp;
+<a href="{% url 'create_location' %}">New Location</a>
+<br><br>
+<div class="form-horizontal">
+<form action="" method="post" enctype='multipart/form-data'>{% csrf_token %}
+<div class="section">
+{{ part_form.as_p }}
+</div>
+{{ location_formset.management_form }}
+<div id="formset">
+{% for form in location_formset.forms %}
+<table class='no_error'>
+{{ form.as_table }}
+</table>
+{% endfor %}
+</div>
+<input type="button" value="Add" id="addmore">
+<div id="emptyform" style="display:none">
+    <table class='no_error'>
+        {{ location_formset.empty_form.as_table }}
+    </table>
+</div>
+<script>
+    $('#addmore').click(function() {
+         var formidx = $('#id_locationrelationship_set-TOTAL_FORMS').val();
+        $('#formset').append($('#emptyform').html().replace(/__prefix__/g, formidx));
+
+        $('#id_locationrelationship_set-TOTAL_FORMS').val(parseInt(formidx) + 1);
+    });
+</script>
+
+{{ part_formset.management_form }}
+<div id="form_set">
+{% for form in part_formset.forms %}
+<table class='no_error'>
+{{ form.as_table }}
+</table>
+{% endfor %}
+</div>
+<input type="button" value="Add" id="add_more">
+<div id="empty_form" style="display:none">
+    <table class='no_error'>
+        {{ part_formset.empty_form.as_table }}
+    </table>
+</div>
+<script>
+    $('#add_more').click(function() {
+         var form_idx = $('#id_manufacturerrelationship_set-TOTAL_FORMS').val();
+        $('#form_set').append($('#empty_form').html().replace(/__prefix__/g, form_idx));
+
+        $('#id_manufacturerrelationship_set-TOTAL_FORMS').val(parseInt(form_idx) + 1);
+    });
+</script>
+<br><br>
+<input class="btn btn-primary" type="submit" value="Save"/>
+</form>
+
+</div>
+<hr/>
+        </div>
+{% endblock content %}
+

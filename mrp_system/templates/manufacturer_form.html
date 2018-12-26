@@ -1,0 +1,23 @@
+{% extends "base2.html" %}
+
+
+{% block title %}Manufacturer{% endblock title %}
+
+{% block content %}
+<h3>Create Manufacturer</h3>
+<div class="container-fluid">
+<div class="form-horizontal">
+<form action="" method="post">
+{% csrf_token %}
+{{ form.as_p }}
+<input type="submit" value="Save"/>
+</form>
+
+</div>
+<hr/>
+<h4>Existing Manufacturers</h4>
+{% for manufacturer in manufacturers %}
+<li>{{ manufacturer.name }} </li>
+{% endfor %}
+        </div>
+{% endblock content %}

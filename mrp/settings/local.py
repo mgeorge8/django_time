@@ -44,6 +44,8 @@ INSTALLED_APPS = [
     'timepiece.entries',
     'redirect.apps.RedirectConfig',
     'import_export',
+    'mrp_system.apps.MrpSystemConfig',
+    'storages',
 ]
 
 MIDDLEWARE = [
@@ -137,14 +139,32 @@ LOGIN_REDIRECT_URL = 'dashboard'
 
 LOGOUT_REDIRECT_URL = 'auth_login'
 
+##MEDIA_URL = '/media/'
+##MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.1/howto/static-files/
 
-STATIC_URL = '/static/'
+#STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static'),
 ]
+
+AWS_ACCESS_KEY_ID = os.environ['access_key']
+AWS_SECRET_ACCESS_KEY = os.environ['secret_access_key']
+AWS_STORAGE_BUCKET_NAME = 'emus-mrp'
+AWS_S3_CUSTOM_DOMAIN = '%s.s3.amazonaws.com' % AWS_STORAGE_BUCKET_NAME
+
+AWS_S3_OBJECT_PARAMETERS = {
+    'CacheControl': 'max-age=86400',
+}
+
+MEDIAFILES_LOCATION = 'media'
+DEFAULT_FILE_STORAGE = 'mrp.settings.custom_storages.MediaStorage'
+
+STATICFILES_LOCATION = 'static'
+STATICFILES_STORAGE = 'mrp.settings.custom_storages.StaticStorage'
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 

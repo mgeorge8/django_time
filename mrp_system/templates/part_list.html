@@ -1,0 +1,88 @@
+{% extends "base2.html" %}
+{% load mrp_tags %}
+
+{% block title %}Parts{% endblock title %}
+{% block crumbs %}
+    {{ block.super }}
+   <li><span class="divider">/</span> <a href="{% url 'list_types' %}">Parts</a></li>
+    <li><span class="divider">/</span> <a href="">{{ type }}</a></li>
+{% endblock crumbs %}
+{% block content %}
+
+<div class="container-fluid">
+<h2>{{ type }} Parts</h2>
+<a href="{% url 'create_part' type.id %}">Create new {{ type }}</a>
+<br><br>
+
+<form action="" method="post">
+<div class="row">
+{% csrf_token %} 
+{% for field in form.visible_fields %}
+
+<div class="group">
+     {{ field.label_tag }}</br>
+     {{field}}
+    </div>&nbsp;&nbsp;
+  {% endfor %}
+
+</div>
+<br>
+<input type="submit" value="Filter"/>
+</form>
+
+<hr/>
+            
+            <table class='table table-bordered table-striped table-condensed'>
+                <thead>
+                    <tr class="table-active">
+			<th>Engimusing Part Number</th>
+			{% if name %}
+<th>{{ name }}</th>{% endif %}
+                        <th>Description</th>
+			<th>Datasheet</th>
+                        <th>Location</th>
+			<th>In Stock</th>
+			<th>Manufacturer</th>
+			 <th>Part Number</th>
+			{% for field in fields %}
+			{% if field.fields != "char1" %}
+			<th>{{ field.name }}</th>
+			{% endif %}
+			{% endfor %}
+
+			<th>Edit</th>
+			<th>Delete</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for part in parts %}
+                        <tr>
+			<td>{{part.engimusingPartNumber}}</td>	
+{% if name %} <td>{{part.char1}}</td>{% endif %}	
+                            <td>{{ part.description }}</td>
+			<td>{% if part.datasheet %}
+			    <a href="{{part.datasheet.url}}" target="_new">PDF</a>{% endif %}</td>
+                            <td>{% for location in part.get_location %}{{ location }}</br>{% endfor %}</td>
+			    <td>{% if part.get_stock %}
+{% for stock in part.get_stock %}{{ stock.stock }}<a href="{% url 'edit_loc_rel' stock.id %}?next={{ request.path|urlencode }}"><i class="fas fa-pencil-alt"></i></a></br>{% endfor %}
+{% else %}<a href="{% url 'add_loc_rel' part.id %}?next={{ request.path|urlencode }}"><i class="fas fa-pencil-alt"></i></a>
+{% endif %}
+</td>
+			     <td>{% for manu in part.get_manufacturers %}{{ manu }}</br>{% endfor %}</td>
+			     <td>{% for number in part.get_related %}{{ number }}</br>{% endfor %} </td>
+
+{% for field in fields %}
+{% if field.fields != "char1" %}
+			<td>{{ part|get_obj_attr:field.fields }}</td>
+{% endif %}
+			{% endfor %}
+			
+			    <td><a class="btn btn-primary btn-sm" href="{% url 'edit_part' type.id part.id %}">Edit</a></td>
+			<td><a class="btn btn-primary btn-sm" href="{% url 'delete_part' part.id %}">Delete</a></td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+     
+    </div>
+{% endblock content %}

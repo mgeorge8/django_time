@@ -1,0 +1,22 @@
+{% extends "base2.html" %}
+
+
+{% block title %}Location{% endblock title %}
+{% block crumbs %}
+    {{ block.super }}
+    <li><span class="divider">/</span> <a href="{% url 'list_locations' %}"> Locations</a></li>
+{% endblock crumbs %}
+{% block content %}
+<h3>Delete Part</h3>
+<div class="container-fluid">
+<div class="form-horizontal">
+<form action="" method="post">
+{% csrf_token %}
+<p>Are you sure you want to delete "{{ object }}"?</p>
+    <input type="submit" value="Confirm">
+<a href="{% url 'list_types' %}">Cancel</a>
+    </form>
+</div>
+<hr/>
+</div>
+{% endblock content %}

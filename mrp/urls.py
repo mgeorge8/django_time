@@ -8,6 +8,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('timepiece.urls')),
     path('', RedirectView.as_view(url='/time/')),
+    path('mrp/', include('mrp_system.urls')),
 
     #authentication views
     url(r'^accounts/login/$', auth_views.LoginView.as_view(),
@@ -35,7 +36,7 @@ urlpatterns = [
 
 ]
 
-from django.conf import settings
-from django.conf.urls.static import static
-
-urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+##from django.conf import settings
+##from django.conf.urls.static import static
+##
+##urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

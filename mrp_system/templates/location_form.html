@@ -1,0 +1,23 @@
+{% extends "base2.html" %}
+
+
+{% block title %}Location{% endblock title %}
+
+{% block content %}
+<h3>Create Location</h3>
+<div class="container-fluid">
+<div class="form-horizontal">
+<form action="" method="post">
+{% csrf_token %}
+{{ form.as_p }}
+<input type="submit" value="Save"/>
+</form>
+
+</div>
+<hr/>
+<h4>Existing Locations</h4>
+{% for location in locations%}
+<li>{{ location.name}} </li>
+{% endfor %}
+        </div>
+{% endblock content %}

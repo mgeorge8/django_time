@@ -1,0 +1,23 @@
+{% extends "base2.html" %}
+
+
+{% block title %}Location{% endblock title %}
+{% block crumbs %}
+    {{ block.super }}
+    <li><span class="divider">/</span> <a href="{% url 'list_locations' %}"> Locations</a></li>
+{% endblock crumbs %}
+{% block content %}
+<h3>Add Location and Stock</h3>
+<div class="container-fluid">
+<div class="form-horizontal">
+<form action="" method="post">
+{% csrf_token %}
+{{ form.as_p }}
+<input type="hidden" name="next" value="{{ request.GET.next }}">
+<input type="submit" value="Save"/>
+</form>
+
+</div>
+<hr/>
+        </div>
+{% endblock content %}

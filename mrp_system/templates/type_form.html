@@ -1,0 +1,29 @@
+{% extends "base2.html" %}
+
+
+{% block title %}Parts{% endblock title %}
+
+{% block content %}
+{% if field_formset.non_form_errors %}
+        {% for error in field_formset.non_form_errors %}
+            <p><font color="red">{{ error }}</font> </p>
+        {% endfor %}
+    {% endif %}
+<div class="container-fluid">
+<div class="form-horizontal">
+<form action="" method="post">
+{% csrf_token %}
+{{ form.as_p }}
+{% csrf_token %}
+{{ field_formset.management_form }}
+{% for form in field_formset %}
+{{ form }} <br>
+{% endfor %}
+
+<input type="submit" value="Save"/>
+</form>
+
+</div>
+<hr/>
+        </div>
+{% endblock content %}

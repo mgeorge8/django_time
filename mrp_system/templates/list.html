@@ -1,0 +1,64 @@
+{% extends "base2.html" %}
+
+
+{% block title %}Parts{% endblock title %}
+
+{% block content %}
+<div class="container-fluid">
+<div class="form-horizontal">
+<form action="">
+{{ form }}
+<input type="submit" value="Search"/>
+</form>
+</div>
+<hr/>
+    {% if is_paginated %}
+        <div class="pagination">
+            <span class="page-links">
+                {% if page_obj.has_previous %}
+                    <a href="?{{ search_request }}&page={{ page_obj.previous_page_number }}">Previous</a>
+                {% endif %}
+                <span class="page-current">
+                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                </span>
+                {% if page_obj.has_next %}
+                    <a href="?{{ search_request }}&page={{ page_obj.next_page_number }}">Next</a>
+                {% endif %}
+            </span>
+        </div>
+<br>
+    {% endif %}
+
+            
+            <table class='table table-bordered table-striped table-condensed'>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Bin</th>
+                        <th>Inventory Number</th>
+                        <th>In Stock</th>
+                        <th>Package</th>
+                        <th>Description</th>
+			<th>Manufacturer</th>
+			 <th>Part Number</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for part in parts %}
+                        <tr>
+                            <td>{{ part.name }}</td>
+                            <td>{{ part.binLocation }}</td>
+                            <td>{{ part.inventoryNumber }}</td>
+                            <td>{{ part.inStock }}</td>
+
+                            <td>{{ part.package }}</td>
+                            <td>{{ part.description }}</td>
+			     <td>{{ part.get_manufacturers }}</td>
+			     <td>{{ part.get_related }} </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+     
+    </div>
+{% endblock content %}
