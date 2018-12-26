@@ -7,7 +7,7 @@ from import_export.admin import ImportExportModelAdmin
 class PartResource(resources.ModelResource):
     class Meta:
         model = Part
-        exclude = ('manufacturer',)
+        exclude = ('manufacturer','location')
 
     def dehydrate_char2(self, part):
         if part.char2 == 'null':

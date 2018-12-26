@@ -56,7 +56,6 @@ class Part(models.Model):
     partNumber = models.IntegerField(blank=True, null=True, editable=False)
     engimusingPartNumber = models.CharField(max_length=30, editable=False)
     description = models.CharField(max_length=300, blank=True)
-    #location = models.ManyToManyField(Location, related_name="loc")
     location = models.ManyToManyField(Location, through='LocationRelationship')
     manufacturer = models.ManyToManyField(Manufacturer,
                                           through='ManufacturerRelationship')
