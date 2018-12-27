@@ -13,7 +13,7 @@ class Location(models.Model):
         return self.name
 
 class Type(models.Model):
-    name = models.CharField(max_length=30)
+    name = models.CharField(max_length=100)
     prefix = models.CharField(max_length=3)
     #field = models.ForeignKey(Field, on_delete=models.CASCADE,
      #                         related_name="type", null=True)
