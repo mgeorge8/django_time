@@ -5,22 +5,43 @@ def create_type(typeName, suffix, fields):
     for name, field in fields.items():
         Field.objects.create(name=name, fields=field, typePart=partType)
 
-f = {
-    'Series': 'char1',
-    'Output Configuration': 'char2',
-    'Output Type': 'char3',
-    'Number of Regulators': 'char4',
-    'Voltage - Input (Max)': 'char5',
-    'Voltage - Output (Min/Fixed)': 'char6',
-    'Voltage - Output (Max)': 'char7',
-    'Voltage Dropout': 'char8',
-    'Current - Output': 'char9',
-    'Current - Quiescent (lq)': 'char10',
-    'Current - Supply (Max)': 'char11',
-    'PSRR': 'char12',
-    'Control Features': 'char13',
-    'Protetion Features': 'char14',
-    'Operating Temperature': 'char15',
-    'Mounting Type': 'char16',
-    'Package / Case': 'char17',
-    }
+##f = {
+##    'Series': 'char1',
+##    'Type': 'char2',
+##    'Unidirectional Channels': 'char3',
+##    'Bidirectional Channels': 'char4',
+##    'Voltage - Reverse Standoff (Typ)': 'char5',
+##    'Voltage - Breakdown (Min)': 'char6',
+##    'Voltage - Clamping (Max) @ Ipp': 'char7',
+##    'Current - Peak Pulse (10/1000µs)': 'char8',
+##    'Power - Peak Pulse': 'char9',
+##    'Power Line Protection': 'char10',
+##    'Applications': 'char11',
+##    'Capacitance @ Frequency': 'char12',
+##    'Operating Temperature': 'char13',
+##    'Mounting Type': 'char14',
+##    'Package / Case': 'char15'
+##    }
+##data = """Series
+##Type
+##Material - Core
+##Inductance
+##Tolerance
+##Current Rating
+##Current - Saturation
+##Shielding
+##DC Resistance (DCR)
+##Q @ Freq
+##Frequency - Self Resonant
+##Ratings
+##Operating Temperature
+##Inductance Frequency - Test
+##Features
+##Mounting Type
+##Package / Case"""
+##data = data.splitlines()
+##f = {}
+##number = 1
+##for d in data:
+##    f[d] = "char"+str(number)
+##    number += 1

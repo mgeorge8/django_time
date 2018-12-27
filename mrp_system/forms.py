@@ -151,7 +151,7 @@ class CustomInlineFormset(BaseInlineFormSet):
 
                         
 
-FieldFormSet = inlineformset_factory(Type, Field, form=FieldForm, extra=17, max_num=17,
+FieldFormSet = inlineformset_factory(Type, Field, form=FieldForm, extra=20, max_num=20,
                                      formset=CustomInlineFormset)
 
 class TypeSelectForm(forms.Form):
