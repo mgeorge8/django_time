@@ -177,11 +177,12 @@ class FilterForm(forms.Form):
         def __init__(self,*args,**kwargs):
                 models = kwargs.pop('models')
                 typeName = kwargs.pop('typeName')
+                partType = Type.objects.get(name=typeName)
                 super(FilterForm, self).__init__(*args, **kwargs)
-                self.fields['location'].queryset = Location.objects.filter(part__partType=Type.objects.get(name=typeName)).distinct()
-                self.fields['manufacturer'].queryset = Manufacturer.objects.filter(part__partType=Type.objects.get(name=typeName)).distinct()
+                self.fields['location'].queryset = Location.objects.filter(part__partType=partType).distinct()
+                self.fields['manufacturer'].queryset = Manufacturer.objects.filter(part__partType=partType).distinct()
                 for field, name in models.items():
-                        self.fields[field] = forms.ModelMultipleChoiceField(Part.objects.all().values_list(field, flat=True).distinct(), required=False)
+                        self.fields[field] = forms.ModelMultipleChoiceField(Part.objects.filter(partType=partType).values_list(field, flat=True).distinct(), required=False)
                         self.fields[field].label = name
                 
         search = forms.CharField(required=False)
