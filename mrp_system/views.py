@@ -432,6 +432,8 @@ def enter_part(request):
             part = Part.objects.create(partType=partType, description=detailed_descript)
             for field in partType.field.all():
                 name = part_attr.get(field.name)
+                if name == 'null':
+                    name = ''
                 f = field.fields
                 setattr(part, f, name)
 
