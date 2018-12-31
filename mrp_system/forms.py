@@ -195,5 +195,5 @@ class EnterPartForm(forms.Form):
 
 class DigiKeyAPIForm(forms.Form):
         partNumber = forms.CharField(label='DigiKey Part Number')
-        partType = forms.ModelChoiceField(queryset=Type.objects.all())
+        partType = forms.ModelChoiceField(queryset=Type.objects.all(), label='Part type')
         
