@@ -1,4 +1,5 @@
 from django.db import models
+#from django.contrib.sites.models import Site
 
 class Manufacturer(models.Model):
     name = models.CharField(max_length=128)
@@ -138,3 +139,9 @@ class LocationRelationship(models.Model):
     part = models.ForeignKey(Part, on_delete=models.CASCADE)
     location = models.ForeignKey(Location, on_delete=models.CASCADE)
     stock = models.IntegerField(blank=True, null=True)
+
+class DigiKeyAPI(models.Model):
+    name = models.CharField(max_length=100)
+    refresh_token = models.CharField(max_length=150)
+    access_token = models.CharField(max_length=150)
+    

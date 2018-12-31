@@ -4,5 +4,16 @@
 {% block title %}Parts{% endblock title %}
 
 {% block content %}
-{{ code }}
+<h3>Enter DigiKey Part</h3>
+<h3>Create Part</h3>
+<div class="container-fluid">
+<div class="form-horizontal">
+<form action="" method="post">
+{% csrf_token %}
+{{ form.as_p }}
+<input type="submit" value="Save"/>
+</form>
+
+</div>
+</div>
 {% endblock content %}

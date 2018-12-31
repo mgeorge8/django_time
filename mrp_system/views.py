@@ -1,10 +1,11 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, HttpResponseNotFound
 from django.views.generic import ListView, TemplateView
 from mrp_system.models import (Part, Type, Field, Manufacturer,
-                               ManufacturerRelationship, Location, LocationRelationship)
+                               ManufacturerRelationship, Location,
+                               LocationRelationship, DigiKeyAPI)
 from mrp_system.forms import (FilterForm, PartForm, LocationForm, LocationFormSet, MergeLocationsForm, ManufacturerForm,
-ManufacturerFormSet, MergeManufacturersForm, FieldFormSet, TypeForm, TypeSelectForm, EnterPartForm)
+ManufacturerFormSet, MergeManufacturersForm, FieldFormSet, TypeForm, TypeSelectForm, EnterPartForm, DigiKeyAPIForm)
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.forms.models import inlineformset_factory
 from django.urls import reverse, reverse_lazy
@@ -16,6 +17,8 @@ from django.contrib.postgres.search import SearchVector
 from django.core.files.storage import DefaultStorage
 import requests
 from bs4 import BeautifulSoup
+import json
+from django.contrib import messages
 
 def view_file(request, name):
     storage = DefaultStorage()
@@ -450,31 +453,106 @@ def enter_part(request):
 import http.client
 
 def oauth(request):
+    if request.method == "POST":
+        form = DigiKeyAPIForm(request.POST)
+        if form.is_valid():
+            partNumber = form.cleaned_data['partNumber']
+            partType = form.cleaned_data['partType']
+            digi = DigiKeyAPI.objects.get(name="DigiKey")
 
-    conn = http.client.HTTPSConnection("api.digikey.com")
+            API_ENDPOINT = "https://sso.digikey.com/as/token.oauth2"
 
-    payload = "{\"SearchOptions\":[\"ManufacturerPartSearch\"],\"Keywords\":\"p5555-nd\",\"RecordCount\":\"10\",\"RecordStartPosition\":\"0\",\"Filters\":{\"CategoryIds\":[27442628],\"FamilyIds\":[81316194],\"ManufacturerIds\":[88520800],\"ParametricFilters\":[{\"ParameterId\":\"725\",\"ValueId\":\"7\"}]},\"Sort\":{\"Option\":\"SortByUnitPrice\",\"Direction\":\"Ascending\",\"SortParameterId\":\"50\"},\"RequestedQuantity\":\"50\"}"
+            data = {'client_id': '73432ca9-e8ba-4965-af17-a22107f63b35',
+                    'client_secret': 'G2rQ1cM8yM4gV6rW2nA1wL2yF7dN4sX4fJ2lV6jE5uT0bB0uG8',
+                    'refresh_token': digi.refresh_token,
+                    'grant_type': 'refresh_token'
+                    }
+            r = requests.post(url = API_ENDPOINT, data=data)
+            response = r.json()
+            refreshToken = response['refresh_token']
+            accessToken = response['access_token']
+            setattr(digi,"refresh_token",refreshToken)
+            setattr(digi,"access_token",accessToken)
+            digi.save()
 
-    headers = {
-        'x-ibm-client-id': '73432ca9-e8ba-4965-af17-a22107f63b35',
-        'x-digikey-locale-site': "US",
-        'x-digikey-locale-language': "en",
-        'x-digikey-locale-currency': "USD",
-        #'x-digikey-locale-shiptocountry': ,
-##        'x-digikey-customer-id': "REPLACE_THIS_VALUE",
-##        'x-digikey-partner-id': "REPLACE_THIS_VALUE",
-        'authorization': "QVhAum4tdogouAdEkCt23amqaMad",
-        'content-type': "application/json",
-        'accept': "application/json"
-        }
+            #partNumber = 'H10247-ND'
 
-    conn.request("POST", "/services/partsearch/v2/keywordsearch", payload, headers)
+            conn = http.client.HTTPSConnection("api.digikey.com")
 
-    res = conn.getresponse()
-    data = res.read()
+            payload = "{\"SearchOptions\":[\"ManufacturerPartSearch\"],\"Keywords\":\"" + partNumber + "\",\"RecordCount\":\"10\",\"RecordStartPosition\":\"0\",\"Filters\":{\"CategoryIds\":[27442628],\"FamilyIds\":[81316194],\"ManufacturerIds\":[88520800],\"ParametricFilters\":[{\"ParameterId\":\"725\",\"ValueId\":\"7\"}]},\"Sort\":{\"Option\":\"SortByUnitPrice\",\"Direction\":\"Ascending\",\"SortParameterId\":\"50\"},\"RequestedQuantity\":\"50\"}"
 
-    print(data.decode("utf-8"))
-    return render(request, "oauth.html", {'code':data})
+            headers = {
+                'x-ibm-client-id': '73432ca9-e8ba-4965-af17-a22107f63b35',
+                'x-digikey-locale-site': "US",
+                'x-digikey-locale-language': "en",
+                'x-digikey-locale-currency': "USD",
+                'authorization': digi.access_token,
+                'content-type': "application/json",
+                'accept': "application/json"
+                }
+
+            conn.request("POST", "/services/partsearch/v2/keywordsearch", payload, headers)
+
+            res = conn.getresponse()
+            string = res.read().decode('utf-8')
+            print(string)
+            jstr = json.loads(string)
+            try:
+                part = jstr['ExactDigiKeyPart']
+                data = part['Parameters']
+            except(IndexError, KeyError, TypeError):
+                #messages.error(request, ('Invalid part number.'))
+                return HttpResponseNotFound('<h1>Invalid Part Number</h1>')
+                #raise Http404("Invalid part number")
+            params = {}
+            for value in data:
+                params[value['Parameter']] = value['Value']
+
+            #partType = Type.objects.get(name="Connectors")
+            fields = Field.objects.filter(typePart=partType)
+            description = part['DetailedDescription']
+            number = part['ManufacturerPartNumber']
+            manufacturer = part['ManufacturerName']['Text']
+            new_part = Part.objects.create(partType=partType, description=description)
+            manu, created = Manufacturer.objects.get_or_create(name=manufacturer)
+            ManufacturerRelationship.objects.create(part=new_part, manufacturer=manu, partNumber=number)
+            for field in fields:
+                name = field.name
+                field_name = field.fields
+                try:
+                    value = part[name]['Value']
+                    setattr(new_part, field.fields, value)
+                except(IndexError, KeyError):
+                    try:
+                        value = params[name]
+                        setattr(new_part, field.fields, value)
+                    except(IndexError, KeyError):
+                        pass
+            new_part.save()
+            redirect_url = reverse('list_parts', args=[partType.pk])
+            return HttpResponseRedirect(redirect_url)
+    else:
+        form = DigiKeyAPIForm()
+    return render(request, "oauth.html", {'form': form})
+
+def get_token(request):
+    digi = DigiKeyAPI.objects.get(name="DigiKey")
+
+    API_ENDPOINT = "https://sso.digikey.com/as/token.oauth2"
+
+    data = {'client_id': '73432ca9-e8ba-4965-af17-a22107f63b35',
+            'client_secret': 'G2rQ1cM8yM4gV6rW2nA1wL2yF7dN4sX4fJ2lV6jE5uT0bB0uG8',
+            'refresh_token': digi.refresh_token,
+            'grant_type': 'refresh_token'
+            }
+    r = requests.post(url = API_ENDPOINT, data=data)
+    response = r.json()
+    refreshToken = response['refresh_token']
+    accessToken = response['access_token']
+    setattr(digi,"refresh_token",refreshToken)
+    setattr(digi,"access_token",accessToken)
+    digi.save()
+
 
 
 

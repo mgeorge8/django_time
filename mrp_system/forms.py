@@ -192,4 +192,8 @@ class FilterForm(forms.Form):
 class EnterPartForm(forms.Form):
         url = forms.CharField()
         partType = forms.ModelChoiceField(queryset=Type.objects.all())
+
+class DigiKeyAPIForm(forms.Form):
+        partNumber = forms.CharField(label='DigiKey Part Number')
+        partType = forms.ModelChoiceField(queryset=Type.objects.all())
         
