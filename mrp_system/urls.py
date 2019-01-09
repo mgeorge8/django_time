@@ -68,5 +68,11 @@ urlpatterns = [
     url('oauth/$',
         views.oauth,
         name='oauth'),
+    url('mouser/$',
+        views.mouser_api,
+        name='mouser'),
+    url('mouser/detail/$',
+        views.mouser_details,
+        name='mouser_detail'),
     
 ]

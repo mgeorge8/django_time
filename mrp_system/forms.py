@@ -189,11 +189,12 @@ class FilterForm(forms.Form):
         location = forms.ModelMultipleChoiceField(required=False, queryset = Location.objects.none())
         manufacturer = forms.ModelMultipleChoiceField(required=False, queryset = Manufacturer.objects.none())
 
+                        
 class EnterPartForm(forms.Form):
         url = forms.CharField()
         partType = forms.ModelChoiceField(queryset=Type.objects.all())
 
 class DigiKeyAPIForm(forms.Form):
-        partNumber = forms.CharField(label='DigiKey Part Number')
-        partType = forms.ModelChoiceField(queryset=Type.objects.all(), label='Part type')
+        partNumber = forms.CharField(label='Part Number')
+        partType = forms.ModelChoiceField(queryset=Type.objects.all(), label='Part Type')
         

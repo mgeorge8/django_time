@@ -1,0 +1,22 @@
+{% extends "base2.html" %}
+
+
+{% block title %}Parts{% endblock title %}
+
+{% block content %}
+<h3>Enter Mouser Part</h3>
+<div class="container-fluid">
+<div class="form-horizontal">
+<form action="" method="post">
+{% csrf_token %}
+{{ form.as_p }}
+<input type="submit" value="Save"/>
+</form>
+</div>
+<hr>
+{% for data in response %}
+{{ data }}<br>
+{% endfor %}
+
+</div>
+{% endblock content %}

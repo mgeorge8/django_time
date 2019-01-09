@@ -50,6 +50,7 @@ class Field(models.Model):
     )
     name = models.CharField(max_length=50)
     fields = models.CharField(max_length=50, choices=FIELD_CHOICES)
+    mouser_name = models.CharField(max_length=100, blank=True)
     typePart = models.ForeignKey(Type, on_delete=models.CASCADE, related_name="field", null=True)
 
 class Part(models.Model):
@@ -133,7 +134,7 @@ def increment_engi_partnumber(partType):
 class ManufacturerRelationship(models.Model):
     part = models.ForeignKey(Part, on_delete=models.CASCADE)
     manufacturer = models.ForeignKey(Manufacturer, on_delete=models.CASCADE)
-    partNumber = models.CharField(max_length=20, blank=True)
+    partNumber = models.CharField(max_length=40, blank=True)
 
 class LocationRelationship(models.Model):
     part = models.ForeignKey(Part, on_delete=models.CASCADE)
