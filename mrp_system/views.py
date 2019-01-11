@@ -3,9 +3,11 @@ from django.http import HttpResponse, HttpResponseRedirect, HttpResponseNotFound
 from django.views.generic import ListView, TemplateView
 from mrp_system.models import (Part, Type, Field, Manufacturer,
                                ManufacturerRelationship, Location,
-                               LocationRelationship, DigiKeyAPI)
+                               LocationRelationship, DigiKeyAPI,
+                               BillofMaterials, Product)
 from mrp_system.forms import (FilterForm, PartForm, LocationForm, LocationFormSet, MergeLocationsForm, ManufacturerForm,
-ManufacturerFormSet, MergeManufacturersForm, FieldFormSet, TypeForm, TypeSelectForm, MouserForm, DigiKeyAPIForm)
+ManufacturerFormSet, MergeManufacturersForm, FieldFormSet, TypeForm, TypeSelectForm, MouserForm, DigiKeyAPIForm,
+                              ProductForm, BOMFormSet, BillPartForm)
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.forms.models import inlineformset_factory
 from django.urls import reverse, reverse_lazy
@@ -694,3 +696,57 @@ def mouser_details(request):
         form = MouserForm()
     return render(request, "mouser_detail.html", {'form': form, 'response': response})
 
+def CreateBOM(request):
+    if request.method == 'POST':
+        form = ProductForm(request.POST)
+        bom_formset = BOMFormSet(request.POST)
+        if form.is_valid() and bom_formset.is_valid():
+            self_object = form.save()
+            bom_formset.instance = self_object
+            bom_formset.save()
+            url = reverse('list_types')
+            return HttpResponseRedirect(url)
+    else:
+        form = ProductForm()
+        bom_formset = BOMFormSet()
+    return render(request,'BOM_create.html',{'form': form,
+                                            'bom_formset': bom_formset})
+
+class BOMListView(ListView):
+    model = Product
+    template_name = 'product_list.html'
+    ordering = ['name']
+    
+        
+def EditBOM(request, id):
+    instance = get_object_or_404(Product, id=id)
+    if request.method == 'POST':
+        form = ProductForm(request.POST, instance=instance)
+        bom_formset = BOMFormSet(request.POST, instance=instance)
+        if form.is_valid() and bom_formset.is_valid():
+            self_object = form.save()
+            bom_formset.instance = self_object
+            bom_formset.save()
+            url = reverse('list_bom')
+            return HttpResponseRedirect(url)
+    else:
+        form = ProductForm(instance=instance)
+        bom_formset = BOMFormSet(instance=instance)
+    return render(request,'BOM_create.html',{'form': form,
+                                            'bom_formset': bom_formset})
+
+class DeleteBOM(DeleteView):
+    model = Product
+    success_url = reverse_lazy('list_bom')
+    pk_url_kwarg = 'product_id'
+    template_name = 'delete_bom.html'
+
+def BOMDetailView(request, product_id):
+    product = get_object_or_404(Product, id=product_id)
+    bom = product.billofmaterials_set.all()
+    return render(request, 'bom_detail.html', {'product': product,
+                                               'bom': bom})
+
+
+
+    

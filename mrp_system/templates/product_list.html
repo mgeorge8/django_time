@@ -1,0 +1,35 @@
+{% extends "base2.html" %}
+
+
+{% block title %}BOM{% endblock title %}
+
+{% block content %}
+<div class="container-fluid">
+<h2> Bill of Materials </h2>
+<a href="{% url 'create_bom' %}"> Create New Bill of Materials</a>
+<hr>           
+<br> 
+<table class='table table-bordered table-striped table-condensed'>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+			<th>Edit</th>
+			<th>Delete</th>
+                    </tr>
+                </thead>
+                <tbody>
+                                {% for product in object_list %}
+
+                        <tr>
+                            <td><a href="{% url 'bom_detail' product.id %}">{{ product.name }}</a></td>
+                            <td><a href="{% url 'edit_bom' product.id%}">Edit {{product.name }}</a></td>
+			    <td><a href="{% url 'delete_bom' product.id%}">Delete</a></td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            
+     
+    </div>
+{% endblock content %}

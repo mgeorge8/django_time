@@ -71,5 +71,21 @@ urlpatterns = [
     url('mouser/detail/$',
         views.mouser_details,
         name='mouser_detail'),
+
+    url('bom/create/$',
+        views.CreateBOM,
+        name='create_bom'),
+    url('bom/$',
+        views.BOMListView.as_view(),
+        name='list_bom'),
+    url(r'^bom/edit/(?P<id>\d+)$',
+        views.EditBOM,
+        name='edit_bom'),
+    url('bom/delete/(?P<product_id>\d+)/$',
+        views.DeleteBOM.as_view(),
+        name='delete_bom'),
+    url('bom/(?P<product_id>\d+)/$',
+        views.BOMDetailView,
+        name='bom_detail'),
     
 ]

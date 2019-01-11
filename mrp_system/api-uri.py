@@ -57,36 +57,45 @@ manufacturer_table = data.find(class_='div-table-body')
 print(data)
 manu = manufacturer_table.find_all('label')
 print(manu.text.strip())
-                               
-##for manufacturer in manufacturer_table_list:
-##    header = manufacturer.text.strip()
-##    row = manufacturer.find_next_sibling().text.strip()
-##    if header == 'Manufacturer':
-##        manu = row
-##    if header == 'Manufacturer Part Number':
-##        man_partNumber = row
-##    if header == 'Detailed Description':
-##        detailed_descript = row
-##
-##manu, created = Manufacturer.objects.get_or_create(name=manu)
-##
-##part_table = data.find(id="product-attribute-table")
-##part_table_list = part_table.find_all("th")
-##part_attr = {}
-##for part in part_table_list:
-##    header = part.text.strip()
-##    row = part.find_next_sibling().text.strip()
-##    part_attr[header] = row
-##    
-##part = Part.objects.create(partType=partType, description=detailed_descript)
-##for field in partType.field.all():
-##    name = part_attr.get(field.name)
-##    if name == 'null' or name is None or name == '-':
-##        name = ''
-##    f = field.fields
-##    setattr(part, f, name)
-##
-##part.save()
-##
-##ManufacturerRelationship.objects.create(part=part, manufacturer=manu,
-##                                    partNumber=man_partNumber)
+
+
+
+import http.client
+import requests
+import json
+from mrp_system.models import DigiKeyAPI
+
+digi = DigiKeyAPI.objects.get(name="DigiKey")
+
+API_ENDPOINT = "https://sso.digikey.com/as/token.oauth2"
+
+data = {'client_id': '73432ca9-e8ba-4965-af17-a22107f63b35',
+        'client_secret': 'G2rQ1cM8yM4gV6rW2nA1wL2yF7dN4sX4fJ2lV6jE5uT0bB0uG8',
+        'refresh_token': digi.refresh_token,
+        'grant_type': 'refresh_token'
+        }
+r = requests.post(url = API_ENDPOINT, data=data)
+response = r.json()
+refreshToken = response['refresh_token']
+accessToken = response['access_token']
+setattr(digi,"refresh_token",refreshToken)
+setattr(digi,"access_token",accessToken)
+digi.save()
+            
+conn = http.client.HTTPSConnection("api.digikey.com")
+
+headers = {
+    'x-ibm-client-id': '73432ca9-e8ba-4965-af17-a22107f63b35',
+    'authorization': digi.access_token,
+    'accept': "application/json"
+    }
+
+conn.request("GET", "/services/barcode/v1/productbarcode/2731164000000050837316"
+             , headers=headers)
+
+res = conn.getresponse()
+data = res.read().decode("utf-8")
+part = json.loads(data)
+number = part['DigiKeyPartNumber']
+print(number)
+

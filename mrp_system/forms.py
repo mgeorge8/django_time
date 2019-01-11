@@ -1,5 +1,6 @@
 from django import forms
-from mrp_system.models import Location, LocationRelationship, Part, Manufacturer, ManufacturerRelationship, Field, Type
+from mrp_system.models import (Location, LocationRelationship,
+Part, Manufacturer, ManufacturerRelationship, Field, Type, Product, BillofMaterials)
 from django.forms import ModelForm, BaseInlineFormSet
 from django.forms.models import inlineformset_factory
 
@@ -100,6 +101,19 @@ class LocationForm(ModelForm):
         
 LocationFormSet = inlineformset_factory(Part, LocationRelationship,
                                         form=LocationForm, extra=1)
+class ProductForm(ModelForm):
+    class Meta:
+        model = Product
+        exclude = ('part',)
+        
+class BillPartForm(ModelForm):
+    part = forms.ModelChoiceField(queryset=Part.objects.all())
+    class Meta:
+        model = BillofMaterials
+        exclude = ('product',)
+
+BOMFormSet = inlineformset_factory(Product, BillofMaterials,
+                                    form=BillPartForm, extra=1)
         
 
 class TypeForm(ModelForm):

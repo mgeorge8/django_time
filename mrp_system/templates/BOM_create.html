@@ -1,0 +1,47 @@
+{% extends "base2.html" %}
+
+
+{% block title %}BOM{% endblock title %}
+{% block crumbs %}
+    {{ block.super }}
+    <li><span class="divider">/</span> <a href="{% url 'list_bom' %}"> BOM's</a></li>
+{% endblock crumbs %}
+{% block content %}
+<div class="container-fluid">
+<h3> Create New Bill of Materials</h3>
+<div class="form-horizontal">
+<form action="" method="post" enctype='multipart/form-data'>{% csrf_token %}
+<div class="section">
+{{ form.as_p }}
+</div>
+{{ bom_formset.management_form }}
+<div id="formset">
+{% for form in bom_formset.forms %}
+<table class='no_error'>
+{{ form.as_table }}
+</table>
+{% endfor %}
+</div>
+<input type="button" value="Add" id="addmore">
+<div id="emptyform" style="display:none">
+    <table class='no_error'>
+        {{ bom_formset.empty_form.as_table }}
+    </table>
+</div>
+<script>
+    $('#addmore').click(function() {
+         var formidx = $('#id_billofmaterials_set-TOTAL_FORMS').val();
+        $('#formset').append($('#emptyform').html().replace(/__prefix__/g, formidx));
+
+        $('#id_billofmaterials_set-TOTAL_FORMS').val(parseInt(formidx) + 1);
+    });
+</script>
+<br><br>
+<input class="btn btn-primary" type="submit" value="Save"/>
+</form>
+
+</div>
+<hr/>
+        </div>
+{% endblock content %}
+

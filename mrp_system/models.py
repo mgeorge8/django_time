@@ -88,7 +88,7 @@ class Part(models.Model):
     #package = models.CharField(max_length=30)
 
     def __str__(self):
-        return str(self.partNumber)
+        return str(self.description)
 
     def get_location(self):
         if self.location:
@@ -140,6 +140,18 @@ class LocationRelationship(models.Model):
     part = models.ForeignKey(Part, on_delete=models.CASCADE)
     location = models.ForeignKey(Location, on_delete=models.CASCADE)
     stock = models.IntegerField(blank=True, null=True)
+
+class Product(models.Model):
+    name = models.CharField(max_length=100, blank=True)
+    part = models.ManyToManyField(Part, through='BillofMaterials')
+
+    def __str__(self):
+        return str(self.name)
+
+class BillofMaterials(models.Model):
+    part = models.ForeignKey(Part, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    amount = models.IntegerField(blank=True, null=True, default=1)
 
 class DigiKeyAPI(models.Model):
     name = models.CharField(max_length=100)
