@@ -5,7 +5,7 @@ from mrp_system.models import (Part, Type, Field, Manufacturer,
                                ManufacturerRelationship, Location,
                                LocationRelationship, DigiKeyAPI)
 from mrp_system.forms import (FilterForm, PartForm, LocationForm, LocationFormSet, MergeLocationsForm, ManufacturerForm,
-ManufacturerFormSet, MergeManufacturersForm, FieldFormSet, TypeForm, TypeSelectForm, EnterPartForm, DigiKeyAPIForm)
+ManufacturerFormSet, MergeManufacturersForm, FieldFormSet, TypeForm, TypeSelectForm, MouserForm, DigiKeyAPIForm)
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.forms.models import inlineformset_factory
 from django.urls import reverse, reverse_lazy
@@ -28,6 +28,7 @@ def view_file(request, name):
 class TypeListView(ListView):
     model = Type
     template_name = 'type_list.html'
+    ordering = ['name']
 
 class ManufacturerListView(ListView):
     model = Manufacturer
@@ -451,61 +452,61 @@ def MergeLocation(primary_object, alias_object):
 ##        form = EnterPartForm()
 ##    return render(request, "enter_part.html", {"form":form})
 
-def enter_part(request):
-    if request.method == "POST":
-        form = EnterPartForm(request.POST)
-        if form.is_valid():
-            url = form.cleaned_data['url']
-            partType = form.cleaned_data['partType']
-            page = requests.get(url, timeout=10)
-            data = BeautifulSoup(page.text, 'html.parser')
-            manufacturer_table = data.find(id="product-overview")
-            manufacturer_table_list = manufacturer_table.find_all("th")
-            for manufacturer in manufacturer_table_list:
-                header = manufacturer.text.strip()
-                row = manufacturer.find_next_sibling().text.strip()
-                if header == 'Manufacturer':
-                    manu = row
-                if header == 'Manufacturer Part Number':
-                    man_partNumber = row
-                if header == 'Detailed Description':
-                    detailed_descript = row
-
-            manu, created = Manufacturer.objects.get_or_create(name=manu)
-            
-            part_table = data.find(id="product-attribute-table")
-            part_table_list = part_table.find_all("th")
-            part_attr = {}
-            for part in part_table_list:
-                header = part.text.strip()
-                row = part.find_next_sibling().text.strip()
-                part_attr[header] = row
-                
-            part = Part.objects.create(partType=partType, description=detailed_descript)
-            for field in partType.field.all():
-                name = part_attr.get(field.name)
-                if name == 'null' or name is None or name == '-':
-                    name = ''
-                f = field.fields
-                setattr(part, f, name)
-
-            part.save()
-            
-            ManufacturerRelationship.objects.create(part=part, manufacturer=manu,
-                                                partNumber=man_partNumber)
-            redirect_url = reverse('list_parts', args=[partType.pk])
-            return HttpResponseRedirect(redirect_url)
-    else:
-        form = EnterPartForm()
-    return render(request, "enter_part.html", {"form":form})
+##def enter_part(request):
+##    if request.method == "POST":
+##        form = EnterPartForm(request.POST)
+##        if form.is_valid():
+##            url = form.cleaned_data['url']
+##            partType = form.cleaned_data['partType']
+##            page = requests.get(url, timeout=10)
+##            data = BeautifulSoup(page.text, 'html.parser')
+##            manufacturer_table = data.find(id="product-overview")
+##            manufacturer_table_list = manufacturer_table.find_all("th")
+##            for manufacturer in manufacturer_table_list:
+##                header = manufacturer.text.strip()
+##                row = manufacturer.find_next_sibling().text.strip()
+##                if header == 'Manufacturer':
+##                    manu = row
+##                if header == 'Manufacturer Part Number':
+##                    man_partNumber = row
+##                if header == 'Detailed Description':
+##                    detailed_descript = row
+##
+##            manu, created = Manufacturer.objects.get_or_create(name=manu)
+##            
+##            part_table = data.find(id="product-attribute-table")
+##            part_table_list = part_table.find_all("th")
+##            part_attr = {}
+##            for part in part_table_list:
+##                header = part.text.strip()
+##                row = part.find_next_sibling().text.strip()
+##                part_attr[header] = row
+##                
+##            part = Part.objects.create(partType=partType, description=detailed_descript)
+##            for field in partType.field.all():
+##                name = part_attr.get(field.name)
+##                if name == 'null' or name is None or name == '-':
+##                    name = ''
+##                f = field.fields
+##                setattr(part, f, name)
+##
+##            part.save()
+##            
+##            ManufacturerRelationship.objects.create(part=part, manufacturer=manu,
+##                                                partNumber=man_partNumber)
+##            redirect_url = reverse('list_parts', args=[partType.pk])
+##            return HttpResponseRedirect(redirect_url)
+##    else:
+##        form = EnterPartForm()
+##    return render(request, "enter_part.html", {"form":form})
 
 import http.client
 
-def oauth(request):
+def enter_digi_part(request):
     if request.method == "POST":
         form = DigiKeyAPIForm(request.POST)
         if form.is_valid():
-            partNumber = form.cleaned_data['partNumber']
+            barcode = form.cleaned_data['partNumber']
             partType = form.cleaned_data['partType']
             digi = DigiKeyAPI.objects.get(name="DigiKey")
 
@@ -525,6 +526,20 @@ def oauth(request):
             digi.save()
 
             #partNumber = 'H10247-ND'
+            conn = http.client.HTTPSConnection("api.digikey.com")
+
+            headers = {
+                'x-ibm-client-id': '73432ca9-e8ba-4965-af17-a22107f63b35',
+                'authorization': digi.access_token,
+                'accept': "application/json"
+                }
+
+            conn.request("GET", "/services/barcode/v1/productbarcode/" + barcode, headers=headers)
+
+            res = conn.getresponse()
+            data = res.read().decode("utf-8")
+            part = json.loads(data)
+            partNumber = part['DigiKeyPartNumber']
 
             conn = http.client.HTTPSConnection("api.digikey.com")
 
@@ -604,7 +619,7 @@ def get_token(request):
 
 def mouser_api(request):
     if request.method == "POST":
-        form = DigiKeyAPIForm(request.POST)
+        form = MouserForm(request.POST)
         if form.is_valid():
             partNumber = form.cleaned_data['partNumber']
             partType = form.cleaned_data['partType']
@@ -643,13 +658,13 @@ def mouser_api(request):
             redirect_url = reverse('list_parts', args=[partType.pk])
             return HttpResponseRedirect(redirect_url)
     else:
-        form = DigiKeyAPIForm()
+        form = MouserForm()
     return render(request, "mouser.html", {'form': form})
 
 def mouser_details(request):
     response = ''
     if request.method == "POST":
-        form = DigiKeyAPIForm(request.POST)
+        form = MouserForm(request.POST)
         if form.is_valid():
             partNumber = form.cleaned_data['partNumber']
             partType = form.cleaned_data['partType']
@@ -676,6 +691,6 @@ def mouser_details(request):
             if not response:
                 response.append("No specs can be retrieved")
     else:
-        form = DigiKeyAPIForm()
+        form = MouserForm()
     return render(request, "mouser_detail.html", {'form': form, 'response': response})
 

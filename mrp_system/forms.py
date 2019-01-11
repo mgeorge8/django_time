@@ -190,11 +190,11 @@ class FilterForm(forms.Form):
         manufacturer = forms.ModelMultipleChoiceField(required=False, queryset = Manufacturer.objects.none())
 
                         
-class EnterPartForm(forms.Form):
-        url = forms.CharField()
+class MouserForm(forms.Form):
+        partNumber = forms.CharField(label='Part Number')
         partType = forms.ModelChoiceField(queryset=Type.objects.order_by('name'))
 
 class DigiKeyAPIForm(forms.Form):
-        partNumber = forms.CharField(label='Part Number')
+        partNumber = forms.CharField(label='Barcode')
         partType = forms.ModelChoiceField(queryset=Type.objects.order_by('name'), label='Part Type')
         
