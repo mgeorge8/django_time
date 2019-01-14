@@ -209,6 +209,7 @@ class MouserForm(forms.Form):
         partType = forms.ModelChoiceField(queryset=Type.objects.order_by('name'))
 
 class DigiKeyAPIForm(forms.Form):
+        website = forms.ChoiceField(choices = ([('Digi-Key','Digi-Key'),('Mouser','Mouser')]), required=True)
         partNumber = forms.CharField(label='Barcode')
         partType = forms.ModelChoiceField(queryset=Type.objects.order_by('name'), label='Part Type')
         

@@ -510,6 +510,122 @@ def enter_digi_part(request):
         if form.is_valid():
             barcode = form.cleaned_data['partNumber']
             partType = form.cleaned_data['partType']
+            website = form.cleaned_data['website']
+            digi = DigiKeyAPI.objects.get(name="DigiKey")
+
+            API_ENDPOINT = "https://sso.digikey.com/as/token.oauth2"
+
+            data = {'client_id': '73432ca9-e8ba-4965-af17-a22107f63b35',
+                    'client_secret': 'G2rQ1cM8yM4gV6rW2nA1wL2yF7dN4sX4fJ2lV6jE5uT0bB0uG8',
+                    'refresh_token': digi.refresh_token,
+                    'grant_type': 'refresh_token'
+                    }
+            r = requests.post(url = API_ENDPOINT, data=data)
+            response = r.json()
+            refreshToken = response['refresh_token']
+            accessToken = response['access_token']
+            setattr(digi,"refresh_token",refreshToken)
+            setattr(digi,"access_token",accessToken)
+            digi.save()
+            if website == 'Digi-Key':
+            #partNumber = 'H10247-ND'
+                conn = http.client.HTTPSConnection("api.digikey.com")
+
+                headers = {
+                    'x-ibm-client-id': '73432ca9-e8ba-4965-af17-a22107f63b35',
+                    'authorization': digi.access_token,
+                    'accept': "application/json"
+                    }
+
+                conn.request("GET", "/services/barcode/v1/productbarcode/" + barcode, headers=headers)
+
+                res = conn.getresponse()
+                data = res.read().decode("utf-8")
+                part = json.loads(data)
+                partNumber = part['DigiKeyPartNumber']
+
+            elif website == 'Mouser':
+                partNumber = barcode
+            else:
+                return HttpResponseNotFound('<h1>Must select a website</h1>')
+
+            conn = http.client.HTTPSConnection("api.digikey.com")
+
+            payload = "{\"SearchOptions\":[\"ManufacturerPartSearch\"],\"Keywords\":\"" + partNumber + "\",\"RecordCount\":\"10\",\"RecordStartPosition\":\"0\",\"Filters\":{\"CategoryIds\":[27442628],\"FamilyIds\":[81316194],\"ManufacturerIds\":[88520800],\"ParametricFilters\":[{\"ParameterId\":\"725\",\"ValueId\":\"7\"}]},\"Sort\":{\"Option\":\"SortByUnitPrice\",\"Direction\":\"Ascending\",\"SortParameterId\":\"50\"},\"RequestedQuantity\":\"50\"}"
+
+            headers = {
+                'x-ibm-client-id': '73432ca9-e8ba-4965-af17-a22107f63b35',
+                'x-digikey-locale-site': "US",
+                'x-digikey-locale-language': "en",
+                'x-digikey-locale-currency': "USD",
+                'authorization': digi.access_token,
+                'content-type': "application/json",
+                'accept': "application/json"
+                }
+
+            conn.request("POST", "/services/partsearch/v2/keywordsearch", payload, headers)
+
+            res = conn.getresponse()
+            string = res.read().decode('utf-8')
+            print(string)
+            jstr = json.loads(string)
+            if website == 'Digi-Key':
+                try:
+                    part = jstr['ExactDigiKeyPart']
+                    data = part['Parameters']
+                except(IndexError, KeyError, TypeError):
+                    return HttpResponseNotFound('<h1>Invalid Part Number</h1>')
+            elif website == 'Mouser':
+                try:
+                    part = jstr['ExactParts'][0]
+                    data = part['Parameters']
+                except(IndexError, KeyError, TypeError):
+                    return HttpResponseNotFound('<h1>Invalid Part Number</h1>')
+            else:
+                return HttpResponseNotFound('<h1>Must select a website</h1>')
+            params = {}
+            for value in data:
+                params[value['Parameter']] = value['Value']
+
+            #partType = Type.objects.get(name="Connectors")
+            fields = Field.objects.filter(typePart=partType)
+            description = part['DetailedDescription']
+            number = part['ManufacturerPartNumber']
+            manufacturer = part['ManufacturerName']['Text']
+            new_part = Part.objects.create(partType=partType, description=description)
+            manu, created = Manufacturer.objects.get_or_create(name=manufacturer)
+            ManufacturerRelationship.objects.create(part=new_part, manufacturer=manu, partNumber=number)
+            for field in fields:
+                name = field.name
+                field_name = field.fields
+                if field.name == "Composition":
+                    try:
+                        value = part['Family']['Text']
+                        setattr(new_part, field.fields, value)
+                    except(IndexError, KeyError):
+                        pass
+                try:
+                    value = part[name]['Value']
+                    setattr(new_part, field.fields, value)
+                except(IndexError, KeyError):
+                    try:
+                        value = params[name]
+                        setattr(new_part, field.fields, value)
+                    except(IndexError, KeyError):
+                        pass
+            new_part.save()
+            redirect_url = reverse('list_parts', args=[partType.pk])
+            return HttpResponseRedirect(redirect_url)
+    else:
+        form = DigiKeyAPIForm()
+    return render(request, "oauth.html", {'form': form})
+
+def enterdigi_part(request):
+    if request.method == "POST":
+        form = DigiKeyAPIForm(request.POST)
+        if form.is_valid():
+            partNumber = form.cleaned_data['partNumber']
+            partType = form.cleaned_data['partType']
             digi = DigiKeyAPI.objects.get(name="DigiKey")
 
             API_ENDPOINT = "https://sso.digikey.com/as/token.oauth2"
@@ -528,20 +644,20 @@ def enter_digi_part(request):
             digi.save()
 
             #partNumber = 'H10247-ND'
-            conn = http.client.HTTPSConnection("api.digikey.com")
-
-            headers = {
-                'x-ibm-client-id': '73432ca9-e8ba-4965-af17-a22107f63b35',
-                'authorization': digi.access_token,
-                'accept': "application/json"
-                }
-
-            conn.request("GET", "/services/barcode/v1/productbarcode/" + barcode, headers=headers)
-
-            res = conn.getresponse()
-            data = res.read().decode("utf-8")
-            part = json.loads(data)
-            partNumber = part['DigiKeyPartNumber']
+##            conn = http.client.HTTPSConnection("api.digikey.com")
+##
+##            headers = {
+##                'x-ibm-client-id': '73432ca9-e8ba-4965-af17-a22107f63b35',
+##                'authorization': digi.access_token,
+##                'accept': "application/json"
+##                }
+##
+##            conn.request("GET", "/services/barcode/v1/productbarcode/" + barcode, headers=headers)
+##
+##            res = conn.getresponse()
+##            data = res.read().decode("utf-8")
+##            part = json.loads(data)
+##            partNumber = part['DigiKeyPartNumber']
 
             conn = http.client.HTTPSConnection("api.digikey.com")
 
@@ -564,7 +680,7 @@ def enter_digi_part(request):
             print(string)
             jstr = json.loads(string)
             try:
-                part = jstr['ExactDigiKeyPart']
+                part = jstr['ExactParts'][0]
                 data = part['Parameters']
             except(IndexError, KeyError, TypeError):
                 #messages.error(request, ('Invalid part number.'))
@@ -585,6 +701,9 @@ def enter_digi_part(request):
             for field in fields:
                 name = field.name
                 field_name = field.fields
+                if field.name == "Composition":
+                    value = part['Family']['Text']
+                    setattr(new_part, field.fields, value)
                 try:
                     value = part[name]['Value']
                     setattr(new_part, field.fields, value)
@@ -600,6 +719,8 @@ def enter_digi_part(request):
     else:
         form = DigiKeyAPIForm()
     return render(request, "oauth.html", {'form': form})
+
+
 
 def get_token(request):
     digi = DigiKeyAPI.objects.get(name="DigiKey")
