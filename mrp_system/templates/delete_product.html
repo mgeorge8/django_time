@@ -1,20 +1,20 @@
 {% extends "base2.html" %}
 
 
-{% block title %}BOM{% endblock title %}
+{% block title %}Product{% endblock title %}
 {% block crumbs %}
     {{ block.super }}
-    <li><span class="divider">/</span> <a href="{% url 'list_bom' %}"> BOM's</a></li>
+    <li><span class="divider">/</span> <a href="{% url 'list_product' %}"> Product's</a></li>
 {% endblock crumbs %}
 {% block content %}
-<h3>Delete Bill of Materials</h3>
+<h3>Delete Product</h3>
 <div class="container-fluid">
 <div class="form-horizontal">
 <form action="" method="post">
 {% csrf_token %}
 <p>Are you sure you want to delete "{{ object }}"?</p>
     <input type="submit" value="Confirm">
-<a href="{% url 'list_bom' %}">Cancel</a>
+<a href="{% url 'list_product' %}">Cancel</a>
     </form>
 </div>
 <hr/>

@@ -4,10 +4,11 @@ from django.views.generic import ListView, TemplateView
 from mrp_system.models import (Part, Type, Field, Manufacturer,
                                ManufacturerRelationship, Location,
                                LocationRelationship, DigiKeyAPI,
-                               BillofMaterials, Product)
+                               PartAmount, Product, ProductAmount)
 from mrp_system.forms import (FilterForm, PartForm, LocationForm, LocationFormSet, MergeLocationsForm, ManufacturerForm,
 ManufacturerFormSet, MergeManufacturersForm, FieldFormSet, TypeForm, TypeSelectForm, MouserForm, DigiKeyAPIForm,
-                              ProductForm, BOMFormSet, BillPartForm)
+                              ProductForm, PartToProductFormSet, PartToProductForm,
+                              ProductToProductFormSet, ProductLocationFormSet)
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.forms.models import inlineformset_factory
 from django.urls import reverse, reverse_lazy
@@ -614,113 +615,11 @@ def enter_digi_part(request):
                     except(IndexError, KeyError):
                         pass
             new_part.save()
-            redirect_url = reverse('list_parts', args=[partType.pk])
+            redirect_url = reverse('edit_part', args=[partType.pk, new_part.id])
             return HttpResponseRedirect(redirect_url)
     else:
         form = DigiKeyAPIForm()
     return render(request, "oauth.html", {'form': form})
-
-def enterdigi_part(request):
-    if request.method == "POST":
-        form = DigiKeyAPIForm(request.POST)
-        if form.is_valid():
-            partNumber = form.cleaned_data['partNumber']
-            partType = form.cleaned_data['partType']
-            digi = DigiKeyAPI.objects.get(name="DigiKey")
-
-            API_ENDPOINT = "https://sso.digikey.com/as/token.oauth2"
-
-            data = {'client_id': '73432ca9-e8ba-4965-af17-a22107f63b35',
-                    'client_secret': 'G2rQ1cM8yM4gV6rW2nA1wL2yF7dN4sX4fJ2lV6jE5uT0bB0uG8',
-                    'refresh_token': digi.refresh_token,
-                    'grant_type': 'refresh_token'
-                    }
-            r = requests.post(url = API_ENDPOINT, data=data)
-            response = r.json()
-            refreshToken = response['refresh_token']
-            accessToken = response['access_token']
-            setattr(digi,"refresh_token",refreshToken)
-            setattr(digi,"access_token",accessToken)
-            digi.save()
-
-            #partNumber = 'H10247-ND'
-##            conn = http.client.HTTPSConnection("api.digikey.com")
-##
-##            headers = {
-##                'x-ibm-client-id': '73432ca9-e8ba-4965-af17-a22107f63b35',
-##                'authorization': digi.access_token,
-##                'accept': "application/json"
-##                }
-##
-##            conn.request("GET", "/services/barcode/v1/productbarcode/" + barcode, headers=headers)
-##
-##            res = conn.getresponse()
-##            data = res.read().decode("utf-8")
-##            part = json.loads(data)
-##            partNumber = part['DigiKeyPartNumber']
-
-            conn = http.client.HTTPSConnection("api.digikey.com")
-
-            payload = "{\"SearchOptions\":[\"ManufacturerPartSearch\"],\"Keywords\":\"" + partNumber + "\",\"RecordCount\":\"10\",\"RecordStartPosition\":\"0\",\"Filters\":{\"CategoryIds\":[27442628],\"FamilyIds\":[81316194],\"ManufacturerIds\":[88520800],\"ParametricFilters\":[{\"ParameterId\":\"725\",\"ValueId\":\"7\"}]},\"Sort\":{\"Option\":\"SortByUnitPrice\",\"Direction\":\"Ascending\",\"SortParameterId\":\"50\"},\"RequestedQuantity\":\"50\"}"
-
-            headers = {
-                'x-ibm-client-id': '73432ca9-e8ba-4965-af17-a22107f63b35',
-                'x-digikey-locale-site': "US",
-                'x-digikey-locale-language': "en",
-                'x-digikey-locale-currency': "USD",
-                'authorization': digi.access_token,
-                'content-type': "application/json",
-                'accept': "application/json"
-                }
-
-            conn.request("POST", "/services/partsearch/v2/keywordsearch", payload, headers)
-
-            res = conn.getresponse()
-            string = res.read().decode('utf-8')
-            print(string)
-            jstr = json.loads(string)
-            try:
-                part = jstr['ExactParts'][0]
-                data = part['Parameters']
-            except(IndexError, KeyError, TypeError):
-                #messages.error(request, ('Invalid part number.'))
-                return HttpResponseNotFound('<h1>Invalid Part Number</h1>')
-                #raise Http404("Invalid part number")
-            params = {}
-            for value in data:
-                params[value['Parameter']] = value['Value']
-
-            #partType = Type.objects.get(name="Connectors")
-            fields = Field.objects.filter(typePart=partType)
-            description = part['DetailedDescription']
-            number = part['ManufacturerPartNumber']
-            manufacturer = part['ManufacturerName']['Text']
-            new_part = Part.objects.create(partType=partType, description=description)
-            manu, created = Manufacturer.objects.get_or_create(name=manufacturer)
-            ManufacturerRelationship.objects.create(part=new_part, manufacturer=manu, partNumber=number)
-            for field in fields:
-                name = field.name
-                field_name = field.fields
-                if field.name == "Composition":
-                    value = part['Family']['Text']
-                    setattr(new_part, field.fields, value)
-                try:
-                    value = part[name]['Value']
-                    setattr(new_part, field.fields, value)
-                except(IndexError, KeyError):
-                    try:
-                        value = params[name]
-                        setattr(new_part, field.fields, value)
-                    except(IndexError, KeyError):
-                        pass
-            new_part.save()
-            redirect_url = reverse('list_parts', args=[partType.pk])
-            return HttpResponseRedirect(redirect_url)
-    else:
-        form = DigiKeyAPIForm()
-    return render(request, "oauth.html", {'form': form})
-
-
 
 def get_token(request):
     digi = DigiKeyAPI.objects.get(name="DigiKey")
@@ -817,56 +716,78 @@ def mouser_details(request):
         form = MouserForm()
     return render(request, "mouser_detail.html", {'form': form, 'response': response})
 
-def CreateBOM(request):
+def CreateProduct(request):
     if request.method == 'POST':
         form = ProductForm(request.POST)
-        bom_formset = BOMFormSet(request.POST)
-        if form.is_valid() and bom_formset.is_valid():
+        part_formset = PartToProductFormSet(request.POST)
+        product_formset = ProductToProductFormSet(request.POST)
+        location_formset = ProductLocationFormSet(request.POST)
+        if (form.is_valid() and part_formset.is_valid() and
+            product_formset.is_valid() and location_formset.is_valid()):
             self_object = form.save()
-            bom_formset.instance = self_object
-            bom_formset.save()
-            url = reverse('list_types')
+            part_formset.instance = self_object
+            part_formset.save()
+            product_formset.instance = self_object
+            product_formset.save()
+            location_formset.instance = self_object
+            location_formset.save()
+            url = reverse('list_product')
             return HttpResponseRedirect(url)
     else:
         form = ProductForm()
-        bom_formset = BOMFormSet()
-    return render(request,'BOM_create.html',{'form': form,
-                                            'bom_formset': bom_formset})
+        part_formset = PartToProductFormSet()
+        product_formset = ProductToProductFormSet()
+        location_formset = ProductLocationFormSet()
+    return render(request,'product_create.html',{'form': form, 'part_formset': part_formset,
+                                            'product_formset': product_formset, 'location_formset':
+                                                 location_formset})
 
-class BOMListView(ListView):
+class ProductListView(ListView):
     model = Product
     template_name = 'product_list.html'
-    ordering = ['name']
+    ordering = ['description']
     
         
-def EditBOM(request, id):
+def EditProduct(request, id):
     instance = get_object_or_404(Product, id=id)
     if request.method == 'POST':
         form = ProductForm(request.POST, instance=instance)
-        bom_formset = BOMFormSet(request.POST, instance=instance)
-        if form.is_valid() and bom_formset.is_valid():
+        part_formset = PartToProductFormSet(request.POST, instance=instance)
+        product_formset = ProductToProductFormSet(request.POST, instance=instance)
+        location_formset = ProductLocationFormSet(request.POST, instance=instance)
+        if (form.is_valid() and part_formset.is_valid() and
+            product_formset.is_valid() and location_formset.is_valid()):
             self_object = form.save()
-            bom_formset.instance = self_object
-            bom_formset.save()
-            url = reverse('list_bom')
+            part_formset.instance = self_object
+            part_formset.save()
+            product_formset.instance = self_object
+            product_formset.save()
+            location_formset.instance = self_object
+            location_formset.save()
+            url = reverse('list_product')
             return HttpResponseRedirect(url)
     else:
         form = ProductForm(instance=instance)
-        bom_formset = BOMFormSet(instance=instance)
-    return render(request,'BOM_create.html',{'form': form,
-                                            'bom_formset': bom_formset})
+        part_formset = PartToProductFormSet(instance=instance)
+        product_formset = ProductToProductFormSet(instance=instance)
+        location_formset = ProductLocationFormSet(instance=instance)
+    return render(request,'product_create.html',{'form': form, 'part_formset': part_formset,
+                                            'product_formset': product_formset,
+                                                 'location_formset': location_formset})
 
-class DeleteBOM(DeleteView):
+class DeleteProduct(DeleteView):
     model = Product
-    success_url = reverse_lazy('list_bom')
+    success_url = reverse_lazy('list_product')
     pk_url_kwarg = 'product_id'
-    template_name = 'delete_bom.html'
+    template_name = 'delete_product.html'
 
-def BOMDetailView(request, product_id):
+def ProductDetailView(request, product_id):
     product = get_object_or_404(Product, id=product_id)
-    bom = product.billofmaterials_set.all()
-    return render(request, 'bom_detail.html', {'product': product,
-                                               'bom': bom})
+    parts = product.partamount_set.all()
+    component_products = ProductAmount.objects.filter(from_product=product)
+    return render(request, 'product_detail.html', {'product': product,
+                                               'parts': parts,
+                                                   'component_products': component_products})
 
 
 

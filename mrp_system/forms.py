@@ -1,6 +1,7 @@
 from django import forms
 from mrp_system.models import (Location, LocationRelationship,
-Part, Manufacturer, ManufacturerRelationship, Field, Type, Product, BillofMaterials)
+Part, Manufacturer, ManufacturerRelationship, Field, Type, Product,
+                               PartAmount, ProductAmount, ProductLocation)
 from django.forms import ModelForm, BaseInlineFormSet
 from django.forms.models import inlineformset_factory
 
@@ -104,18 +105,35 @@ LocationFormSet = inlineformset_factory(Part, LocationRelationship,
 class ProductForm(ModelForm):
     class Meta:
         model = Product
-        exclude = ('part',)
+        exclude = ('part', 'component_product', 'location')
         
-class BillPartForm(ModelForm):
+class PartToProductForm(ModelForm):
     part = forms.ModelChoiceField(queryset=Part.objects.all())
     class Meta:
-        model = BillofMaterials
+        model = PartAmount
         exclude = ('product',)
 
-BOMFormSet = inlineformset_factory(Product, BillofMaterials,
-                                    form=BillPartForm, extra=1)
-        
+PartToProductFormSet = inlineformset_factory(Product, PartAmount,
+                                    form=PartToProductForm, extra=1)
 
+class ProductToProductForm(ModelForm):
+    to_product = forms.ModelChoiceField(label='Product', queryset=Product.objects.all())
+    class Meta:
+        model = ProductAmount
+        exclude = ('from_product',)
+
+ProductToProductFormSet = inlineformset_factory(Product, ProductAmount, fk_name='from_product',
+                                                form=ProductToProductForm, extra=1)
+        
+class ProductLocationForm(ModelForm):
+    location=forms.ModelChoiceField(queryset=Location.objects.order_by('name'))
+    class Meta:
+        model = ProductLocation
+        exclude = ('product',)
+
+ProductLocationFormSet = inlineformset_factory(Product, ProductLocation,
+                                        form=ProductLocationForm, extra=1)
+        
 class TypeForm(ModelForm):
     class Meta:
         model = Type

@@ -1,0 +1,101 @@
+{% extends "base2.html" %}
+
+
+{% block title %}Product{% endblock title %}
+{% block crumbs %}
+    {{ block.super }}
+    <li><span class="divider">/</span> <a href="{% url 'list_product' %}"> Products</a></li>
+{% endblock crumbs %}
+{% block content %}
+<div class="container-fluid">
+<h3> Create New Product</h3>
+<div class="form-horizontal">
+<form action="" method="post" enctype='multipart/form-data'>{% csrf_token %}
+<div class="section">
+{{ form.as_table }}
+</div>
+
+<hr><br>
+{{ location_formset.management_form }}
+<div id="form-set">
+{% for form in location_formset.forms %}
+<div class='no_error'>
+<table class='no_error'>
+{{ form.as_table }}
+</table>
+</div>
+{% endfor %}
+</div>
+<input type="button" value="Add" id="add-more">
+<div id="empty-form" style="display:none">
+    <table class='no_error'>
+        {{ location_formset.empty_form.as_table }}
+    </table>
+</div>
+<script>
+    $('#add-more').click(function() {
+         var formidx = $('#id_location_set-TOTAL_FORMS').val();
+        $('#form-set').append($('#empty-form').html().replace(/__prefix__/g, formidx));
+
+        $('#id_location_set-TOTAL_FORMS').val(parseInt(formidx) + 1);
+    });
+</script>
+
+<hr><br>
+{{ part_formset.management_form }}
+<div id="formset">
+{% for form in part_formset.forms %}
+<table class='no_error'>
+{{ form.as_table }}
+</table>
+{% endfor %}
+</div>
+<input type="button" value="Add" id="addmore">
+<div id="emptyform" style="display:none">
+    <table class='no_error'>
+        {{ part_formset.empty_form.as_table }}
+    </table>
+</div>
+<script>
+    $('#addmore').click(function() {
+         var formidx = $('#id_part_set-TOTAL_FORMS').val();
+        $('#formset').append($('#emptyform').html().replace(/__prefix__/g, formidx));
+
+        $('#id_part_set-TOTAL_FORMS').val(parseInt(formidx) + 1);
+    });
+</script>
+<hr><br>
+{{ product_formset.management_form }}
+<div id="form_set">
+{% for form in product_formset.forms %}
+<div class='no_error'>
+<table class='no_error'>
+{{ form.as_table }}
+</table>
+</div>
+{% endfor %}
+</div>
+<input type="button" value="Add" id="add_more">
+<div id="empty_form" style="display:none">
+    <table class='no_error'>
+        {{ product_formset.empty_form.as_table }}
+    </table>
+</div>
+<script>
+    $('#add_more').click(function() {
+         var formidx = $('#id_from_product_set-TOTAL_FORMS').val();
+        $('#form_set').append($('#empty_form').html().replace(/__prefix__/g, formidx));
+
+        $('#id_from_product_set-TOTAL_FORMS').val(parseInt(formidx) + 1);
+    });
+</script>
+
+<br><br>
+<input class="btn btn-primary" type="submit" value="Save"/>
+</form>
+
+</div>
+<hr/>
+        </div>
+{% endblock content %}
+

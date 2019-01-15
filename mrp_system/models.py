@@ -142,17 +142,32 @@ class LocationRelationship(models.Model):
     stock = models.IntegerField(blank=True, null=True)
 
 class Product(models.Model):
-    name = models.CharField(max_length=100, blank=True)
-    part = models.ManyToManyField(Part, through='BillofMaterials')
+    description = models.CharField(max_length=100, blank=True)
+    url = models.CharField(max_length=500, blank=True)
+    location = models.ManyToManyField(Location, through='ProductLocation')
+    part = models.ManyToManyField(Part, through='PartAmount')
+    component_product = models.ManyToManyField('self', symmetrical=False,
+                                               through='ProductAmount',
+                                               through_fields=('from_product', 'to_product'),)
 
     def __str__(self):
-        return str(self.name)
+        return str(self.description)
 
-class BillofMaterials(models.Model):
+class PartAmount(models.Model):
     part = models.ForeignKey(Part, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     amount = models.IntegerField(blank=True, null=True, default=1)
 
+class ProductAmount(models.Model):
+    from_product = models.ForeignKey(Product, related_name='from_product', on_delete=models.CASCADE)
+    to_product = models.ForeignKey(Product, related_name='to_product', on_delete=models.CASCADE)
+    amount = models.IntegerField(blank=True, null=True, default=1)
+
+class ProductLocation(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    location = models.ForeignKey(Location, on_delete=models.CASCADE)
+    stock = models.IntegerField(blank=True, null=True)
+    
 class DigiKeyAPI(models.Model):
     name = models.CharField(max_length=100)
     refresh_token = models.CharField(max_length=150)
