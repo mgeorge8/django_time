@@ -87,6 +87,9 @@ urlpatterns = [
     url('product/(?P<product_id>\d+)/$',
         views.ProductDetailView,
         name='product_detail'),
+    url('bom/(?P<product_id>\d+)/$',
+        views.billOfMaterialsDetail,
+        name='bom_detail'),
 
     url('mo/create/$',
         views.CreateMO,

@@ -1,20 +1,41 @@
 {% extends "base2.html" %}
 
 
-{% block title %}Product{% endblock title %}
+{% block title %}BOM{% endblock title %}
 {% block crumbs %}
     {{ block.super }}
-    <li><span class="divider">/</span> <a href="{% url 'list_product' %}"> Products</a></li>
+    <li><span class="divider">/</span> <a href="{% url 'list_mo' %}">Manufacturing Orders</a></li>
 {% endblock crumbs %}
 {% block content %}
-<h3>produc</h3>
+<h3>Manufacturing Order for {{ mo.name }}</h3>
 <hr/>
-<h5>Parts {{ parts }}</h5>
+<h5>Parts To Order</h5>
 <ul>
-{% for p in pats %}
-<li>{{ p.amount }} - {{ p.part.description }}</li>
+{% for key, value in order.items %}
+<li>{{ value }} - {{ key }}</li>
 {% endfor %}
 </ul>
+<br><br>
+<h5>Parts Needed to Make</h5>
 
+<table class='table table-bordered table-striped table-condensed'>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+			<th>Total Amount Needed</th>
+			<th>Total Amount Have</th>
+                    </tr>
+                </thead>
+                <tbody>
+                                {% for key, value in products.items %}
+
+                        <tr>
+			    <td>{{ key }}</td>
+                            <td>{{ value.0 }}</a></td>
+			    <td>{{ value.1 }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
 
 {% endblock content %}

@@ -785,10 +785,46 @@ class DeleteProduct(DeleteView):
 def ProductDetailView(request, product_id):
     product = get_object_or_404(Product, id=product_id)
     parts = product.partamount_set.all()
+    locations = product.productlocation_set.all()
     component_products = ProductAmount.objects.filter(from_product=product)
     return render(request, 'product_detail.html', {'product': product,
+                                                   'locations': locations,
                                                'parts': parts,
                                                    'component_products': component_products})
+
+def billOfMaterialsDetail(request, product_id):
+    product = get_object_or_404(Product, id=product_id)
+    parts = {}
+##    mos = mo.moproduct_set.all()
+##    products = ProductAmount.objects.none()   
+##    for m in mos:
+    partList = product.partamount_set.all()
+    for p in partList:
+        if parts.get(p.part.description):
+            parts[p.part.description]+=p.amount
+        else:
+            parts[p.part.description]=p.amount
+    products = ProductAmount.objects.filter(from_product=product)
+    while products:
+        productList=products
+        products = ProductAmount.objects.none()
+        for pr in productList:
+            partList2 = pr.to_product.partamount_set.all()
+            for pa in partList2:
+                if parts.get(pa.part.description):
+                    parts[pa.part.description]+=pa.amount
+                else:
+                    parts[pa.part.description]=pa.amount
+            if products:
+                products = products.union(ProductAmount.objects.filter(from_product=pr.to_product))
+            else:
+                print("else")
+                products = ProductAmount.objects.filter(from_product=pr.to_product)
+                print("else")
+                print(products)
+        print(products)
+    print(parts)
+    return render(request, 'bom_detail.html', {'parts': parts, 'product': product}) 
 
 def CreateMO(request):
     if request.method == 'POST':
@@ -838,40 +874,60 @@ class DeleteMO(DeleteView):
 
 def MODetailView(request, mo_id):
     mo = get_object_or_404(ManufacturingOrder, id=mo_id)
-    parts = {}
+    #parts = {}
     mos = mo.moproduct_set.all()
-    products = ProductAmount.objects.none()   
+    products = {}
+    order = {}
     for m in mos:
-        partList = m.product.partamount_set.all()
-        for p in partList:
-            if parts.get(p.part.description):
-                parts[p.part.description]+=p.amount
-            else:
-                parts[p.part.description]=p.amount
-        if products:
-            products = products.union(ProductAmount.objects.filter(from_product=m.product))
-        else:
-            products = ProductAmount.objects.filter(from_product=m.product)
-    while products:
-        productList=products
-        products = ProductAmount.objects.none()
-        for pr in productList:
-            partLis = pr.to_product.partamount_set.all()
-            for pa in partLis:
-                if parts.get(pa.part.description):
-                    parts[pa.part.description]+=pa.amount
-                else:
-                    parts[pa.part.description]=pa.amount
-            if products:
-                print("if")
-                products = products.union(ProductAmount.objects.filter(from_product=pr.to_product))
-            else:
-                print("else")
-                products = ProductAmount.objects.filter(from_product=pr.to_product)
-                print("else")
-                print(products)
-        print(products)
-    print(parts)
-    return render(request, 'mo_detail.html', {'parts': parts}) 
+        value = 0
+        stocklist = []
+        #stocklist = "Total amount needed: "
+        amount = m.amount
+        #stocklist += str(amount)
+        stocklist.append(amount)
+        #products[m.product.description] = str(m.amount)
+        locations = m.product.productlocation_set.all()
+        for l in locations:
+            value += l.stock
+        #stocklist += " Total amount have: "
+        #stocklist += str(value)
+        stocklist.append(value)
+        needed = amount - value
+        if needed > 0:
+            order[m.product.description] = needed
+        
+        products[m.product.description] = stocklist
+        
+##    for m in mos:
+##        partList = m.product.partamount_set.all()
+##        for p in partList:
+##            if parts.get(p.part.description):
+##                parts[p.part.description]+=p.amount
+##            else:
+##                parts[p.part.description]=p.amount
+##        if products:
+##            products = products.union(ProductAmount.objects.filter(from_product=m.product))
+##        else:
+##            products = ProductAmount.objects.filter(from_product=m.product)
+##    while products:
+##        productList=products
+##        products = ProductAmount.objects.none()
+##        for pr in productList:
+##            partLis = pr.to_product.partamount_set.all()
+##            for pa in partLis:
+##                if parts.get(pa.part.description):
+##                    parts[pa.part.description]+=pa.amount
+##                else:
+##                    parts[pa.part.description]=pa.amount
+##            if products:
+##                print("if")
+##                products = products.union(ProductAmount.objects.filter(from_product=pr.to_product))
+##            else:
+##                print("else")
+##                products = ProductAmount.objects.filter(from_product=pr.to_product)
+##                print("else")
+##                print(products)
+##        print(products)
+    return render(request, 'mo_detail.html', {'order': order, 'products': products, 'mo': mo}) 
         
     

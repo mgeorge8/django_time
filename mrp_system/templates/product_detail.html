@@ -9,6 +9,13 @@
 {% block content %}
 <h3>{{ product.description }}</h3>
 <hr/>
+<h5>URL:</h5><p> {{ product.url }}</p>
+<h5>Locations</h5>
+<ul>
+{% for l in locations %}
+<li>{{ l.stock }} - {{ l.location.name }}</li>
+{% endfor %}
+</ul>
 <h5>Parts</h5>
 <ul>
 {% for p in parts %}
