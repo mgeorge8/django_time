@@ -172,6 +172,9 @@ class ManufacturingOrder(models.Model):
     name = models.CharField(max_length=50, blank=True)
     product = models.ManyToManyField(Product, through='MOProduct')
 
+    def __str__(self):
+        return self.name
+    
 class MOProduct(models.Model):
     manufacturing_order = models.ForeignKey(ManufacturingOrder, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)

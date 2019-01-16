@@ -859,7 +859,7 @@ def EditMO(request, id):
             self_object = form.save()
             manu_formset.instance = self_object
             manu_formset.save()
-            url = reverse('list_product')
+            url = reverse('list_mo')
             return HttpResponseRedirect(url)
     else:
         form = ManufacturingOrderForm(instance=instance)
