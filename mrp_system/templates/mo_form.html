@@ -1,0 +1,52 @@
+{% extends "base2.html" %}
+
+
+{% block title %}MO{% endblock title %}
+{% block crumbs %}
+    {{ block.super }}
+    <li><span class="divider">/</span> <a href="{% url 'list_mo' %}"> Manufacturing Orders</a></li>
+{% endblock crumbs %}
+{% block content %}
+<div class="container-fluid">
+<h3> Create New Manufacturing Order</h3>
+<div class="form-horizontal">
+<form action="" method="post" enctype='multipart/form-data'>{% csrf_token %}
+<div class="section">
+{{ form.as_table }}
+</div>
+
+<hr><br>
+{{ manu_formset.management_form }}
+<div id="form-set">
+{% for form in manu_formset.forms %}
+<div class='no_error'>
+<table class='no_error'>
+{{ form.as_table }}
+</table>
+</div>
+{% endfor %}
+</div>
+<input type="button" value="Add" id="add-more">
+<div id="empty-form" style="display:none">
+    <table class='no_error'>
+        {{ manu_formset.empty_form.as_table }}
+    </table>
+</div>
+<script>
+    $('#add-more').click(function() {
+         var formidx = $('#id_product_set-TOTAL_FORMS').val();
+        $('#form-set').append($('#empty-form').html().replace(/__prefix__/g, formidx));
+
+        $('#id_product_set-TOTAL_FORMS').val(parseInt(formidx) + 1);
+    });
+</script>
+
+<br><br>
+<input class="btn btn-primary" type="submit" value="Save"/>
+</form>
+
+</div>
+<hr/>
+        </div>
+{% endblock content %}
+

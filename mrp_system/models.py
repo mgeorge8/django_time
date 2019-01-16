@@ -167,6 +167,15 @@ class ProductLocation(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     location = models.ForeignKey(Location, on_delete=models.CASCADE)
     stock = models.IntegerField(blank=True, null=True)
+
+class ManufacturingOrder(models.Model):
+    name = models.CharField(max_length=50, blank=True)
+    product = models.ManyToManyField(Product, through='MOProduct')
+
+class MOProduct(models.Model):
+    manufacturing_order = models.ForeignKey(ManufacturingOrder, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    amount = models.IntegerField(blank=True, null=True)
     
 class DigiKeyAPI(models.Model):
     name = models.CharField(max_length=100)

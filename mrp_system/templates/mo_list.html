@@ -6,26 +6,24 @@
 {% block content %}
 <div class="container-fluid">
 <h2> Products </h2>
-<a href="{% url 'create_product' %}"> Create New Product</a>
+<a href="{% url 'create_mo' %}"> Create New Manufacturing Order</a>
 <hr>           
 <br> 
 <table class='table table-bordered table-striped table-condensed'>
                 <thead>
                     <tr>
-                        <th>Description</th>
-			<th>Bill Of Materials</th>
+                        <th>Name</th>
 			<th>Edit</th>
 			<th>Delete</th>
                     </tr>
                 </thead>
                 <tbody>
-                                {% for product in object_list %}
+                                {% for mo in object_list %}
 
                         <tr>
-			    <td>{{ product.description }}</td>
-                            <td><a href="{% url 'product_detail' product.id %}">BOM</a></td>
-                            <td><a href="{% url 'edit_product' product.id%}">Edit</a></td>
-			    <td><a href="{% url 'delete_product' product.id%}">Delete</a></td>
+			    <td><a href="{% url 'detail_mo' mo.id%}">{{ mo.name }}</td>
+                            <td><a href="{% url 'edit_mo' mo.id%}">Edit</a></td>
+			    <td><a href="{% url 'delete_mo' mo.id%}">Delete</td>
                         </tr>
                     {% endfor %}
                 </tbody>

@@ -4,11 +4,12 @@ from django.views.generic import ListView, TemplateView
 from mrp_system.models import (Part, Type, Field, Manufacturer,
                                ManufacturerRelationship, Location,
                                LocationRelationship, DigiKeyAPI,
-                               PartAmount, Product, ProductAmount)
+                               PartAmount, Product, ProductAmount, ManufacturingOrder)
 from mrp_system.forms import (FilterForm, PartForm, LocationForm, LocationFormSet, MergeLocationsForm, ManufacturerForm,
 ManufacturerFormSet, MergeManufacturersForm, FieldFormSet, TypeForm, TypeSelectForm, MouserForm, DigiKeyAPIForm,
                               ProductForm, PartToProductFormSet, PartToProductForm,
-                              ProductToProductFormSet, ProductLocationFormSet)
+                              ProductToProductFormSet, ProductLocationFormSet,
+                              ManufacturingOrderForm, ManufacturingProductFormSet)
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.forms.models import inlineformset_factory
 from django.urls import reverse, reverse_lazy
@@ -789,6 +790,88 @@ def ProductDetailView(request, product_id):
                                                'parts': parts,
                                                    'component_products': component_products})
 
+def CreateMO(request):
+    if request.method == 'POST':
+        form = ManufacturingOrderForm(request.POST)
+        manu_formset = ManufacturingProductFormSet(request.POST)
+        #product_formset = ProductToProductFormSet(request.POST)
+        #location_formset = ProductLocationFormSet(request.POST)
+        if (form.is_valid() and manu_formset.is_valid()):
+            self_object = form.save()
+            manu_formset.instance = self_object
+            manu_formset.save()
+            url = reverse('list_product')
+            return HttpResponseRedirect(url)
+    else:
+        form = ManufacturingOrderForm()
+        manu_formset = ManufacturingProductFormSet()
+    return render(request,'mo_form.html',{'form': form, 'manu_formset': manu_formset})
 
+class MOListView(ListView):
+    model = ManufacturingOrder
+    template_name = 'mo_list.html'
+    ordering = ['name']
+        
+def EditMO(request, id):
+    instance = get_object_or_404(ManufacturingOrder, id=id)
+    if request.method == 'POST':
+        form = ManufacturingOrderForm(request.POST, instance=instance)
+        manu_formset = ManufacturingProductFormSet(request.POST, instance=instance)
+        #product_formset = ProductToProductFormSet(request.POST)
+        #location_formset = ProductLocationFormSet(request.POST)
+        if (form.is_valid() and manu_formset.is_valid()):
+            self_object = form.save()
+            manu_formset.instance = self_object
+            manu_formset.save()
+            url = reverse('list_product')
+            return HttpResponseRedirect(url)
+    else:
+        form = ManufacturingOrderForm(instance=instance)
+        manu_formset = ManufacturingProductFormSet(instance=instance)
+    return render(request,'mo_form.html',{'form': form, 'manu_formset': manu_formset})
 
+class DeleteMO(DeleteView):
+    model = ManufacturingOrder
+    success_url = reverse_lazy('list_mo')
+    pk_url_kwarg = 'manufacturingorder_id'
+    template_name = 'delete_mo.html'
+
+def MODetailView(request, mo_id):
+    mo = get_object_or_404(ManufacturingOrder, id=mo_id)
+    parts = {}
+    mos = mo.moproduct_set.all()
+    products = ProductAmount.objects.none()   
+    for m in mos:
+        partList = m.product.partamount_set.all()
+        for p in partList:
+            if parts.get(p.part.description):
+                parts[p.part.description]+=p.amount
+            else:
+                parts[p.part.description]=p.amount
+        if products:
+            products = products.union(ProductAmount.objects.filter(from_product=m.product))
+        else:
+            products = ProductAmount.objects.filter(from_product=m.product)
+    while products:
+        productList=products
+        products = ProductAmount.objects.none()
+        for pr in productList:
+            partLis = pr.to_product.partamount_set.all()
+            for pa in partLis:
+                if parts.get(pa.part.description):
+                    parts[pa.part.description]+=pa.amount
+                else:
+                    parts[pa.part.description]=pa.amount
+            if products:
+                print("if")
+                products = products.union(ProductAmount.objects.filter(from_product=pr.to_product))
+            else:
+                print("else")
+                products = ProductAmount.objects.filter(from_product=pr.to_product)
+                print("else")
+                print(products)
+        print(products)
+    print(parts)
+    return render(request, 'mo_detail.html', {'parts': parts}) 
+        
     
