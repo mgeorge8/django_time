@@ -26,6 +26,7 @@ import urllib
 from django.contrib import messages
 import xlsxwriter
 import io
+import sys
 
 def view_file(request, name):
     storage = DefaultStorage()
