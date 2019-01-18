@@ -112,7 +112,7 @@
                                     <tbody>
                                         {% for project in project_entries %}
                                             <tr>
-                                                <td>{{ project.project__name}} </td>
+                                                <td>{{ project.project__name}} - {{ project.activities }} </td>
                                                 <td class="hours">{{ project.sum|humanize_hours:"{hours:02d}:{minutes:02d}:{seconds:02d}" }}</td>
                                             </tr>
                                         {% endfor %}

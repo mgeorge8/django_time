@@ -24,6 +24,8 @@ from bs4 import BeautifulSoup
 import json
 import urllib
 from django.contrib import messages
+import xlsxwriter
+import io
 
 def view_file(request, name):
     storage = DefaultStorage()
@@ -791,6 +793,40 @@ def ProductDetailView(request, product_id):
                                                    'locations': locations,
                                                'parts': parts,
                                                    'component_products': component_products})
+def bomExcel(request):
+    output = io.BytesIO()
+    title = "BOM-.xlsx" 
+    workbook = xlsxwriter.Workbook(output, {'in_memory': True})
+    worksheet = workbook.add_worksheet()
+##    partDetail = ()
+##    listDetail = []
+    row = 0
+    col = 0
+    worksheet.write(row, col, 'Quantity')
+    worksheet.write(row, col + 1, 'Engimusing Part Number')
+    worksheet.write(row, col + 2, 'Manufacturer')
+    worksheet.write(row, col + 3, 'Manufacturer Part Number')
+    worksheet.write(row, col + 4, 'Description')
+    row += 1
+##    for key, value in parts.items():
+##        worksheet.write(row, col, value)
+##        worksheet.write(row, col + 1, key.engimusingPartNumber)
+##        worksheet.write(row, col + 2, ",".join(p['manufacturer__name'] for p in
+##                                               key.manufacturerrelationship_set.values('manufacturer__name')))
+##        worksheet.write(row, col + 3, ",".join(p['partNumber'] for p in
+##                                               key.manufacturerrelationship_set.values('partNumber')))
+##        worksheet.write(row, col + 4, key.description)
+##        row += 1
+
+    workbook.close()
+
+    output.seek(0)
+
+    response = HttpResponse(output, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+    response['Content-Disposition'] = 'attachment; filename=%s' % title
+
+    return response                
 
 def billOfMaterialsDetail(request, product_id):
     product = get_object_or_404(Product, id=product_id)
@@ -800,10 +836,10 @@ def billOfMaterialsDetail(request, product_id):
 ##    for m in mos:
     partList = product.partamount_set.all()
     for p in partList:
-        if parts.get(p.part.description):
-            parts[p.part.description]+=p.amount
+        if parts.get(p.part):
+            parts[p.part]+=p.amount
         else:
-            parts[p.part.description]=p.amount
+            parts[p.part]=p.amount
     products = ProductAmount.objects.filter(from_product=product)
     while products:
         productList=products
@@ -811,19 +847,20 @@ def billOfMaterialsDetail(request, product_id):
         for pr in productList:
             partList2 = pr.to_product.partamount_set.all()
             for pa in partList2:
-                if parts.get(pa.part.description):
-                    parts[pa.part.description]+=pa.amount
+                if parts.get(pa.part):
+                    parts[pa.part]+=pa.amount
                 else:
-                    parts[pa.part.description]=pa.amount
+                    parts[pa.part]=pa.amount
             if products:
                 products = products.union(ProductAmount.objects.filter(from_product=pr.to_product))
             else:
                 print("else")
                 products = ProductAmount.objects.filter(from_product=pr.to_product)
                 print("else")
-                print(products)
         print(products)
     print(parts)
+    if(request.GET.get('mybtn')):
+        bomExcel(parts, product.description)
     return render(request, 'bom_detail.html', {'parts': parts, 'product': product}) 
 
 def CreateMO(request):

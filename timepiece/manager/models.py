@@ -33,6 +33,7 @@ class Profile(models.Model):
        # max_digits=8, decimal_places=2, default=40)
     ssn = models.CharField(max_length=4, blank=True, default = ' ')
     title = models.CharField(max_length=20, blank=True, default = ' ')
+    payroll = models.BooleanField(default=True, blank=False)
 
     class Meta:
         db_table = 'manager_profile'  # Using legacy table name.

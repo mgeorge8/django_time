@@ -90,6 +90,10 @@ urlpatterns = [
     url('bom/(?P<product_id>\d+)/$',
         views.billOfMaterialsDetail,
         name='bom_detail'),
+    url('bom/xlsx/$',
+        views.bomExcel,
+        name='bom_excel'),
+    
 
     url('mo/create/$',
         views.CreateMO,

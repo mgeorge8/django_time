@@ -208,7 +208,7 @@ class ListUsers(ListView):
 ##        return super(ListUsers, self).get_queryset().select_related()
 
 def week_timesheet(request, date):
-    all_users = User.objects.all().select_related('profile')
+    all_users = User.objects.filter(profile__payroll=True).select_related('profile')
     response = HttpResponse(content_type='text/csv')
     from_date = datetime.datetime.strptime(date, "%Y-%m-%d")
     date2 = utils.add_timezone(datetime.datetime.today()).date()
@@ -239,6 +239,7 @@ def week_timesheet(request, date):
         user_entries = week_entries.order_by().values('user__first_name', 'user__last_name')
         user_entries = user_entries.annotate(sum=Sum('hours')).order_by('-sum')
         hours = sum(entries['sum'] for entries in user_entries)
+        hours = round(hours, 2)
         writer.writerow([last_name, first_name, ssn, title, hours])
        
             
@@ -299,7 +300,11 @@ class WeekTimesheet(WeekTimesheetMixin, TemplateView):
         else:
             hours = 0
         #weekq = Entry.timespan(loop_date, span='week')
-        project_entries = week_entry.order_by().values('project__name').annotate(sum=Sum('hours')).order_by('-sum')
+        #project_entries = week_entry.order_by().values('project__name').annotate(sum=Sum('hours')).order_by('-sum')
+        project_entries = week_entry.order_by().values('project__name').distinct()
+        project_entries = project_entries.annotate(sum=Sum('hours')).order_by('-sum')
+        for p in project_entries:
+            p['activities'] = ",".join(week['activities'] for week in week_entry.filter(project__name=p['project__name']).order_by('activities').values('activities').distinct())
 
         context.update({
             'user': user,

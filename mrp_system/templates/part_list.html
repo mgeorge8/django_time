@@ -68,8 +68,8 @@
 {% else %}<a href="{% url 'add_loc_rel' part.id %}?next={{ request.path|urlencode }}"><i class="fas fa-pencil-alt"></i></a>
 {% endif %}
 </td>
-			     <td>{% for manu in part.get_manufacturers %}{{ manu }}</br>{% endfor %}</td>
-			     <td>{% for number in part.get_related %}{{ number }}</br>{% endfor %} </td>
+	<td>{% for manu in part.get_manufacturers %}{{ manu }}</br>{% endfor %}</td>
+			<td>{% for number in part.get_related %}{{ number }}</br>{% endfor %} </td>		   
 
 {% for field in fields %}
 {% if field.fields != "char1" %}

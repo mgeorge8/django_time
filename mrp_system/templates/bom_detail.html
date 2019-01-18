@@ -8,13 +8,33 @@
 {% endblock crumbs %}
 {% block content %}
 <h3>Bill of Materials for {{ product.description }}</h3>
+<a href="{% url 'bom_excel' %}">Products</a>
+<form action="#" method="get">
+ <input type="submit" class="btn" value="Click" name="mybtn">
+</form>
 <hr/>
-<h5>Parts</h5>
-<ul>
-{% for key, value in parts.items %}
-<li>{{ value }} - {{ key }}</li>
-{% endfor %}
-</ul>
+<table class='table table-bordered table-striped table-condensed'>
+                <thead>
+                    <tr class="table-active">
+			<th>Quantity</th>                       
+			<th>Engimusing Part Number</th>
+			<th>Manufacturer</th>
+			<th>Part Number</th>
+			<th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for key, value in parts.items %}
+                        <tr>
+			<td>{{ value }}
+			<td>{{key.engimusingPartNumber}}</td>	
+			<td>{% for manu in key.get_manufacturers %}{{ manu }}</br>{% endfor %}</td>
+			<td>{% for number in key.get_related %}{{ number }}</br>{% endfor %} </td>
+			<td>{{ key.description }}
+</tr>
+                    {% endfor %}
+                </tbody>
+            </table>	
 
 
 {% endblock content %}
