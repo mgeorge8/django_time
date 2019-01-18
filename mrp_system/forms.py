@@ -244,6 +244,11 @@ class MouserForm(forms.Form):
 
 class DigiKeyAPIForm(forms.Form):
         website = forms.ChoiceField(choices = ([('Digi-Key','Digi-Key'),('Mouser','Mouser')]), required=True)
-        partNumber = forms.CharField(label='Barcode')
+        partNumber = forms.CharField(label='Barcode', widget=forms.TextInput(attrs={'autofocus': True}),
+                                     help_text='(MFG P/N Barcode for Mouser)')
         partType = forms.ModelChoiceField(queryset=Type.objects.order_by('name'), label='Part Type')
+
+##        def __init__(self):
+##                self.fields['partNumber'].widget.attrs.update({'autofocus': 'autofocus'})
+        
         

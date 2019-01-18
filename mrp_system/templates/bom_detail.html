@@ -8,9 +8,8 @@
 {% endblock crumbs %}
 {% block content %}
 <h3>Bill of Materials for {{ product.description }}</h3>
-<a href="{% url 'bom_excel' %}">Products</a>
 <form action="#" method="get">
- <input type="submit" class="btn" value="Click" name="mybtn">
+ <input type="submit" class="btn" value="Download BOM" name="mybtn">
 </form>
 <hr/>
 <table class='table table-bordered table-striped table-condensed'>

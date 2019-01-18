@@ -89,11 +89,7 @@ urlpatterns = [
         name='product_detail'),
     url('bom/(?P<product_id>\d+)/$',
         views.billOfMaterialsDetail,
-        name='bom_detail'),
-    url('bom/xlsx/$',
-        views.bomExcel,
-        name='bom_excel'),
-    
+        name='bom_detail'),    
 
     url('mo/create/$',
         views.CreateMO,

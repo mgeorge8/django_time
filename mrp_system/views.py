@@ -572,6 +572,7 @@ def enter_digi_part(request):
             res = conn.getresponse()
             string = res.read().decode('utf-8')
             print(string)
+            sys.stdout.flush()
             jstr = json.loads(string)
             if website == 'Digi-Key':
                 try:
@@ -793,9 +794,9 @@ def ProductDetailView(request, product_id):
                                                    'locations': locations,
                                                'parts': parts,
                                                    'component_products': component_products})
-def bomExcel(request):
+def bomExcel(parts, description):
     output = io.BytesIO()
-    title = "BOM-.xlsx" 
+    title = "BOM-%s.xlsx" % description
     workbook = xlsxwriter.Workbook(output, {'in_memory': True})
     worksheet = workbook.add_worksheet()
 ##    partDetail = ()
@@ -808,15 +809,15 @@ def bomExcel(request):
     worksheet.write(row, col + 3, 'Manufacturer Part Number')
     worksheet.write(row, col + 4, 'Description')
     row += 1
-##    for key, value in parts.items():
-##        worksheet.write(row, col, value)
-##        worksheet.write(row, col + 1, key.engimusingPartNumber)
-##        worksheet.write(row, col + 2, ",".join(p['manufacturer__name'] for p in
-##                                               key.manufacturerrelationship_set.values('manufacturer__name')))
-##        worksheet.write(row, col + 3, ",".join(p['partNumber'] for p in
-##                                               key.manufacturerrelationship_set.values('partNumber')))
-##        worksheet.write(row, col + 4, key.description)
-##        row += 1
+    for key, value in parts.items():
+        worksheet.write(row, col, value)
+        worksheet.write(row, col + 1, key.engimusingPartNumber)
+        worksheet.write(row, col + 2, ",".join(p['manufacturer__name'] for p in
+                                               key.manufacturerrelationship_set.values('manufacturer__name')))
+        worksheet.write(row, col + 3, ",".join(p['partNumber'] for p in
+                                               key.manufacturerrelationship_set.values('partNumber')))
+        worksheet.write(row, col + 4, key.description)
+        row += 1
 
     workbook.close()
 
@@ -860,7 +861,7 @@ def billOfMaterialsDetail(request, product_id):
         print(products)
     print(parts)
     if(request.GET.get('mybtn')):
-        bomExcel(parts, product.description)
+        return bomExcel(parts, product.description)
     return render(request, 'bom_detail.html', {'parts': parts, 'product': product}) 
 
 def CreateMO(request):
