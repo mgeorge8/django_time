@@ -579,6 +579,8 @@ def enter_digi_part(request):
                 try:
                     part = jstr['ExactDigiKeyPart']
                     data = part['Parameters']
+##                    partTye = part['Category']['Text']
+##                    print(partTye)
                 except(IndexError, KeyError, TypeError):
                     return HttpResponseNotFound('<h1>Invalid Part Number</h1>')
             elif website == 'Mouser':
