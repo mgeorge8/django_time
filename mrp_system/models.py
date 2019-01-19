@@ -155,6 +155,11 @@ class Product(models.Model):
     def __str__(self):
         return str(self.description)
 
+    def get_stock(self):
+        if self.location:
+            return [ProductLocation for ProductLocation in
+                    self.productlocation_set.order_by('id')]
+
 class PartAmount(models.Model):
     part = models.ForeignKey(Part, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
@@ -169,6 +174,7 @@ class ProductLocation(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     location = models.ForeignKey(Location, on_delete=models.CASCADE)
     stock = models.IntegerField(blank=True, null=True)
+
 
 class ManufacturingOrder(models.Model):
     name = models.CharField(max_length=50, blank=True)

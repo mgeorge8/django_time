@@ -15,24 +15,40 @@
 <li>{{ value }} - {{ key }}</li>
 {% endfor %}
 </ul>
-<br><br>
+<br>
+{% if products %}
+<h5>Products Needed</h5>
+<ul>
+{% for p in products %}
+<li>{{ p.amount }} - {{ p.to_product.description }} (Have {% for stock in  p.to_product.get_stock %}{{ stock.stock }} in {{stock.location.name }}, {% endfor %})</li>
+{% endfor %}
+</ul>
+{% endif %}
 <h5>Parts Needed to Make</h5>
 
 <table class='table table-bordered table-striped table-condensed'>
                 <thead>
                     <tr>
-                        <th>Name</th>
-			<th>Total Amount Needed</th>
-			<th>Total Amount Have</th>
+			<th>Total Quantity Needed</th>
+			<th>Quantity In Stock</th>
+			<th>Location</th>
+			<th>Engimusing Part Number</th>
+			<th>Manufacturer</th>
+			<th>Manufacturer Part Number</th>
+			<th>Description</th>			
                     </tr>
                 </thead>
                 <tbody>
-                                {% for key, value in products.items %}
+                                {% for key, value in parts.items %}
 
                         <tr>
-			    <td>{{ key }}</td>
-                            <td>{{ value.0 }}</a></td>
-			    <td>{{ value.1 }}</td>
+			    <td>{{ value }}</td>
+                            <td>{% for stock in key.get_stock %}{{ stock.stock }}</br>{% endfor %}</td>
+			    <td>{% for location in key.get_location %}{{ location }}</br>{% endfor %}</td>
+			    <td>{{ key.engimusingPartNumber }}</td>
+			    <td>{% for manu in key.get_manufacturers %}{{ manu }}</br>{% endfor %}</td>
+			<td>{% for number in key.get_related %}{{ number }}</br>{% endfor %} </td>
+			<td>{{ key.description }}</td>
                         </tr>
                     {% endfor %}
                 </tbody>

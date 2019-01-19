@@ -919,37 +919,46 @@ def MODetailView(request, mo_id):
     mos = mo.moproduct_set.all()
     products = {}
     order = {}
-    for m in mos:
-        value = 0
-        stocklist = []
-        #stocklist = "Total amount needed: "
-        amount = m.amount
-        #stocklist += str(amount)
-        stocklist.append(amount)
-        #products[m.product.description] = str(m.amount)
-        locations = m.product.productlocation_set.all()
-        for l in locations:
-            value += l.stock
-        #stocklist += " Total amount have: "
-        #stocklist += str(value)
-        stocklist.append(value)
-        needed = amount - value
-        if needed > 0:
-            order[m.product.description] = needed
-        
-        products[m.product.description] = stocklist
-        
+    parts = {}
 ##    for m in mos:
-##        partList = m.product.partamount_set.all()
-##        for p in partList:
-##            if parts.get(p.part.description):
-##                parts[p.part.description]+=p.amount
-##            else:
-##                parts[p.part.description]=p.amount
-##        if products:
-##            products = products.union(ProductAmount.objects.filter(from_product=m.product))
-##        else:
-##            products = ProductAmount.objects.filter(from_product=m.product)
+##        value = 0
+##        stocklist = []
+##        #stocklist = "Total amount needed: "
+##        amount = m.amount
+##        #stocklist += str(amount)
+##        stocklist.append(amount)
+##        #products[m.product.description] = str(m.amount)
+##        locations = m.product.productlocation_set.all()
+##        for l in locations:
+##            value += l.stock
+##        #stocklist += " Total amount have: "
+##        #stocklist += str(value)
+##        stocklist.append(value)
+##        needed = amount - value
+##        if needed > 0:
+##            order[m.product.description] = needed
+##        
+##        products[m.product.description] = stocklist
+        
+    for m in mos:
+        partList = m.product.partamount_set.all()
+        for p in partList:
+            if parts.get(p.part):
+                parts[p.part]+=p.amount
+            else:
+                parts[p.part]=p.amount
+        if products:
+            products = products.union(ProductAmount.objects.filter(from_product=m.product))
+        else:
+            products = ProductAmount.objects.filter(from_product=m.product)
+    for key, value in parts.items():
+        locs = LocationRelationship.objects.filter(part=key)
+        amount = 0
+        for l in locs:
+            amount += l.stock
+        needed = value - amount
+        if needed > 0:
+            order[key.description] = needed
 ##    while products:
 ##        productList=products
 ##        products = ProductAmount.objects.none()
@@ -969,6 +978,7 @@ def MODetailView(request, mo_id):
 ##                print("else")
 ##                print(products)
 ##        print(products)
-    return render(request, 'mo_detail.html', {'order': order, 'products': products, 'mo': mo}) 
+    return render(request, 'mo_detail.html', {'parts': parts, 'products': products,
+                                              'order': order, 'mo': mo}) 
         
     
