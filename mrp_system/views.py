@@ -4,7 +4,8 @@ from django.views.generic import ListView, TemplateView
 from mrp_system.models import (Part, Type, Field, Manufacturer,
                                ManufacturerRelationship, Location,
                                LocationRelationship, DigiKeyAPI,
-                               PartAmount, Product, ProductAmount, ManufacturingOrder)
+                               PartAmount, Product, ProductAmount, ManufacturingOrder,
+                               MOProduct)
 from mrp_system.forms import (FilterForm, PartForm, LocationForm, LocationFormSet, MergeLocationsForm, ManufacturerForm,
 ManufacturerFormSet, MergeManufacturersForm, FieldFormSet, TypeForm, TypeSelectForm, MouserForm, DigiKeyAPIForm,
                               ProductForm, PartToProductFormSet, PartToProductForm,
@@ -942,11 +943,13 @@ def MODetailView(request, mo_id):
         
     for m in mos:
         partList = m.product.partamount_set.all()
+        #mo_product = MOProduct.objects.get(manufacturing_order=m, product=m.product).values('amount')
+        multiplier = m.amount
         for p in partList:
             if parts.get(p.part):
-                parts[p.part]+=p.amount
+                parts[p.part]+= (p.amount * multiplier)
             else:
-                parts[p.part]=p.amount
+                parts[p.part]= (p.amount * multiplier)
         if products:
             products = products.union(ProductAmount.objects.filter(from_product=m.product))
         else:
