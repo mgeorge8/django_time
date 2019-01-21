@@ -7,7 +7,7 @@ from mrp_system.models import (Part, Type, Field, Manufacturer,
                                PartAmount, Product, ProductAmount, ManufacturingOrder,
                                MOProduct)
 from mrp_system.forms import (FilterForm, PartForm, LocationForm, LocationFormSet, MergeLocationsForm, ManufacturerForm,
-ManufacturerFormSet, MergeManufacturersForm, FieldFormSet, TypeForm, TypeSelectForm, MouserForm, DigiKeyAPIForm,
+ManufacturerFormSet, MergeManufacturersForm, FieldFormSet, TypeForm, TypeSelectForm, MouserForm, APIForm,
                               ProductForm, PartToProductFormSet, PartToProductForm,
                               ProductToProductFormSet, ProductLocationFormSet,
                               ManufacturingOrderForm, ManufacturingProductFormSet)
@@ -512,9 +512,11 @@ import http.client
 
 def enter_digi_part(request):
     if request.method == "POST":
-        form = DigiKeyAPIForm(request.POST)
+        form = APIForm(request.POST)
         if form.is_valid():
-            barcode = form.cleaned_data['partNumber']
+            barcode = form.cleaned_data['barcode']
+            partNumber = form.cleaned_data['partNumber']
+            manuPartNumb = form.cleaned_data['manuPartNumber']
             partType = form.cleaned_data['partType']
             website = form.cleaned_data['website']
             digi = DigiKeyAPI.objects.get(name="DigiKey")
@@ -539,7 +541,7 @@ def enter_digi_part(request):
             setattr(digi,"refresh_token",refreshToken)
             setattr(digi,"access_token",accessToken)
             digi.save()
-            if website == 'Digi-Key':
+            if website == 'Digi-Key' and barcode:
             #partNumber = 'H10247-ND'
                 conn = http.client.HTTPSConnection("api.digikey.com")
 
@@ -556,14 +558,20 @@ def enter_digi_part(request):
                 part = json.loads(data)
                 partNumber = part['DigiKeyPartNumber']
 
-            elif website == 'Mouser':
-                partNumber = barcode
+            elif website == 'Mouser' and barcode:
+                search = barcode
+                
+            elif partNumber:
+                search = partNumber
+            elif manuPartNumb:
+                search = manuPartNumb
+                
             else:
                 return HttpResponseNotFound('<h1>Must select a website</h1>')
 
             conn = http.client.HTTPSConnection("api.digikey.com")
 
-            payload = "{\"SearchOptions\":[\"ManufacturerPartSearch\"],\"Keywords\":\"" + partNumber + "\",\"RecordCount\":\"10\",\"RecordStartPosition\":\"0\",\"Filters\":{\"CategoryIds\":[27442628],\"FamilyIds\":[81316194],\"ManufacturerIds\":[88520800],\"ParametricFilters\":[{\"ParameterId\":\"725\",\"ValueId\":\"7\"}]},\"Sort\":{\"Option\":\"SortByUnitPrice\",\"Direction\":\"Ascending\",\"SortParameterId\":\"50\"},\"RequestedQuantity\":\"50\"}"
+            payload = "{\"SearchOptions\":[\"ManufacturerPartSearch\"],\"Keywords\":\"" + search + "\",\"RecordCount\":\"10\",\"RecordStartPosition\":\"0\",\"Filters\":{\"CategoryIds\":[27442628],\"FamilyIds\":[81316194],\"ManufacturerIds\":[88520800],\"ParametricFilters\":[{\"ParameterId\":\"725\",\"ValueId\":\"7\"}]},\"Sort\":{\"Option\":\"SortByUnitPrice\",\"Direction\":\"Ascending\",\"SortParameterId\":\"50\"},\"RequestedQuantity\":\"50\"}"
 
             headers = {
                 'x-ibm-client-id': '73432ca9-e8ba-4965-af17-a22107f63b35',
@@ -639,7 +647,7 @@ def enter_digi_part(request):
             redirect_url = reverse('edit_part', args=[partType.pk, new_part.id])
             return HttpResponseRedirect(redirect_url)
     else:
-        form = DigiKeyAPIForm()
+        form = APIForm()
     return render(request, "oauth.html", {'form': form})
 
 def get_token(request):

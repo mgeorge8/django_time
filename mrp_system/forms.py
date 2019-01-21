@@ -64,10 +64,6 @@ class PartForm(ModelForm):
             super(PartForm, self).__init__(*args, **kwargs)
             #type_id = kwargs.pop('type_id', 0)
             partType = Type.objects.get(id=type_id)
-           # self.fields.pop('partType')
-##            self.fields['partType'].initial = partType
-##            self.fields['partType'].widget.attrs['readonly'] = True
-##            self.fields['partType'].widget.attrs['disabled'] = True
 
             for field in partType.field.all():
                 #self.fields[field.name] = FIELD_TYPES[field.fields](label = field.name)
@@ -91,9 +87,23 @@ class ManufacturerForm(ModelForm):
     class Meta:
         model = ManufacturerRelationship
         exclude = ('part',)
+
+class CustomFormset(BaseInlineFormSet):
+    def clean(self):
+        if any(self.errors):
+            return
+        for form in self.forms:
+            if form.cleaned_data:
+                partNumber = form.cleaned_data['partNumber']
+        #password2 = self.cleaned_data.get('password2', None)
+                exists = ManufacturerRelationship.objects.filter(partNumber=partNumber)
+                if exists:
+                    raise forms.ValidationError('Manufacturer part number already exists!')
+        return self.cleaned_data
     
 ManufacturerFormSet = inlineformset_factory(Part, ManufacturerRelationship,
-                                            form=ManufacturerForm, extra=1)
+                                            form=ManufacturerForm, extra=1,
+                                            formset=CustomFormset)
 
 class LocationForm(ModelForm):
     location = forms.ModelChoiceField(queryset=Location.objects.order_by('name'))
@@ -147,6 +157,7 @@ class ManufacturingProductForm(ModelForm):
         exclude = ()
         
 
+        
 ManufacturingProductFormSet = inlineformset_factory(ManufacturingOrder, MOProduct,
                                         form=ManufacturingProductForm, extra=1)
         
@@ -242,12 +253,26 @@ class MouserForm(forms.Form):
         partNumber = forms.CharField(label='Part Number')
         partType = forms.ModelChoiceField(queryset=Type.objects.order_by('name'))
 
-class DigiKeyAPIForm(forms.Form):
+class APIForm(forms.Form):
         website = forms.ChoiceField(choices = ([('Digi-Key','Digi-Key'),('Mouser','Mouser')]), required=True)
-        partNumber = forms.CharField(label='Barcode', widget=forms.TextInput(attrs={'autofocus': True}),
-                                     help_text='(MFG P/N Barcode for Mouser)')
+        barcode = forms.CharField(label='Barcode', widget=forms.TextInput(attrs={'autofocus': True}),
+                                     help_text='(MFG P/N Barcode for Mouser)', required=False)
+        partNumber = forms.CharField(label='Digi-Key Part Number', help_text='(Digi-Key only)', required=False)
+        manuPartNumber = forms.CharField(label='Manufacturer Part Number', required=False)
         partType = forms.ModelChoiceField(queryset=Type.objects.order_by('name'), label='Part Type')
 
+        def clean(self):
+                super(APIForm, self).clean()
+                barcode = self.cleaned_data.get('barcode', None)
+                partNumber = self.cleaned_data.get('partNumber', None)
+                manuPartNumber = self.cleaned_data.get('manuPartNumber', None)
+                related_fields = [barcode, partNumber, manuPartNumber]
+                related_fields_selected = [field for field in related_fields if field]
+
+        # check if more than one related fields was selected 
+                if len(related_fields_selected)>1: 
+                   raise forms.ValidationError('Please enter only one of Barcode, Digi-Key Part Number, and Manufacturer Part Number!')
+                return self.cleaned_data
 ##        def __init__(self):
 ##                self.fields['partNumber'].widget.attrs.update({'autofocus': 'autofocus'})
         

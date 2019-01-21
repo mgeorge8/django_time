@@ -84,7 +84,7 @@ class EntryManager(models.Manager):
 class ToDo(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE,)
     priority = models.IntegerField()
-    description = models.CharField(max_length=50, blank=False)
+    description = models.CharField(max_length=500, blank=False)
     completed = models.BooleanField(blank=False, default=False)
 
     class Meta:
