@@ -111,8 +111,17 @@
 <a href="{% url 'auth_login' %}" class="btn btn-outline-secondary">Log in</a>
 {% endif %}
 </nav>
+<div id="alerts" class="container-fluid">
+{% block messages %}
+    {% for message in messages %}
+        <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}">
+            <a class="close" data-dismiss="alert" href="#">x</a>
+            {{ message }}
+        </div>
+    {% endfor %}
+</div>
+{% endblock messages %}
 
-<br> <br>
 
     <div id="content" class="container-fluid">
             {% block breadcrumb %}

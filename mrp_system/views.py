@@ -528,7 +528,13 @@ def enter_digi_part(request):
                     }
             r = requests.post(url = API_ENDPOINT, data=data)
             response = r.json()
-            refreshToken = response['refresh_token']
+            try:
+                refreshToken = response['refresh_token']
+            except (IndexError, KeyError):
+                messages.warning(request, ('Digi-Key access tokens are off.'))
+                url = reverse('digi_part')
+                return HttpResponseRedirect(url)
+
             accessToken = response['access_token']
             setattr(digi,"refresh_token",refreshToken)
             setattr(digi,"access_token",accessToken)
@@ -604,7 +610,10 @@ def enter_digi_part(request):
             manu, created = Manufacturer.objects.get_or_create(name=manufacturer)
             exists = ManufacturerRelationship.objects.filter(manufacturer=manu, partNumber=number)
             if exists:
-                return HttpResponseNotFound('<h1>Part already exists!</h1> <a href="{% url \'list_product\' %}">Products</a>')
+                messages.warning(request, ('Manufacturer Part Number already exists.'))
+                url = reverse('digi_part')
+                return HttpResponseRedirect(url)
+                #return HttpResponseNotFound('<h1>Part already exists!</h1> <a href="{% url \'list_product\' %}">Products</a>')
             new_part = Part.objects.create(partType=partType, description=description)
 
             ManufacturerRelationship.objects.create(part=new_part, manufacturer=manu, partNumber=number)
