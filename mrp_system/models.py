@@ -85,10 +85,6 @@ class Part(models.Model):
     integer2 = models.IntegerField(blank=True, null=True)
     datasheet = models.FileField(upload_to='documents/', blank=True)
 
-    class Meta:
-        unique_together = ('description', 'char1', 'char2',)
-
-
     def __str__(self):
         return str(self.description)
 
@@ -136,7 +132,7 @@ def increment_engi_partnumber(partType):
 class ManufacturerRelationship(models.Model):
     part = models.ForeignKey(Part, on_delete=models.CASCADE)
     manufacturer = models.ForeignKey(Manufacturer, on_delete=models.CASCADE)
-    partNumber = models.CharField(max_length=40, blank=True, unique=True)
+    partNumber = models.CharField(max_length=40, blank=True)
 
 class LocationRelationship(models.Model):
     part = models.ForeignKey(Part, on_delete=models.CASCADE)

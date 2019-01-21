@@ -601,8 +601,12 @@ def enter_digi_part(request):
             description = part['DetailedDescription']
             number = part['ManufacturerPartNumber']
             manufacturer = part['ManufacturerName']['Text']
-            new_part = Part.objects.create(partType=partType, description=description)
             manu, created = Manufacturer.objects.get_or_create(name=manufacturer)
+            exists = ManufacturerRelationship.objects.filter(manufacturer=manu, partNumber=number)
+            if exists:
+                return HttpResponseNotFound('<h1>Part already exists!</h1> <a href="{% url \'list_product\' %}">Products</a>')
+            new_part = Part.objects.create(partType=partType, description=description)
+
             ManufacturerRelationship.objects.create(part=new_part, manufacturer=manu, partNumber=number)
             for field in fields:
                 name = field.name
