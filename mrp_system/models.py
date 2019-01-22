@@ -175,6 +175,8 @@ class ProductLocation(models.Model):
 class ManufacturingOrder(models.Model):
     name = models.CharField(max_length=50, blank=True)
     product = models.ManyToManyField(Product, through='MOProduct')
+##    number = models.IntegerField()
+##    date_created = models.
 
     def __str__(self):
         return self.name

@@ -9,7 +9,7 @@
 {% block content %}
 <h3>{{ product.description }}</h3>
 <hr/>
-<h5>URL:</h5><p> {{ product.url }}</p>
+<h5>URL:</h5><a href="{{ product.url }}" target="_self">{{product.url}}</a>
 <h5>Locations</h5>
 <ul>
 {% for l in locations %}
@@ -21,9 +21,6 @@
 {% for p in parts %}
 <li>{{ p.amount }} - {{ p.part.description }}</li>
 {% endfor %}
-</ul>
-<h5>Products</h5>
-<ul>
 {% for product in component_products %}
 <li>{{ product.amount }} - {{ product.to_product.description }}</li>
 {% endfor %}

@@ -34,10 +34,10 @@
 </div>
 <script>
     $('#add-more').click(function() {
-         var formidx = $('#id_location_set-TOTAL_FORMS').val();
+         var formidx = $('#id_productlocation_set-TOTAL_FORMS').val();
         $('#form-set').append($('#empty-form').html().replace(/__prefix__/g, formidx));
 
-        $('#id_location_set-TOTAL_FORMS').val(parseInt(formidx) + 1);
+        $('#id_productlocation_set-TOTAL_FORMS').val(parseInt(formidx) + 1);
     });
 </script>
 
@@ -58,10 +58,10 @@
 </div>
 <script>
     $('#addmore').click(function() {
-         var formidx = $('#id_part_set-TOTAL_FORMS').val();
+         var formidx = $('#id_partamount_set-TOTAL_FORMS').val();
         $('#formset').append($('#emptyform').html().replace(/__prefix__/g, formidx));
 
-        $('#id_part_set-TOTAL_FORMS').val(parseInt(formidx) + 1);
+        $('#id_partamount_set-TOTAL_FORMS').val(parseInt(formidx) + 1);
     });
 </script>
 <hr><br>
@@ -83,10 +83,10 @@
 </div>
 <script>
     $('#add_more').click(function() {
-         var formidx = $('#id_from_product_set-TOTAL_FORMS').val();
+         var formidx = $('#id_from_product-TOTAL_FORMS').val();
         $('#form_set').append($('#empty_form').html().replace(/__prefix__/g, formidx));
 
-        $('#id_from_product_set-TOTAL_FORMS').val(parseInt(formidx) + 1);
+        $('#id_from_product-TOTAL_FORMS').val(parseInt(formidx) + 1);
     });
 </script>
 

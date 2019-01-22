@@ -96,9 +96,19 @@ class CustomFormset(BaseInlineFormSet):
             if form.cleaned_data:
                 partNumber = form.cleaned_data['partNumber']
         #password2 = self.cleaned_data.get('password2', None)
-                exists = ManufacturerRelationship.objects.filter(partNumber=partNumber)
-                if exists:
-                    raise forms.ValidationError('Manufacturer part number already exists!')
+                try:
+                        mr = ManufacturerRelationship.objects.get(part=self.instance)
+                        number = mr.partNumber
+                except ManufacturerRelationship.DoesNotExist:
+                    mr = None
+                    number = None
+                
+                if partNumber == number:
+                        pass
+                else:
+                        exists = ManufacturerRelationship.objects.filter(partNumber=partNumber)
+                        if exists:
+                            raise forms.ValidationError('Manufacturer part number already exists!')
         return self.cleaned_data
     
 ManufacturerFormSet = inlineformset_factory(Part, ManufacturerRelationship,

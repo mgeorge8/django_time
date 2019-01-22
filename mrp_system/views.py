@@ -557,6 +557,7 @@ def enter_digi_part(request):
                 data = res.read().decode("utf-8")
                 part = json.loads(data)
                 partNumber = part['DigiKeyPartNumber']
+                search = partNumber
 
             elif website == 'Mouser' and barcode:
                 search = barcode
@@ -567,7 +568,7 @@ def enter_digi_part(request):
                 search = manuPartNumb
                 
             else:
-                return HttpResponseNotFound('<h1>Must select a website</h1>')
+                return HttpResponseNotFound('<h1>Must select a website and enter a field!</h1>')
 
             conn = http.client.HTTPSConnection("api.digikey.com")
 
