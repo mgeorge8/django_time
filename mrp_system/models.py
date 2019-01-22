@@ -173,13 +173,13 @@ class ProductLocation(models.Model):
 
 
 class ManufacturingOrder(models.Model):
-    name = models.CharField(max_length=50, blank=True)
+    #name = models.CharField(max_length=50, blank=True)
     product = models.ManyToManyField(Product, through='MOProduct')
-##    number = models.IntegerField()
-##    date_created = models.
+    number = models.CharField(max_length=50)
+    date_created = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return self.name
+        return self.number
     
 class MOProduct(models.Model):
     manufacturing_order = models.ForeignKey(ManufacturingOrder, on_delete=models.CASCADE)

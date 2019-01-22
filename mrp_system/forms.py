@@ -5,6 +5,7 @@ Part, Manufacturer, ManufacturerRelationship, Field, Type, Product,
                                MOProduct, ManufacturingOrder)
 from django.forms import ModelForm, BaseInlineFormSet
 from django.forms.models import inlineformset_factory
+from timepiece.forms import TimepieceSplitDateTimeField
 
 FIELD_TYPES = {
     'char1': forms.CharField,
@@ -127,6 +128,15 @@ class ProductForm(ModelForm):
     class Meta:
         model = Product
         exclude = ('part', 'component_product', 'location')
+
+    def clean(self):
+        super(ProductForm, self).clean()
+        url = self.cleaned_data.get('url', None)
+
+# check if more than one related fields was selected 
+        if 'http' not in url: 
+           raise forms.ValidationError('Please enter url prefaced with http://')
+        return self.cleaned_data
         
 class PartToProductForm(ModelForm):
     part = forms.ModelChoiceField(queryset=Part.objects.all())
@@ -155,7 +165,7 @@ class ProductLocationForm(ModelForm):
 ProductLocationFormSet = inlineformset_factory(Product, ProductLocation,
                                         form=ProductLocationForm, extra=1)
 
-class ManufacturingOrderForm(ModelForm):
+class ManufacturingOrderForm(ModelForm):    
     class Meta:
         model = ManufacturingOrder
         exclude = ('product',)
@@ -283,7 +293,6 @@ class APIForm(forms.Form):
                 if len(related_fields_selected)>1: 
                    raise forms.ValidationError('Please enter only one of Barcode, Digi-Key Part Number, and Manufacturer Part Number!')
                 return self.cleaned_data
-##        def __init__(self):
-##                self.fields['partNumber'].widget.attrs.update({'autofocus': 'autofocus'})
+
         
         

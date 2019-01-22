@@ -15,7 +15,7 @@ class ClockInForm(forms.ModelForm):
     active_comment = forms.CharField(
         label='Notes for the active entry', widget=forms.Textarea(attrs={'rows':5, 'cols':90, 'maxlength': '50'}),
         required=False)
-    start_time = TimepieceSplitDateTimeField(required=False)
+    start_time = TimepieceSplitDateTimeField()
 
     class Meta:
         model = Entry

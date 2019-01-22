@@ -7,7 +7,8 @@
     <li><span class="divider">/</span> <a href="{% url 'list_mo' %}">Manufacturing Orders</a></li>
 {% endblock crumbs %}
 {% block content %}
-<h3>Manufacturing Order for {{ mo.name }}</h3>
+<h3>Manufacturing Order for {{ mo.number }}</h3>
+<p>Created on: {{ mo.date_created }}</p>
 <hr/>
 <h5>Parts To Order</h5>
 <ul>

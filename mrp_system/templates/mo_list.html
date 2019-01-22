@@ -1,18 +1,18 @@
 {% extends "base2.html" %}
 
 
-{% block title %}Product{% endblock title %}
+{% block title %}MO{% endblock title %}
 
 {% block content %}
 <div class="container-fluid">
-<h2> Products </h2>
+<h2>Manufacturing Orders</h2>
 <a href="{% url 'create_mo' %}"> Create New Manufacturing Order</a>
 <hr>           
 <br> 
 <table class='table table-bordered table-striped table-condensed'>
                 <thead>
                     <tr>
-                        <th>Name</th>
+                        <th>Number</th>
 			<th>Edit</th>
 			<th>Delete</th>
                     </tr>
@@ -21,7 +21,7 @@
                                 {% for mo in object_list %}
 
                         <tr>
-			    <td><a href="{% url 'detail_mo' mo.id%}">{{ mo.name }}</td>
+			    <td><a href="{% url 'detail_mo' mo.id%}">{{ mo.number }}</td>
                             <td><a href="{% url 'edit_mo' mo.id%}">Edit</a></td>
 			    <td><a href="{% url 'delete_mo' mo.id%}">Delete</td>
                         </tr>

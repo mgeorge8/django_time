@@ -910,7 +910,7 @@ def CreateMO(request):
 class MOListView(ListView):
     model = ManufacturingOrder
     template_name = 'mo_list.html'
-    ordering = ['name']
+    ordering = ['date_created']
         
 def EditMO(request, id):
     instance = get_object_or_404(ManufacturingOrder, id=id)
