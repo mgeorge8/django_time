@@ -7,6 +7,8 @@ from django.forms import ModelForm, BaseInlineFormSet
 from django.forms.models import inlineformset_factory
 from timepiece.forms import TimepieceSplitDateTimeField
 from django.contrib.postgres.search import SearchVector
+from django.utils.safestring import mark_safe
+
 
 FIELD_TYPES = {
     'char1': forms.CharField,
@@ -140,7 +142,10 @@ class ProductForm(ModelForm):
         return self.cleaned_data
         
 class PartToProductForm(ModelForm):
-    search = forms.CharField(required=False)
+    search = forms.CharField(required=False, help_text=mark_safe('(Can search part type,' +
+                             ' description, engimusing part number, manufacturer part number, ' +
+                             'or manufacturer name) <br> Type in search value, then click out of field '+
+                             'and the part dropdown will be filtered.'))
     #part = forms.ModelChoiceField(queryset=Part.objects.none())
     class Meta:
         model = PartAmount
