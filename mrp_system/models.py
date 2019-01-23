@@ -15,7 +15,7 @@ class Location(models.Model):
 
 class Type(models.Model):
     name = models.CharField(max_length=100)
-    prefix = models.CharField(max_length=5)
+    prefix = models.CharField(max_length=4)
     #field = models.ForeignKey(Field, on_delete=models.CASCADE,
      #                         related_name="type", null=True)
 
@@ -115,7 +115,7 @@ class Part(models.Model):
         if not self.id:
             partType = self.partType
             self.engimusingPartNumber = increment_engi_partnumber(partType)
-            self.partNumber = int(self.engimusingPartNumber[3:9])
+            self.partNumber = int(self.engimusingPartNumber[4:9])
             print(self.partNumber)
         super().save(*args, **kwargs)
 
