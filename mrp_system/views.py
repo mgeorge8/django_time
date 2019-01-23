@@ -130,7 +130,13 @@ class TypeCreate(CreateView):
     def form_valid(self, form, field_formset):
         self.object = form.save()
         field_formset.instance = self.object
-        field_formset.save()
+        forms = field_formset.save(commit=False)
+        count = 1
+        for f in forms:
+            f.fields = 'char' + str(count)
+            count += 1
+            f.save()
+        #field_formset.save()
         return super(TypeCreate, self).form_valid(form)
 
     def form_invalid(self, form, field_formset):

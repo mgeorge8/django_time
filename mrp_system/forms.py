@@ -194,10 +194,9 @@ class TypeForm(ModelForm):
 class FieldForm(ModelForm):
     class Meta:
         model = Field
-        exclude = ()
+        exclude = ('fields',)
         labels = {
             "name": "Field Name",
-            "fields": "Field Type"
         }
 
 class CustomInlineFormset(BaseInlineFormSet):
@@ -206,29 +205,29 @@ class CustomInlineFormset(BaseInlineFormSet):
             return
 
         names = []
-        fields = []
+        #fields = []
         duplicates = False
         
         for form in self.forms:
            if form.cleaned_data:
                name = form.cleaned_data['name']
-               field = form.cleaned_data['fields']
+               #field = form.cleaned_data['fields']
 
-               if name and field:
+               if name: #and field:
                    if name in names:
                        duplicates = True
                    names.append(name)
 
-                   if field in fields:
-                       duplicates = True
-                   fields.append(field)
+##                   if field in fields:
+##                       duplicates = True
+##                   fields.append(field)
 
                if duplicates:
                    raise forms.ValidationError('Fields must have unique names and types.')
-               if name and not field:
-                   raise forms.ValidationError('All field names must have an associated type.')
-               elif field and not name:
-                   raise forms.ValidationError('All field names must have an associated type.')
+##               if name and not field:
+##                   raise forms.ValidationError('All field names must have an associated type.')
+##               elif field and not name:
+##                   raise forms.ValidationError('All field names must have an associated type.')
 
                         
 
