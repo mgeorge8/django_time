@@ -89,7 +89,14 @@ urlpatterns = [
         name='product_detail'),
     url('bom/(?P<product_id>\d+)/$',
         views.billOfMaterialsDetail,
-        name='bom_detail'),    
+        name='bom_detail'),
+##    url('get_parts/(?P<searchField>\d+)/$',
+##        views.get_parts,
+##        name='get_parts'),
+    path('ajax/load-parts/',
+         views.get_parts,
+         name='ajax_load_parts'),
+
 
     url('mo/create/$',
         views.CreateMO,

@@ -1,0 +1,4 @@
+<option value="">---------</option>
+{% for part in parts %}
+<option value="{{ part.pk }}">{{ part.description }}</option>
+{% endfor %}

@@ -1,4 +1,7 @@
 {% extends "base2.html" %}
+{% block extrajs %}
+
+{% endblock extrajs %}
 
 
 {% block title %}Product{% endblock title %}
@@ -39,11 +42,12 @@
 
         $('#id_productlocation_set-TOTAL_FORMS').val(parseInt(formidx) + 1);
     });
+
 </script>
 
 <hr><br>
 {{ part_formset.management_form }}
-<div id="formset">
+<div id="formset" data-parts-url="{% url 'ajax_load_parts' %}">
 {% for form in part_formset.forms %}
 <table class='no_error'>
 {{ form.as_table }}
@@ -56,14 +60,47 @@
         {{ part_formset.empty_form.as_table }}
     </table>
 </div>
+<div id="part_script">
+<script>
+
+    $('#id_partamount_set-0-search').change(function () {
+	console.log( $(this).val() );
+      var url = $("#formset").attr("data-parts-url");  
+      var search = $(this).val(); 
+
+      $.ajax({                       
+        url: url,                    
+        data: {
+          'search': search       
+        },
+        success: function (data) {   
+          $("#id_partamount_set-0-part").empty(); 
+	  $.each(data, function(key, value) {
+		$("#id_partamount_set-0-part").append($('<option>', { value: key }).text(value));
+		});
+        }
+      });
+
+    });
+
+  </script>
+</div>
 <script>
     $('#addmore').click(function() {
          var formidx = $('#id_partamount_set-TOTAL_FORMS').val();
         $('#formset').append($('#emptyform').html().replace(/__prefix__/g, formidx));
 
         $('#id_partamount_set-TOTAL_FORMS').val(parseInt(formidx) + 1);
-    });
+
+});
 </script>
+<script>
+$('#addmore').click(function() {
+  var formidx = $('#id_partamount_set-TOTAL_FORMS').val() - 1;
+$('#part_script').append($("<sc" + "ript>$('#id_partamount_set-" + formidx + "-search').on('change', function () { console.log( $(this).val() ); var url = $('#formset').attr('data-parts-url'); var search = $(this).val(); $.ajax({ url: url, data: {'search': search}, success: function (data) { $('#id_partamount_set-" + formidx + "-part').empty(); $.each(data, function(key, value) { $('#id_partamount_set-" + formidx + "-part').append($('<option>', { value: key }).text(value)); }); } }); });</sc" + "ript>")[0]);
+});
+</script>
+
 <hr><br>
 {{ product_formset.management_form }}
 <div id="form_set">
@@ -87,6 +124,8 @@
         $('#form_set').append($('#empty_form').html().replace(/__prefix__/g, formidx));
 
         $('#id_from_product-TOTAL_FORMS').val(parseInt(formidx) + 1);
+
+	
     });
 </script>
 

@@ -6,6 +6,7 @@ Part, Manufacturer, ManufacturerRelationship, Field, Type, Product,
 from django.forms import ModelForm, BaseInlineFormSet
 from django.forms.models import inlineformset_factory
 from timepiece.forms import TimepieceSplitDateTimeField
+from django.contrib.postgres.search import SearchVector
 
 FIELD_TYPES = {
     'char1': forms.CharField,
@@ -139,10 +140,28 @@ class ProductForm(ModelForm):
         return self.cleaned_data
         
 class PartToProductForm(ModelForm):
-    part = forms.ModelChoiceField(queryset=Part.objects.all())
+    search = forms.CharField(required=False)
+    #part = forms.ModelChoiceField(queryset=Part.objects.none())
     class Meta:
         model = PartAmount
         exclude = ('product',)
+
+##    def __init__(self, *args, **kwargs):
+##        super().__init__(*args, **kwargs)
+##        self.fields['part'].queryset = Part.objects.none()
+##
+##        if 'search' in self.data:
+##            print("yes")
+##            try:
+##                searchField = self.data.get('search')
+##                print(searchField + "search")
+##                self.fields['part'].queryset = Part.objects.annotate(search=SearchVector('partType__name', 'description'),).filter(search=searchField)
+##
+##            except (ValueError, TypeError):
+##                pass  # invalid input from the client; ignore and fallback to empty City queryset
+##        elif self.instance.pk:
+##            self.fields['part'].queryset = Part.objects.annotate(search=SearchVector('partType__name', 'description'),).filter(search=self.instance.search)
+##            #self.instance.country.city_set.order_by('name')
 
 PartToProductFormSet = inlineformset_factory(Product, PartAmount,
                                     form=PartToProductForm, extra=1)

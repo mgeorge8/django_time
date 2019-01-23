@@ -1,5 +1,6 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from django.http import HttpResponse, HttpResponseRedirect, HttpResponseNotFound
+from django.http import (HttpResponse, HttpResponseRedirect, HttpResponseNotFound,
+                         JsonResponse)
 from django.views.generic import ListView, TemplateView
 from mrp_system.models import (Part, Type, Field, Manufacturer,
                                ManufacturerRelationship, Location,
@@ -746,6 +747,19 @@ def mouser_details(request):
         form = MouserForm()
     return render(request, "mouser_detail.html", {'form': form, 'response': response})
 
+def get_parts(request):
+    searchField = request.GET.get('search')
+    parts = Part.objects.annotate(search=SearchVector('partType__name', 'description',
+                                                      'engimusingPartNumber', 'manufacturer__name',
+                                                      'manufacturerrelationship__partNumber'),).filter(search=searchField)
+    parts_dict = {}
+    for part in parts:
+        parts_dict[part.id] = part.description
+    return JsonResponse(parts_dict)
+    #return HttpResponse(json.dumps(parts_dict), mimetype="application/json")
+    #return render (request, 'part_options.html', {'parts': parts})
+##    return JsonResponse(parts, safe=False)
+
 def CreateProduct(request):
     if request.method == 'POST':
         form = ProductForm(request.POST)
@@ -771,6 +785,51 @@ def CreateProduct(request):
     return render(request,'product_create.html',{'form': form, 'part_formset': part_formset,
                                             'product_formset': product_formset, 'location_formset':
                                                  location_formset})
+
+class ProductCreate(CreateView):
+    form_class = ProductForm
+    template_name = 'timepiece/project/createproject.html'
+    success_url = reverse_lazy('list_projects')
+
+    def get(self, request, *args, **kwargs):
+        self.object = None
+        form_class = self.get_form_class()
+        form = self.get_form(form_class)
+        part_formset = PartToProductFormSet()
+        product_formset = ProductToProductFormSet()
+        location_formset = ProductLocationFormSet()
+        return self.render_to_response(
+            self.get_context_data(form=form, part_formset=part_formset, product_formset=product_formset,
+                                  location_formset=location_formset))
+
+    def post(self, request, *args, **kwargs):
+        self.object = None
+        form_class = self.get_form_class()
+        form = self.get_form(form_class)
+        part_formset = PartToProductFormSet(request.POST)
+        product_formset = ProductToProductFormSet(request.POST)
+        location_formset = ProductLocationFormSet(request.POST)
+        if (form.is_valid() and part_formset.is_valid() and
+            product_formset.is_valid() and location_formset.is_valid()):
+            return self.form_valid(form, part_formset, product_formset, location_formset)
+        else:
+            return self.form_invalid(form, part_formset, product_formset, location_formset)
+
+    def form_valid(self, form, part_formset, product_formset, location_formset):
+        self.object = form.save()
+        part_formset.instance = self.object
+        part_formset.save()
+        product_formset.instance = self.object
+        product_formset.save()
+        location_formset.instance = self.object
+        location_formset.save()
+        return super(ProductCreate, self).form_valid(form)
+
+    def form_invalid(self, form, part_formset, product_formset, location_formset):
+        return self.render_to_response(
+            self.get_context_data(form=form,part_formset=part_formset, product_formset=product_formset,
+                                  location_formset=location_formset))
+
 
 class ProductListView(ListView):
     model = Product
