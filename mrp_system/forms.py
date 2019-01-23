@@ -136,9 +136,11 @@ class ProductForm(ModelForm):
         super(ProductForm, self).clean()
         url = self.cleaned_data.get('url', None)
 
-# check if more than one related fields was selected 
-        if 'http' not in url: 
-           raise forms.ValidationError('Please enter url prefaced with http://')
+        if url:
+            if 'http' not in url: 
+                raise forms.ValidationError('Please enter url prefaced with http://')
+        else:
+            pass
         return self.cleaned_data
         
 class PartToProductForm(ModelForm):
