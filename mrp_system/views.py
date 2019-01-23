@@ -520,6 +520,7 @@ def enter_digi_part(request):
             string = res.read().decode('utf-8')
             sys.stdout.flush()
             jstr = json.loads(string)
+            print(string)
             if website == 'Digi-Key':
                 try:
                     part = jstr['ExactDigiKeyPart']
@@ -544,7 +545,9 @@ def enter_digi_part(request):
 
             #partType = Type.objects.get(name="Connectors")
             fields = Field.objects.filter(typePart=partType)
-            description = part['DetailedDescription']
+            description = part['ProductDescription']
+            if not description:
+                part['DetailedDescription']
             number = part['ManufacturerPartNumber']
             manufacturer = part['ManufacturerName']['Text']
             manu, created = Manufacturer.objects.get_or_create(name=manufacturer)
