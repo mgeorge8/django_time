@@ -234,6 +234,50 @@ class CustomInlineFormset(BaseInlineFormSet):
 FieldFormSet = inlineformset_factory(Type, Field, form=FieldForm, extra=20, max_num=20,
                                      formset=CustomInlineFormset)
 
+class EditFieldForm(ModelForm):
+    class Meta:
+        model = Field
+        exclude = ()
+        labels = {
+            "name": "Field Name",
+            "fields": "Field Type",
+        }
+
+class EditCustomInlineFormset(BaseInlineFormSet):
+    def clean(self):
+        if any(self.errors):
+            return
+
+        names = []
+        fields = []
+        duplicates = False
+        
+        for form in self.forms:
+           if form.cleaned_data:
+               name = form.cleaned_data['name']
+               field = form.cleaned_data['fields']
+
+               if name and field:
+                   if name in names:
+                       duplicates = True
+                   names.append(name)
+
+                   if field in fields:
+                       duplicates = True
+                   fields.append(field)
+
+               if duplicates:
+                   raise forms.ValidationError('Fields must have unique names and types.')
+               if name and not field:
+                   raise forms.ValidationError('All field names must have an associated type.')
+               elif field and not name:
+                   raise forms.ValidationError('All field names must have an associated type.')
+
+                        
+
+EditFieldFormSet = inlineformset_factory(Type, Field, form=EditFieldForm, extra=20, max_num=20,
+                                     formset=EditCustomInlineFormset)
+
 class MergeManufacturersForm(forms.Form):
         primary = forms.ModelChoiceField(label='Primary Manufacturer',
                                          queryset = Manufacturer.objects.order_by('name'))

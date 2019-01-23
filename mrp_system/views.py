@@ -11,7 +11,8 @@ from mrp_system.forms import (FilterForm, PartForm, LocationForm, LocationFormSe
 ManufacturerFormSet, MergeManufacturersForm, FieldFormSet, TypeForm, APIForm,
                               ProductForm, PartToProductFormSet, PartToProductForm,
                               ProductToProductFormSet, ProductLocationFormSet,
-                              ManufacturingOrderForm, ManufacturingProductFormSet)
+                              ManufacturingOrderForm, ManufacturingProductFormSet,
+                              EditFieldFormSet)
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.forms.models import inlineformset_factory
 from django.urls import reverse, reverse_lazy
@@ -155,7 +156,7 @@ class EditType(UpdateView):
         self.object = self.get_object()
         form_class = self.get_form_class()
         form = self.get_form(form_class)
-        field_formset = FieldFormSet(instance=self.object)
+        field_formset = EditFieldFormSet(instance=self.object)
         return self.render_to_response(
             self.get_context_data(form=form, field_formset=field_formset))
 
@@ -163,7 +164,7 @@ class EditType(UpdateView):
         self.object = self.get_object()
         form_class = self.get_form_class()
         form = self.get_form(form_class)
-        field_formset = FieldFormSet(request.POST, instance=self.object)
+        field_formset = EditFieldFormSet(request.POST, instance=self.object)
         if (form.is_valid() and field_formset.is_valid()):
             return self.form_valid(form, field_formset)
         else:
@@ -172,12 +173,14 @@ class EditType(UpdateView):
     def form_valid(self, form, field_formset):
         self.object = form.save()
         field_formset.instance = self.object
-        forms = field_formset.save(commit=False)
-        count = 1
-        for f in forms:
-            f.fields = 'char' + str(count)
-            count += 1
-            f.save()
+##        forms = field_formset.save(commit=False)
+##        count = 1
+##        for f in forms:
+##            f.prefix
+##            f.fields = 'char' + str(count)
+##            count += 1
+##            f.save()
+##        #field_forms
         field_formset.save()
         return HttpResponseRedirect(self.get_success_url())
 
