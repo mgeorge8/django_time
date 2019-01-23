@@ -9,6 +9,9 @@ urlpatterns = [
     url(r'^type/edit/(?P<type_id>\d+)/$',
         views.EditType.as_view(),
         name='edit_type'),
+    url(r'^type/delete/(?P<type_id>\d+)/$',
+        views.DeleteType.as_view(),
+        name='delete_type'),
     
     url(r'^parts/(?P<type_id>\d+)/$',
         views.ListParts,#.as_view(),

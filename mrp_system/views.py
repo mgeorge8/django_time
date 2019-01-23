@@ -175,7 +175,11 @@ class EditType(UpdateView):
         return self.render_to_response(
             self.get_context_data(form=form, field_formset=field_formset))
 
-
+class DeleteType(DeleteView):
+    model = Type
+    success_url = reverse_lazy('list_types')
+    pk_url_kwarg = 'type_id'
+    template_name = 'delete_type.html'
 
 def ListParts(request, type_id):
     filters={}
