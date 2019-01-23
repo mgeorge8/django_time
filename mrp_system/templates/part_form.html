@@ -2,7 +2,10 @@
 
 
 {% block title %}Parts{% endblock title %}
-
+{% block crumbs %}
+    {{ block.super }}
+    <li><span class="divider">/</span> <a href="{% url 'list_parts'  partType.id %}">Parts</a></li>
+{% endblock crumbs %}
 {% block content %}
 {% if part_formset.non_form_errors %}
         {% for error in part_formset.non_form_errors %}

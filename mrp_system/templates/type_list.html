@@ -23,9 +23,9 @@
 
                         <tr>
                             <td><a href="{% url 'list_parts' type.id %}">{{ type.name }}</a></td>
-                            <td><a href="{% url 'create_part' type.id %}">New {{type.name }}</a></td>
-                            <td><a href="{% url 'edit_type' type.id %}">Edit {{type.name }} Model</a></td>
-			    <td><a href="{% url 'delete_type' type.id %}">Delete {{type.name }}</a></td>
+                            <td><a href="{% url 'create_part' type.id %}">New {{ type.name }}</a></td>
+                            <td><a href="{% url 'edit_type' type.id %}">Edit Model</a></td>
+			    <td><a href="{% url 'delete_type' type.id %}">Delete</a></td>
                         </tr>
                     {% endfor %}
                 </tbody>

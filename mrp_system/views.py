@@ -8,7 +8,7 @@ from mrp_system.models import (Part, Type, Field, Manufacturer,
                                PartAmount, Product, ProductAmount, ManufacturingOrder,
                                MOProduct)
 from mrp_system.forms import (FilterForm, PartForm, LocationForm, LocationFormSet, MergeLocationsForm, ManufacturerForm,
-ManufacturerFormSet, MergeManufacturersForm, FieldFormSet, TypeForm, TypeSelectForm, MouserForm, APIForm,
+ManufacturerFormSet, MergeManufacturersForm, FieldFormSet, TypeForm, APIForm,
                               ProductForm, PartToProductFormSet, PartToProductForm,
                               ProductToProductFormSet, ProductLocationFormSet,
                               ManufacturingOrderForm, ManufacturingProductFormSet)
@@ -190,13 +190,13 @@ def ListParts(request, type_id):
     for field in fields:
         if field.fields == "char1":
             name = field.name
-    typeName = partType.name
+    #typeName = partType.name
     searchField = None
     models={}
     for field in fields:
         models[field.fields] = field.name
     if request.method == 'POST':
-        form = FilterForm(request.POST, models=models, typeName=typeName)
+        form = FilterForm(request.POST, models=models, type_id=type_id)
         manufacturer = request.POST.getlist('manufacturer')
         location = request.POST.getlist('location')
         char1 = request.POST.getlist('char1')
@@ -219,8 +219,6 @@ def ListParts(request, type_id):
         char18 = request.POST.getlist('char18')
         char19 = request.POST.getlist('char19')
         char20 = request.POST.getlist('char20')
-        integer1 = request.POST.getlist('integer1')
-        integer2 = request.POST.getlist('integer2')
         searchField = request.POST.get('search')
         if len(manufacturer) > 0:
             filters['manufacturer__in'] = manufacturer
@@ -266,18 +264,26 @@ def ListParts(request, type_id):
             filters['char19__in'] = char15
         if len(char20) > 0:
             filters['char20__in'] = char15
-        if len(integer1) > 0:
-            filters['integer1__in'] = integer1
-        if len(integer2) > 0:
-            filters['integer2__in'] = integer2
-        form=FilterForm(models=models, typeName=typeName)
+        form=FilterForm(models=models, type_id=type_id)
     else:
-        form = FilterForm(models=models, typeName=typeName)
+        form = FilterForm(models=models, type_id=type_id)
     parts = parts.filter(**filters)
+    string_filters = 'Current Filters: '
+    for key, value in filters.items():
+        if key == 'location__in':
+            locations = Location.objects.filter(id__in=value)
+            string_filters += ", ".join(l.name for l in locations) + '; '
+        elif key == 'manufacturer__in':
+            manufacturers = Manufacturer.objects.filter(id__in=value)
+            string_filters += ", ".join(m.name for m in manufacturers) + '; '
+        else:
+            string_filters += ", ".join(v for v in value) + '; '
     if searchField == "" or searchField is None:
         parts = parts.distinct('id')
     else:
-        parts = parts.annotate(search=SearchVector('manufacturer__name', 'location__name', 'char1', 'char2', Cast('integer1', CharField()), Cast('integer2', CharField()))).filter(search=searchField)
+        parts = parts.annotate(search=SearchVector('manufacturer__name', 'location__name', 'description',
+                                                   'enigmusingPartNumber', 'manufacturerrelationship__partNumber',
+                                                   'char1', 'char2')).filter(search=searchField)
         parts = parts.distinct('id')
     current_filters = ''
     if filters.items():
@@ -285,7 +291,7 @@ def ListParts(request, type_id):
             current_filters += "{},   ".format(v)
     return render(request, 'part_list.html', {'type': partType, 'parts': parts,
                                               'fields': fields, 'form': form,
-                                              'name': name})
+                                              'name': name, 'string_filters': string_filters})
     
 
 class CreateManufacturer(CreateView):
@@ -329,7 +335,6 @@ def LocationRelationshipEdit(request, locationrelationship_id):
         if form.is_valid():
             form.save()
             nextUrl = request.POST.get('next', '/')
-            print(nextUrl)
             return HttpResponseRedirect(nextUrl)
     else:
         form = LocationForm(instance=rel)
@@ -417,101 +422,6 @@ def MergeLocation(primary_object, alias_object):
         part.location.add(primary_object)
         part.location.filter(id=alias_object.id).delete()
 
-##def enter_part(request):
-##    if request.method == "POST":
-##        form = EnterPartForm(request.POST)
-##        if form.is_valid():
-##            url = form.cleaned_data['url']
-##            partType = form.cleaned_data['partType']
-##            page = requests.get(url, timeout=10)
-##            data = BeautifulSoup(page.text, 'html.parser')
-##            manufacturer_table = data.find(id="product-overview")
-##            manufacturer_table_list = manufacturer_table.find_all("th")
-##            for manufacturer in manufacturer_table_list:
-##                header = manufacturer.text.strip()
-##                row = manufacturer.find_next_sibling().text.strip()
-##                if header == 'Manufacturer':
-##                    manu = row
-##                if header == 'Manufacturer Part Number':
-##                    man_partNumber = row
-##                if header == 'Detailed Description':
-##                    detailed_descript = row
-##
-##            manu, created = Manufacturer.objects.get_or_create(name=manu)
-##            
-##            part_table = data.find(id="product-attribute-table")
-##            part_table_list = part_table.find_all("th")
-##            part_attr = {}
-##            for part in part_table_list:
-##                header = part.text.strip()
-##                row = part.find_next_sibling().text.strip()
-##                part_attr[header] = row
-##                
-##            part = Part.objects.create(partType=partType, description=detailed_descript)
-##            for field in partType.field.all():
-##                name = part_attr.get(field.name)
-##                if name == 'null' or name is None or name == '-':
-##                    name = ''
-##                f = field.fields
-##                setattr(part, f, name)
-##
-##            part.save()
-##            
-##            ManufacturerRelationship.objects.create(part=part, manufacturer=manu,
-##                                                partNumber=man_partNumber)
-##            redirect_url = reverse('list_parts', args=[partType.pk])
-##            return HttpResponseRedirect(redirect_url)
-##    else:
-##        form = EnterPartForm()
-##    return render(request, "enter_part.html", {"form":form})
-
-##def enter_part(request):
-##    if request.method == "POST":
-##        form = EnterPartForm(request.POST)
-##        if form.is_valid():
-##            url = form.cleaned_data['url']
-##            partType = form.cleaned_data['partType']
-##            page = requests.get(url, timeout=10)
-##            data = BeautifulSoup(page.text, 'html.parser')
-##            manufacturer_table = data.find(id="product-overview")
-##            manufacturer_table_list = manufacturer_table.find_all("th")
-##            for manufacturer in manufacturer_table_list:
-##                header = manufacturer.text.strip()
-##                row = manufacturer.find_next_sibling().text.strip()
-##                if header == 'Manufacturer':
-##                    manu = row
-##                if header == 'Manufacturer Part Number':
-##                    man_partNumber = row
-##                if header == 'Detailed Description':
-##                    detailed_descript = row
-##
-##            manu, created = Manufacturer.objects.get_or_create(name=manu)
-##            
-##            part_table = data.find(id="product-attribute-table")
-##            part_table_list = part_table.find_all("th")
-##            part_attr = {}
-##            for part in part_table_list:
-##                header = part.text.strip()
-##                row = part.find_next_sibling().text.strip()
-##                part_attr[header] = row
-##                
-##            part = Part.objects.create(partType=partType, description=detailed_descript)
-##            for field in partType.field.all():
-##                name = part_attr.get(field.name)
-##                if name == 'null' or name is None or name == '-':
-##                    name = ''
-##                f = field.fields
-##                setattr(part, f, name)
-##
-##            part.save()
-##            
-##            ManufacturerRelationship.objects.create(part=part, manufacturer=manu,
-##                                                partNumber=man_partNumber)
-##            redirect_url = reverse('list_parts', args=[partType.pk])
-##            return HttpResponseRedirect(redirect_url)
-##    else:
-##        form = EnterPartForm()
-##    return render(request, "enter_part.html", {"form":form})
 
 import http.client
 
@@ -593,15 +503,12 @@ def enter_digi_part(request):
 
             res = conn.getresponse()
             string = res.read().decode('utf-8')
-            print(string)
             sys.stdout.flush()
             jstr = json.loads(string)
             if website == 'Digi-Key':
                 try:
                     part = jstr['ExactDigiKeyPart']
                     data = part['Parameters']
-##                    partTye = part['Category']['Text']
-##                    print(partTye)
                 except(IndexError, KeyError, TypeError):
                     try:
                         part=jstr['ExactParts'][0]
@@ -660,113 +567,16 @@ def enter_digi_part(request):
         form = APIForm()
     return render(request, "oauth.html", {'form': form})
 
-def get_token(request):
-    digi = DigiKeyAPI.objects.get(name="DigiKey")
-
-    API_ENDPOINT = "https://sso.digikey.com/as/token.oauth2"
-
-    data = {'client_id': '73432ca9-e8ba-4965-af17-a22107f63b35',
-            'client_secret': 'G2rQ1cM8yM4gV6rW2nA1wL2yF7dN4sX4fJ2lV6jE5uT0bB0uG8',
-            'refresh_token': digi.refresh_token,
-            'grant_type': 'refresh_token'
-            }
-    r = requests.post(url = API_ENDPOINT, data=data)
-    response = r.json()
-    refreshToken = response['refresh_token']
-    accessToken = response['access_token']
-    setattr(digi,"refresh_token",refreshToken)
-    setattr(digi,"access_token",accessToken)
-    digi.save()
-
-def mouser_api(request):
-    if request.method == "POST":
-        form = MouserForm(request.POST)
-        if form.is_valid():
-            partNumber = form.cleaned_data['partNumber']
-            partType = form.cleaned_data['partType']
-            
-            url = 'http://octopart.com/api/v3/parts/match?'
-            url += '&queries=[{"sku":"' + partNumber + '"}]'
-            url += '&apikey=683454dc'
-            url += '&include[]=specs'
-            url += '&include[]=descriptions'
-
-            data = urllib.request.urlopen(url).read()
-            response = json.loads(data)
-
-            fields = Field.objects.filter(typePart=partType)
-            for result in response['results']:
-                description = ''
-                try:
-                    description = result['items'][0]['descriptions'][0]['value']
-                except(IndexError, KeyError):
-                    pass
-                new_part = Part.objects.create(partType=partType, description=description)
-                manufacturer = result['items'][0]['manufacturer']['name']
-                number = result['items'][0]['mpn']
-                manu, created = Manufacturer.objects.get_or_create(name=manufacturer)
-                ManufacturerRelationship.objects.create(part=new_part, manufacturer=manu, partNumber=number)
-                for item in result['items']:
-                    if item['specs']:
-                        for field in fields:
-                            if field.mouser_name:
-                                try:
-                                    value = item['specs'][field.mouser_name]['display_value']
-                                    setattr(new_part, field.fields, value)
-                                except(IndexError, KeyError):
-                                    pass
-                new_part.save()
-            redirect_url = reverse('list_parts', args=[partType.pk])
-            return HttpResponseRedirect(redirect_url)
-    else:
-        form = MouserForm()
-    return render(request, "mouser.html", {'form': form})
-
-def mouser_details(request):
-    response = ''
-    if request.method == "POST":
-        form = MouserForm(request.POST)
-        if form.is_valid():
-            partNumber = form.cleaned_data['partNumber']
-            partType = form.cleaned_data['partType']
-            
-            url = 'http://octopart.com/api/v3/parts/match?'
-            url += '&queries=[{"sku":"' + partNumber + '"}]'
-            url += '&apikey=683454dc'
-            url += '&include[]=specs'
-            url += '&include[]=descriptions'
-
-            data = urllib.request.urlopen(url).read()
-            resp = json.loads(data.decode())
-            res = json.dumps(resp, indent=4)
-            response = []
-            try:
-                respo = resp['results'][0]['items'][0]['specs']
-            except(IndexError, KeyError):
-                respo = {}
-                response.append("No specs can be retrieved")
-            #response = json.dumps(respo, indent=4)
-            
-            for key, value in respo.items():
-                response.append(key)
-            if not response:
-                response.append("No specs can be retrieved")
-    else:
-        form = MouserForm()
-    return render(request, "mouser_detail.html", {'form': form, 'response': response})
 
 def get_parts(request):
     searchField = request.GET.get('search')
-    parts = Part.objects.annotate(search=SearchVector('partType__name', 'description',
+    parts = Part.objects.annotate(search=SearchVector('partType__name', 'description', 'location__name',
                                                       'engimusingPartNumber', 'manufacturer__name',
                                                       'manufacturerrelationship__partNumber'),).filter(search=searchField)
     parts_dict = {}
     for part in parts:
         parts_dict[part.id] = part.description
     return JsonResponse(parts_dict)
-    #return HttpResponse(json.dumps(parts_dict), mimetype="application/json")
-    #return render (request, 'part_options.html', {'parts': parts})
-##    return JsonResponse(parts, safe=False)
 
 def CreateProduct(request):
     if request.method == 'POST':
@@ -948,11 +758,7 @@ def billOfMaterialsDetail(request, product_id):
             if products:
                 products = products.union(ProductAmount.objects.filter(from_product=pr.to_product))
             else:
-                print("else")
                 products = ProductAmount.objects.filter(from_product=pr.to_product)
-                print("else")
-        print(products)
-    print(parts)
     if(request.GET.get('mybtn')):
         return bomExcel(parts, product.description)
     return render(request, 'bom_detail.html', {'parts': parts, 'product': product}) 
@@ -1010,25 +816,6 @@ def MODetailView(request, mo_id):
     products = {}
     order = {}
     parts = {}
-##    for m in mos:
-##        value = 0
-##        stocklist = []
-##        #stocklist = "Total amount needed: "
-##        amount = m.amount
-##        #stocklist += str(amount)
-##        stocklist.append(amount)
-##        #products[m.product.description] = str(m.amount)
-##        locations = m.product.productlocation_set.all()
-##        for l in locations:
-##            value += l.stock
-##        #stocklist += " Total amount have: "
-##        #stocklist += str(value)
-##        stocklist.append(value)
-##        needed = amount - value
-##        if needed > 0:
-##            order[m.product.description] = needed
-##        
-##        products[m.product.description] = stocklist
         
     for m in mos:
         partList = m.product.partamount_set.all()
@@ -1051,26 +838,130 @@ def MODetailView(request, mo_id):
         needed = value - amount
         if needed > 0:
             order[key.description] = needed
-##    while products:
-##        productList=products
-##        products = ProductAmount.objects.none()
-##        for pr in productList:
-##            partLis = pr.to_product.partamount_set.all()
-##            for pa in partLis:
-##                if parts.get(pa.part.description):
-##                    parts[pa.part.description]+=pa.amount
-##                else:
-##                    parts[pa.part.description]=pa.amount
-##            if products:
-##                print("if")
-##                products = products.union(ProductAmount.objects.filter(from_product=pr.to_product))
-##            else:
-##                print("else")
-##                products = ProductAmount.objects.filter(from_product=pr.to_product)
-##                print("else")
-##                print(products)
-##        print(products)
     return render(request, 'mo_detail.html', {'parts': parts, 'products': products,
-                                              'order': order, 'mo': mo}) 
-        
-    
+                                              'order': order, 'mo': mo})
+
+##def enter_part(request):
+##    if request.method == "POST":
+##        form = EnterPartForm(request.POST)
+##        if form.is_valid():
+##            url = form.cleaned_data['url']
+##            partType = form.cleaned_data['partType']
+##            page = requests.get(url, timeout=10)
+##            data = BeautifulSoup(page.text, 'html.parser')
+##            manufacturer_table = data.find(id="product-overview")
+##            manufacturer_table_list = manufacturer_table.find_all("th")
+##            for manufacturer in manufacturer_table_list:
+##                header = manufacturer.text.strip()
+##                row = manufacturer.find_next_sibling().text.strip()
+##                if header == 'Manufacturer':
+##                    manu = row
+##                if header == 'Manufacturer Part Number':
+##                    man_partNumber = row
+##                if header == 'Detailed Description':
+##                    detailed_descript = row
+##
+##            manu, created = Manufacturer.objects.get_or_create(name=manu)
+##            
+##            part_table = data.find(id="product-attribute-table")
+##            part_table_list = part_table.find_all("th")
+##            part_attr = {}
+##            for part in part_table_list:
+##                header = part.text.strip()
+##                row = part.find_next_sibling().text.strip()
+##                part_attr[header] = row
+##                
+##            part = Part.objects.create(partType=partType, description=detailed_descript)
+##            for field in partType.field.all():
+##                name = part_attr.get(field.name)
+##                if name == 'null' or name is None or name == '-':
+##                    name = ''
+##                f = field.fields
+##                setattr(part, f, name)
+##
+##            part.save()
+##            
+##            ManufacturerRelationship.objects.create(part=part, manufacturer=manu,
+##                                                partNumber=man_partNumber)
+##            redirect_url = reverse('list_parts', args=[partType.pk])
+##            return HttpResponseRedirect(redirect_url)
+##    else:
+##        form = EnterPartForm()
+##    return render(request, "enter_part.html", {"form":form})
+
+##def mouser_api(request):
+##    if request.method == "POST":
+##        form = MouserForm(request.POST)
+##        if form.is_valid():
+##            partNumber = form.cleaned_data['partNumber']
+##            partType = form.cleaned_data['partType']
+##            
+##            url = 'http://octopart.com/api/v3/parts/match?'
+##            url += '&queries=[{"sku":"' + partNumber + '"}]'
+##            url += '&apikey=683454dc'
+##            url += '&include[]=specs'
+##            url += '&include[]=descriptions'
+##
+##            data = urllib.request.urlopen(url).read()
+##            response = json.loads(data)
+##
+##            fields = Field.objects.filter(typePart=partType)
+##            for result in response['results']:
+##                description = ''
+##                try:
+##                    description = result['items'][0]['descriptions'][0]['value']
+##                except(IndexError, KeyError):
+##                    pass
+##                new_part = Part.objects.create(partType=partType, description=description)
+##                manufacturer = result['items'][0]['manufacturer']['name']
+##                number = result['items'][0]['mpn']
+##                manu, created = Manufacturer.objects.get_or_create(name=manufacturer)
+##                ManufacturerRelationship.objects.create(part=new_part, manufacturer=manu, partNumber=number)
+##                for item in result['items']:
+##                    if item['specs']:
+##                        for field in fields:
+##                            if field.mouser_name:
+##                                try:
+##                                    value = item['specs'][field.mouser_name]['display_value']
+##                                    setattr(new_part, field.fields, value)
+##                                except(IndexError, KeyError):
+##                                    pass
+##                new_part.save()
+##            redirect_url = reverse('list_parts', args=[partType.pk])
+##            return HttpResponseRedirect(redirect_url)
+##    else:
+##        form = MouserForm()
+##    return render(request, "mouser.html", {'form': form})
+##
+##def mouser_details(request):
+##    response = ''
+##    if request.method == "POST":
+##        form = MouserForm(request.POST)
+##        if form.is_valid():
+##            partNumber = form.cleaned_data['partNumber']
+##            partType = form.cleaned_data['partType']
+##            
+##            url = 'http://octopart.com/api/v3/parts/match?'
+##            url += '&queries=[{"sku":"' + partNumber + '"}]'
+##            url += '&apikey=683454dc'
+##            url += '&include[]=specs'
+##            url += '&include[]=descriptions'
+##
+##            data = urllib.request.urlopen(url).read()
+##            resp = json.loads(data.decode())
+##            res = json.dumps(resp, indent=4)
+##            response = []
+##            try:
+##                respo = resp['results'][0]['items'][0]['specs']
+##            except(IndexError, KeyError):
+##                respo = {}
+##                response.append("No specs can be retrieved")
+##            #response = json.dumps(respo, indent=4)
+##            
+##            for key, value in respo.items():
+##                response.append(key)
+##            if not response:
+##                response.append("No specs can be retrieved")
+##    else:
+##        form = MouserForm()
+##    return render(request, "mouser_detail.html", {'form': form, 'response': response})

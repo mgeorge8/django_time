@@ -68,12 +68,6 @@ urlpatterns = [
     url('digikey/enter$',
         views.enter_digi_part,
         name='digi_part'),
-    url('mouser/$',
-        views.mouser_api,
-        name='mouser'),
-    url('mouser/detail/$',
-        views.mouser_details,
-        name='mouser_detail'),
 
     url('product/create/$',
         views.CreateProduct,

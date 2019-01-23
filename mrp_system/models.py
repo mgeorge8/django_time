@@ -45,12 +45,10 @@ class Field(models.Model):
         ('char18', 'Character 18'),
         ('char19', 'Character 19'),
         ('char20', 'Character 20'),
-        ('integer1', 'Integer 1'),
-        ('integer2', 'Integer 2'),
     )
     name = models.CharField(max_length=50)
     fields = models.CharField(max_length=50, choices=FIELD_CHOICES)
-    mouser_name = models.CharField(max_length=100, blank=True)
+    #mouser_name = models.CharField(max_length=100, blank=True)
     typePart = models.ForeignKey(Type, on_delete=models.CASCADE, related_name="field", null=True)
 
 class Part(models.Model):
@@ -81,8 +79,6 @@ class Part(models.Model):
     char18 = models.CharField(max_length=100, blank=True)
     char19 = models.CharField(max_length=100, blank=True)
     char20 = models.CharField(max_length=100, blank=True)
-    integer1 = models.IntegerField(blank=True, null=True)
-    integer2 = models.IntegerField(blank=True, null=True)
     datasheet = models.FileField(upload_to='documents/', blank=True)
 
     def __str__(self):

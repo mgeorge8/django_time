@@ -31,8 +31,6 @@ FIELD_TYPES = {
     'char18': forms.CharField,
     'char19': forms.CharField,
     'char20': forms.CharField,
-    'integer1': forms.IntegerField,
-    'integer2': forms.IntegerField
     }
 FIELDS_F = {
     'char1': 'char1',
@@ -54,9 +52,7 @@ FIELDS_F = {
     'char17': 'char17',
     'char18': 'char18',
     'char19': 'char19',
-    'char20': 'char20',
-    'integer1': 'integer1',
-    'integer2': 'integer2'
+    'char20': 'char20'
     }
 
 class PartForm(ModelForm):
@@ -76,7 +72,7 @@ class PartForm(ModelForm):
             extra_fields = ('char1', 'char2', 'char3', 'char4', 'char5', 'char6',
                             'char7', 'char8','char9','char10','char11','char12',
                             'char13','char14','char15','char16','char17','char18',
-                            'char19','char20','integer1', 'integer2')
+                            'char19','char20')
             for field in extra_fields:
                 if field not in partType.field.values_list('fields', flat=True):
                     self.fields.pop(field)
@@ -101,13 +97,12 @@ class CustomFormset(BaseInlineFormSet):
                 partNumber = form.cleaned_data['partNumber']
         #password2 = self.cleaned_data.get('password2', None)
                 try:
-                        mr = ManufacturerRelationship.objects.get(part=self.instance)
-                        number = mr.partNumber
+                        mr = ManufacturerRelationship.objects.get(part=self.instance, partNumber=partNumber)
                 except ManufacturerRelationship.DoesNotExist:
                     mr = None
                     number = None
                 
-                if partNumber == number:
+                if mr:
                         pass
                 else:
                         exists = ManufacturerRelationship.objects.filter(partNumber=partNumber)
@@ -153,23 +148,6 @@ class PartToProductForm(ModelForm):
         model = PartAmount
         exclude = ('product',)
 
-##    def __init__(self, *args, **kwargs):
-##        super().__init__(*args, **kwargs)
-##        self.fields['part'].queryset = Part.objects.none()
-##
-##        if 'search' in self.data:
-##            print("yes")
-##            try:
-##                searchField = self.data.get('search')
-##                print(searchField + "search")
-##                self.fields['part'].queryset = Part.objects.annotate(search=SearchVector('partType__name', 'description'),).filter(search=searchField)
-##
-##            except (ValueError, TypeError):
-##                pass  # invalid input from the client; ignore and fallback to empty City queryset
-##        elif self.instance.pk:
-##            self.fields['part'].queryset = Part.objects.annotate(search=SearchVector('partType__name', 'description'),).filter(search=self.instance.search)
-##            #self.instance.country.city_set.order_by('name')
-
 PartToProductFormSet = inlineformset_factory(Product, PartAmount,
                                     form=PartToProductForm, extra=1)
 
@@ -201,8 +179,6 @@ class ManufacturingProductForm(ModelForm):
     class Meta:
         model = MOProduct
         exclude = ()
-        
-
         
 ManufacturingProductFormSet = inlineformset_factory(ManufacturingOrder, MOProduct,
                                         form=ManufacturingProductForm, extra=1)
@@ -259,13 +235,6 @@ class CustomInlineFormset(BaseInlineFormSet):
 FieldFormSet = inlineformset_factory(Type, Field, form=FieldForm, extra=20, max_num=20,
                                      formset=CustomInlineFormset)
 
-class TypeSelectForm(forms.Form):
-    partType = forms.ModelChoiceField(label='', queryset=Type.objects.order_by('name'),
-                                widget=forms.Select(attrs={"onChange":'this.form.submit()'}))
-
-    def save(self):
-        return (self.cleaned_data.get('partType'))
-
 class MergeManufacturersForm(forms.Form):
         primary = forms.ModelChoiceField(label='Primary Manufacturer',
                                          queryset = Manufacturer.objects.order_by('name'))
@@ -281,8 +250,8 @@ class MergeLocationsForm(forms.Form):
 class FilterForm(forms.Form):
         def __init__(self,*args,**kwargs):
                 models = kwargs.pop('models')
-                typeName = kwargs.pop('typeName')
-                partType = Type.objects.get(name=typeName)
+                type_id = kwargs.pop('type_id')
+                partType = Type.objects.get(id=type_id)
                 super(FilterForm, self).__init__(*args, **kwargs)
                 self.fields['location'].queryset = Location.objects.filter(part__partType=partType).distinct()
                 self.fields['manufacturer'].queryset = Manufacturer.objects.filter(part__partType=partType).distinct()
@@ -292,12 +261,7 @@ class FilterForm(forms.Form):
                 
         search = forms.CharField(required=False)
         location = forms.ModelMultipleChoiceField(required=False, queryset = Location.objects.none())
-        manufacturer = forms.ModelMultipleChoiceField(required=False, queryset = Manufacturer.objects.none())
-
-                        
-class MouserForm(forms.Form):
-        partNumber = forms.CharField(label='Part Number')
-        partType = forms.ModelChoiceField(queryset=Type.objects.order_by('name'))
+        manufacturer = forms.ModelMultipleChoiceField(required=False, queryset = Manufacturer.objects.none())                    
 
 class APIForm(forms.Form):
         website = forms.ChoiceField(choices = ([('Digi-Key','Digi-Key'),('Mouser','Mouser')]), required=True)
@@ -320,5 +284,7 @@ class APIForm(forms.Form):
                    raise forms.ValidationError('Please enter only one of Barcode, Digi-Key Part Number, and Manufacturer Part Number!')
                 return self.cleaned_data
 
-        
+##class MouserForm(forms.Form):
+##        partNumber = forms.CharField(label='Part Number')
+##        partType = forms.ModelChoiceField(queryset=Type.objects.order_by('name'))        
         
