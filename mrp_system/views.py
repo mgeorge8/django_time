@@ -545,9 +545,9 @@ def enter_digi_part(request):
 
             #partType = Type.objects.get(name="Connectors")
             fields = Field.objects.filter(typePart=partType)
-            description = part['ProductDescription']
+            description = part['DetailedDescription']
             if not description:
-                part['DetailedDescription']
+                description = part['ProductDescription']
             number = part['ManufacturerPartNumber']
             manufacturer = part['ManufacturerName']['Text']
             manu, created = Manufacturer.objects.get_or_create(name=manufacturer)
