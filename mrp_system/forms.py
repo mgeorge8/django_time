@@ -317,7 +317,6 @@ class APIForm(forms.Form):
                                      help_text='(MFG P/N Barcode for Mouser)', required=False)
         partNumber = forms.CharField(label='Digi-Key Part Number', help_text='(Digi-Key only)', required=False)
         manuPartNumber = forms.CharField(label='Manufacturer Part Number', required=False)
-        partType = forms.ModelChoiceField(queryset=Type.objects.order_by('name'), label='Part Type')
 
         def clean(self):
                 super(APIForm, self).clean()

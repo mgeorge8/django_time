@@ -485,7 +485,6 @@ def enter_digi_part(request):
             barcode = form.cleaned_data['barcode']
             partNumber = form.cleaned_data['partNumber']
             manuPartNumb = form.cleaned_data['manuPartNumber']
-            partType = form.cleaned_data['partType']
             website = form.cleaned_data['website']
             digi = DigiKeyAPI.objects.get(name="DigiKey")
 
