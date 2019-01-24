@@ -31,6 +31,7 @@ FIELD_TYPES = {
     'char18': forms.CharField,
     'char19': forms.CharField,
     'char20': forms.CharField,
+    'char21': forms.CharField,
     }
 FIELDS_F = {
     'char1': 'char1',
@@ -52,7 +53,8 @@ FIELDS_F = {
     'char17': 'char17',
     'char18': 'char18',
     'char19': 'char19',
-    'char20': 'char20'
+    'char20': 'char20',
+    'char21': 'char21'
     }
 
 class PartForm(ModelForm):
@@ -72,7 +74,7 @@ class PartForm(ModelForm):
             extra_fields = ('char1', 'char2', 'char3', 'char4', 'char5', 'char6',
                             'char7', 'char8','char9','char10','char11','char12',
                             'char13','char14','char15','char16','char17','char18',
-                            'char19','char20')
+                            'char19','char20','char21')
             for field in extra_fields:
                 if field not in partType.field.values_list('fields', flat=True):
                     self.fields.pop(field)
@@ -231,7 +233,7 @@ class CustomInlineFormset(BaseInlineFormSet):
 
                         
 
-FieldFormSet = inlineformset_factory(Type, Field, form=FieldForm, extra=20, max_num=20,
+FieldFormSet = inlineformset_factory(Type, Field, form=FieldForm, extra=21, max_num=21,
                                      formset=CustomInlineFormset)
 
 class EditFieldForm(ModelForm):
@@ -275,7 +277,7 @@ class EditCustomInlineFormset(BaseInlineFormSet):
 
                         
 
-EditFieldFormSet = inlineformset_factory(Type, Field, form=EditFieldForm, extra=20, max_num=20,
+EditFieldFormSet = inlineformset_factory(Type, Field, form=EditFieldForm, extra=21, max_num=21,
                                      formset=EditCustomInlineFormset)
 
 class QuickTypeForm(forms.Form):

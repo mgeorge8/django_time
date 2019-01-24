@@ -45,6 +45,7 @@ class Field(models.Model):
         ('char18', 'Character 18'),
         ('char19', 'Character 19'),
         ('char20', 'Character 20'),
+        ('char21', 'Character 21'),
     )
     name = models.CharField(max_length=50)
     fields = models.CharField(max_length=50, choices=FIELD_CHOICES)
@@ -79,6 +80,7 @@ class Part(models.Model):
     char18 = models.CharField(max_length=100, blank=True)
     char19 = models.CharField(max_length=100, blank=True)
     char20 = models.CharField(max_length=100, blank=True)
+    char21 = models.CharField(max_length=100, blank=True)
     datasheet = models.FileField(upload_to='documents/', blank=True)
 
     def __str__(self):

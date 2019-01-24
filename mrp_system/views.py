@@ -269,6 +269,7 @@ def ListParts(request, type_id):
         char18 = request.POST.getlist('char18')
         char19 = request.POST.getlist('char19')
         char20 = request.POST.getlist('char20')
+        char21 = request.POST.getlist('char21')
         searchField = request.POST.get('search')
         if len(manufacturer) > 0:
             filters['manufacturer__in'] = manufacturer
@@ -305,15 +306,17 @@ def ListParts(request, type_id):
         if len(char15) > 0:
             filters['char15__in'] = char15
         if len(char16) > 0:
-            filters['char16__in'] = char15
+            filters['char16__in'] = char16
         if len(char17) > 0:
-            filters['char17__in'] = char15
+            filters['char17__in'] = char17
         if len(char18) > 0:
-            filters['char18__in'] = char15
+            filters['char18__in'] = char18
         if len(char19) > 0:
-            filters['char19__in'] = char15
+            filters['char19__in'] = char19
         if len(char20) > 0:
-            filters['char20__in'] = char15
+            filters['char20__in'] = char20
+        if len(char21) > 0:
+            filters['char21__in'] = char21
         form=FilterForm(models=models, type_id=type_id)
     else:
         form = FilterForm(models=models, type_id=type_id)
@@ -555,7 +558,7 @@ def enter_digi_part(request):
             string = res.read().decode('utf-8')
             sys.stdout.flush()
             jstr = json.loads(string)
-            f = open("data.txt", "a")
+            f = open("data4.txt", "a")
             f.write(string)
             if website == 'Digi-Key':
                 try:
@@ -578,9 +581,33 @@ def enter_digi_part(request):
             params = {}
             for value in data:
                 params[value['Parameter']] = value['Value']
+            f.write("-----------------------")
+            for key, value in params.items():
+                f.write(key)
+            typeName = part['Family']['Text']
+            f.write("$$$$" + typeName)
             f.write("!!!!!!!!!")
             f.write(json.dumps(params))
-            #partType = Type.objects.get(name="Connectors")
+            partType, created = Type.objects.get_or_create(name=typeName)
+            count = 1
+            #print(params)
+            if created:
+                try:
+                    part['Series']['Parameter']
+                    Field.objects.create(name='Series',fields='char1', typePart=partType)
+                    count = 2
+                except(IndexError, KeyError, TypeError):
+                    count = 1
+                for name, value in params.items():
+                    #print("here")
+                    if count <= 21:
+                        field = "char" + str(count)
+                        Field.objects.create(name=name, fields=field, typePart=partType)
+                        count += 1
+                    else:
+                        messages.warning(request, ('Can\'t create type, too many fields.'))
+                        url = reverse('digi_part')
+                        return HttpResponseRedirect(url)
             fields = Field.objects.filter(typePart=partType)
             description = part['DetailedDescription']
             if not description:
