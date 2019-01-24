@@ -65,9 +65,12 @@ urlpatterns = [
     url('location/relationship/add/(?P<part_id>\d+)\$',
         views.LocationRelationshipAdd,
         name='add_loc_rel'),
-    url('digikey/enter$',
+    url('digikey/enter/$',
         views.enter_digi_part,
         name='digi_part'),
+    url('tokens/$',
+        views.print_tokens_digi,
+        name='print_tokens'),
 
     url('product/create/$',
         views.CreateProduct,
