@@ -569,7 +569,7 @@ def enter_digi_part(request):
                 ManufacturerRelationship.objects.create(part=new_part, manufacturer=manu, partNumber=number)
             try:
                 datasheet_url = part['PrimaryDatasheet']
-                datasheet_name = urlparse(img_url).path.split('/')[-1]
+                datasheet_name = urlparse(datasheet_url).path.split('/')[-1]
                 response = requests.get(datasheet_url)
                 if response.status_code == 200:
                     new_part.datasheet.save(datasheet_name, ContentFile(response.content), save=True)
