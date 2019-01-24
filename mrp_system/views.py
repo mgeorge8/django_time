@@ -24,14 +24,10 @@ from django.contrib.postgres.search import SearchVector
 from django.core.files.storage import DefaultStorage
 import requests, json, urllib, xlsxwriter, io, sys
 from bs4 import BeautifulSoup
-##import json
-##import urllib
 from urllib.parse import urlparse
 from django.contrib import messages
-##import xlsxwriter
-##import io
-##import sys
 from django.core.files.base import ContentFile
+from django.utils.safestring import mark_safe
 
 def view_file(request, name):
     storage = DefaultStorage()
@@ -117,8 +113,14 @@ class TypeCreate(CreateView):
         form_class = self.get_form_class()
         form = self.get_form(form_class)
         field_formset = FieldFormSet()
-        return self.render_to_response(
-            self.get_context_data(form=form, field_formset=field_formset))
+        hint = "Enter Part Type name, Prefix for Engimusing Part Number, "
+        hint += "and name of each individual field to be tracked (excluding description, "
+        hint += "part numbers, manufacturer, location, and stock)."
+        return render(request, self.template_name, {'form': form,
+                                                    'field_formset': field_formset,
+                                                    'hint': hint})
+##        return self.render_to_response(
+##            self.get_context_data(form=form, field_formset=field_formset))
 
     def post(self, request, *args, **kwargs):
         self.object = None
@@ -159,8 +161,13 @@ class EditType(UpdateView):
         form_class = self.get_form_class()
         form = self.get_form(form_class)
         field_formset = EditFieldFormSet(instance=self.object)
-        return self.render_to_response(
-            self.get_context_data(form=form, field_formset=field_formset))
+        hint = "Enter Part Type name, Prefix for Engimusing Part Number, "
+        hint += "and name of each individual field to be tracked (excluding description, "
+        hint += "part numbers, manufacturer, location, and stock). \n"
+        hint += "Ensure each field has a different Character field type selected!"
+        return render(request, self.template_name, {'form': form,
+                                                    'field_formset': field_formset,
+                                                    'hint': hint})
 
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()

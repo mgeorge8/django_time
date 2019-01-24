@@ -4,6 +4,8 @@
 {% block title %}Parts{% endblock title %}
 
 {% block content %}
+<h3>Create/Edit Type</h3>
+<p>{{ hint|linebreaks }}</p>
 {% if field_formset.non_form_errors %}
         {% for error in field_formset.non_form_errors %}
             <p><font color="red">{{ error }}</font> </p>
