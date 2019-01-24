@@ -10,49 +10,75 @@
 <h3>Manufacturing Order for {{ mo.number }}</h3>
 <p>Created on: {{ mo.date_created }}</p>
 <hr/>
-<h5>Parts To Order</h5>
-<ul>
-{% for key, value in order.items %}
-<li>{{ value }} - {{ key }}</li>
-{% endfor %}
-</ul>
-<br>
-{% if products %}
-<h5>Products Needed</h5>
-<ul>
-{% for p in products %}
-<li>{{ p.amount }} - {{ p.to_product.description }} (Have {% for stock in  p.to_product.get_stock %}{{ stock.stock }} in {{stock.location.name }}, {% endfor %})</li>
-{% endfor %}
-</ul>
-{% endif %}
 <h5>Parts Needed to Make</h5>
 
 <table class='table table-bordered table-striped table-condensed'>
                 <thead>
                     <tr>
+			<th>Amount to Order</th>
 			<th>Total Quantity Needed</th>
 			<th>Quantity In Stock</th>
 			<th>Location</th>
 			<th>Engimusing Part Number</th>
+			<th>Description</th>
 			<th>Manufacturer</th>
 			<th>Manufacturer Part Number</th>
-			<th>Description</th>			
+						
                     </tr>
                 </thead>
+{% comment %}
+<tbody>
+                                {% for p in partList %}
+
+                        <tr>
+			    <td></td>
+			    <td>{{ p }}</td>
+                            <td>{% for stock in p.part.get_stock %}{{ stock.stock }}</br>{% endfor %}</td>
+			    <td>{% for location in p.part.get_location %}{{ location }}</br>{% endfor %}</td>
+			    <td>{{ p.part.engimusingPartNumber }}</td>
+			    <td>{% for manu in p.part.get_manufacturers %}{{ manu }}</br>{% endfor %}</td>
+			<td>{% for number in p.part.get_related %}{{ number }}</br>{% endfor %} </td>
+			<td>{{ p.part.description }}</td>
+                        </tr>
+                    {% endfor %}
+			
+                </tbody>
+{% endcomment %}
                 <tbody>
+<tr>
+<th colspan="8">Parts</th>
+</tr>
                                 {% for key, value in parts.items %}
 
                         <tr>
-			    <td>{{ value }}</td>
+			    <td>{{value.1}}</td>
+			    <td>{{ value.0 }}</td>
                             <td>{% for stock in key.get_stock %}{{ stock.stock }}</br>{% endfor %}</td>
 			    <td>{% for location in key.get_location %}{{ location }}</br>{% endfor %}</td>
 			    <td>{{ key.engimusingPartNumber }}</td>
+			    <td>{{ key.description }}</td>
 			    <td>{% for manu in key.get_manufacturers %}{{ manu }}</br>{% endfor %}</td>
 			<td>{% for number in key.get_related %}{{ number }}</br>{% endfor %} </td>
-			<td>{{ key.description }}</td>
+			
                         </tr>
                     {% endfor %}
+<tr>
+<th colspan="8">Products</th>
+</tr>
+{% for key, value in products.items %}
+<tr>
+<td>{{ value.1 }}</td>
+<td>{{ value.0 }}</td>
+<td>{% for stock in  key.get_stock %}{{ stock.stock }}<br>{% endfor %}</td>
+<td>{% for stock in  key.get_stock %}{{ stock.location.name }}<br>{% endfor %}</td>
+<td>{{ key.engimusing_product_number }}</td>
+<td>{{ key.description }}</td> 
+<td></td>
+<td></td>
+</tr>
+{% endfor %}
                 </tbody>
+
             </table>
 
 {% endblock content %}

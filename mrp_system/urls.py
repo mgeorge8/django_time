@@ -12,6 +12,9 @@ urlpatterns = [
     url(r'^type/delete/(?P<type_id>\d+)/$',
         views.DeleteType.as_view(),
         name='delete_type'),
+    url(r'^type/quick_create/$',
+        views.quick_type_create,
+        name='quick_type'),
     
     url(r'^parts/(?P<type_id>\d+)/$',
         views.ListParts,#.as_view(),
@@ -71,6 +74,9 @@ urlpatterns = [
     url('tokens/$',
         views.print_tokens_digi,
         name='print_tokens'),
+    url('tokens/enter/$',
+        views.enter_tokens,
+        name='enter_tokens'),
 
     url('product/create/$',
         views.CreateProduct,

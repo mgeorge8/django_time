@@ -6,20 +6,21 @@ from mrp_system.models import (Part, Type, Field, Manufacturer,
                                ManufacturerRelationship, Location,
                                LocationRelationship, DigiKeyAPI,
                                PartAmount, Product, ProductAmount, ManufacturingOrder,
-                               MOProduct)
-from mrp_system.forms import (FilterForm, PartForm, LocationForm, LocationFormSet, MergeLocationsForm, ManufacturerForm,
-ManufacturerFormSet, MergeManufacturersForm, FieldFormSet, TypeForm, APIForm,
+                               MOProduct, ProductLocation)
+from mrp_system.forms import (FilterForm, PartForm, LocationForm, LocationFormSet,
+                              MergeLocationsForm, ManufacturerForm, ManufacturerFormSet,
+                              MergeManufacturersForm, FieldFormSet, TypeForm, APIForm,
                               ProductForm, PartToProductFormSet, PartToProductForm,
                               ProductToProductFormSet, ProductLocationFormSet,
                               ManufacturingOrderForm, ManufacturingProductFormSet,
-                              EditFieldFormSet)
+                              EditFieldFormSet, QuickTypeForm, EnterTokensForm)
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.forms.models import inlineformset_factory
 from django.urls import reverse, reverse_lazy
 from django.forms import ModelForm
 from django import forms
 from django.db.models.functions import Cast
-from django.db.models import CharField
+from django.db.models import CharField, Sum
 from django.contrib.postgres.search import SearchVector
 from django.core.files.storage import DefaultStorage
 import requests, json, urllib, xlsxwriter, io, sys
@@ -28,6 +29,7 @@ from urllib.parse import urlparse
 from django.contrib import messages
 from django.core.files.base import ContentFile
 from django.utils.safestring import mark_safe
+from itertools import chain
 
 def view_file(request, name):
     storage = DefaultStorage()
@@ -102,6 +104,30 @@ def PartEdit(request, type_id, id):
                                             'location_formset': location_formset,
                                             'part_formset': part_formset,
                                             'partType': partType})
+
+def quick_type_create(request):
+    if request.method == 'POST':
+        form = QuickTypeForm(request.POST)
+        if form.is_valid():
+            data = form.cleaned_data['fields']
+            data = data.split(",")
+            print(data)
+            typeName = data.pop(0).strip()
+            suffix = data.pop(0).strip()
+            print(typeName + ": " + suffix)
+            fields = {}
+            number = 1
+            for d in data:
+                fields[d.strip()] = "char"+str(number)
+                number += 1
+            partType = Type.objects.create(name=typeName, prefix=suffix)
+            for name, field in fields.items():
+                Field.objects.create(name=name, fields=field, typePart=partType)
+            redirect_url = reverse('edit_type', args=[partType.pk])
+            return HttpResponseRedirect(redirect_url)
+    else:
+        form = QuickTypeForm()
+    return render(request,'quick_type_form.html',{'form': form})
 
 class TypeCreate(CreateView):
     form_class = TypeForm
@@ -529,7 +555,8 @@ def enter_digi_part(request):
             string = res.read().decode('utf-8')
             sys.stdout.flush()
             jstr = json.loads(string)
-            print(string)
+            f = open("data.txt", "a")
+            f.write(string)
             if website == 'Digi-Key':
                 try:
                     part = jstr['ExactDigiKeyPart']
@@ -551,7 +578,8 @@ def enter_digi_part(request):
             params = {}
             for value in data:
                 params[value['Parameter']] = value['Value']
-
+            f.write("!!!!!!!!!")
+            f.write(json.dumps(params))
             #partType = Type.objects.get(name="Connectors")
             fields = Field.objects.filter(typePart=partType)
             description = part['DetailedDescription']
@@ -856,38 +884,69 @@ def MODetailView(request, mo_id):
     #parts = {}
     mos = mo.moproduct_set.all()
     products = {}
-    order = {}
     parts = {}
-        
     for m in mos:
         partList = m.product.partamount_set.all()
         #mo_product = MOProduct.objects.get(manufacturing_order=m, product=m.product).values('amount')
         multiplier = m.amount
         for p in partList:
             if parts.get(p.part):
-                parts[p.part]+= (p.amount * multiplier)
+                parts[p.part][0] += (p.amount * multiplier)
             else:
-                parts[p.part]= (p.amount * multiplier)
-        if products:
-            products = products.union(ProductAmount.objects.filter(from_product=m.product))
-        else:
-            products = ProductAmount.objects.filter(from_product=m.product)
+                parts[p.part]= [p.amount * multiplier]
+        product_amounts = ProductAmount.objects.filter(from_product=m.product)
+        for pr in product_amounts:
+            if products.get(pr.to_product):
+                products[pr.to_product][0] += (pr.amount * multiplier)
+            else:
+                products[pr.to_product]= [pr.amount * multiplier]
+##        if products:
+##            products = products.union(ProductAmount.objects.filter(from_product=m.product))
+##        else:
+##            products = ProductAmount.objects.filter(from_product=m.product)
     for key, value in parts.items():
         locs = LocationRelationship.objects.filter(part=key)
         amount = 0
         for l in locs:
             amount += l.stock
-        needed = value - amount
-        if needed > 0:
-            order[key.description] = needed
+        needed = value[0] - amount
+        if needed <= 0:
+            needed = 0
+        parts[key].append(needed)
+    for key, value in products.items():
+        locs = ProductLocation.objects.filter(product=key)
+        amount = 0
+        for l in locs:
+            amount += l.stock
+        needed = value[0] - amount
+        if needed <= 0:
+            needed = 0
+        products[key].append(needed)
+##    pro_list = products.values_list('from_product', flat=True)
+##    print(pro_list)
     return render(request, 'mo_detail.html', {'parts': parts, 'products': products,
-                                              'order': order, 'mo': mo})
+                                              'mo': mo})
 
 def print_tokens_digi(request):
     digi = DigiKeyAPI.objects.get(name="DigiKey")
     access = digi.access_token
     refresh = digi.refresh_token
     return render(request, 'print_tokens.html', {'access':access, 'refresh':refresh})
+
+def enter_tokens(request):
+    if request.method == 'POST':
+        form = EnterTokensForm(request.POST)
+        if form.is_valid():
+            access = form.cleaned_data['access_token']
+            refresh = form.cleaned_data['refresh_token']
+            digi = DigiKeyAPI.objects.get(name="DigiKey")
+            setattr(digi,"access_token",access)
+            setattr(digi,"refresh_token",refresh)
+            digi.save()
+            return HttpResponseRedirect(reverse('list_types'))
+    else:
+        form = EnterTokensForm()
+    return render(request,'enter_tokens.html',{'form': form})
 
 ##def enter_part(request):
 ##    if request.method == "POST":

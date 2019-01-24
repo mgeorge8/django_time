@@ -136,6 +136,7 @@ class LocationRelationship(models.Model):
     stock = models.IntegerField(blank=True, null=True)
 
 class Product(models.Model):
+    engimusing_product_number = models.CharField(max_length=50, blank=True)
     description = models.CharField(max_length=100, blank=True)
     url = models.CharField(max_length=500, blank=True)
     location = models.ManyToManyField(Location, through='ProductLocation')

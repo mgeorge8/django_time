@@ -34,10 +34,10 @@
 </div>
 <script>
     $('#add-more').click(function() {
-         var formidx = $('#id_product_set-TOTAL_FORMS').val();
+         var formidx = $('#id_moproduct_set-TOTAL_FORMS').val();
         $('#form-set').append($('#empty-form').html().replace(/__prefix__/g, formidx));
 
-        $('#id_product_set-TOTAL_FORMS').val(parseInt(formidx) + 1);
+        $('#id_moproduct_set-TOTAL_FORMS').val(parseInt(formidx) + 1);
     });
 </script>
 

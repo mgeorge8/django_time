@@ -302,7 +302,7 @@ class WeekTimesheet(WeekTimesheetMixin, TemplateView):
         #weekq = Entry.timespan(loop_date, span='week')
         #project_entries = week_entry.order_by().values('project__name').annotate(sum=Sum('hours')).order_by('-sum')
         project_entries = week_entry.order_by().values('project__name').distinct()
-        project_entries = project_entries.annotate(sum=Sum('hours')).order_by('-sum')
+        project_entries = project_entries.annotate(amount=Sum('amount')).order_by('-amount')
         for p in project_entries:
             p['activities'] = ",".join(week['activities'] for week in week_entry.filter(project__name=p['project__name']).order_by('activities').values('activities').distinct())
 

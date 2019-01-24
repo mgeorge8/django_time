@@ -36,7 +36,7 @@
                             <td>{{ user.last_name }}</td>
                             <td>{{ user.email }}</td>
 
-                            <td><a href="{% url 'view_user_timesheet' user.pk %}">View Time Sheet</a></td>
+                            <td><a href="{% url 'week_timesheet' user.pk %}">View Time Sheet</a></td>
                             <td>
                                 {% if user.is_active %}
                                     <span class="label label-success"><i class="fas fa-check-square"></i></span>

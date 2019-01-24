@@ -278,6 +278,9 @@ class EditCustomInlineFormset(BaseInlineFormSet):
 EditFieldFormSet = inlineformset_factory(Type, Field, form=EditFieldForm, extra=20, max_num=20,
                                      formset=EditCustomInlineFormset)
 
+class QuickTypeForm(forms.Form):
+        fields = forms.CharField()
+        
 class MergeManufacturersForm(forms.Form):
         primary = forms.ModelChoiceField(label='Primary Manufacturer',
                                          queryset = Manufacturer.objects.order_by('name'))
@@ -326,6 +329,10 @@ class APIForm(forms.Form):
                 if len(related_fields_selected)>1: 
                    raise forms.ValidationError('Please enter only one of Barcode, Digi-Key Part Number, and Manufacturer Part Number!')
                 return self.cleaned_data
+
+class EnterTokensForm(forms.Form):
+        access_token = forms.CharField()
+        refresh_token = forms.CharField()
 
 ##class MouserForm(forms.Form):
 ##        partNumber = forms.CharField(label='Part Number')
