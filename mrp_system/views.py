@@ -569,14 +569,12 @@ def enter_digi_part(request):
                 ManufacturerRelationship.objects.create(part=new_part, manufacturer=manu, partNumber=number)
             try:
                 datasheet_url = part['PrimaryDatasheet']
-                datasheet_name = urlparse(datasheet_url).path.split('/')[-1]
-                headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36'}
-                response = requests.get(datasheet_url, headers=headers)
-                print(response.status_code)
-                print(response.content)
-                print(datasheet_url)
-                if response.status_code == 200:
-                    new_part.datasheet.save(datasheet_name, ContentFile(response.content), save=True)
+                if 'pdf' in datasheet_url:
+                    datasheet_name = urlparse(datasheet_url).path.split('/')[-1]
+                    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36'}
+                    response = requests.get(datasheet_url, headers=headers)
+                    if response.status_code == 200:
+                        new_part.datasheet.save(datasheet_name, ContentFile(response.content), save=True)
             except(IndexError, KeyError, TypeError):
                 pass
             for field in fields:
