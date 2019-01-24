@@ -22,14 +22,16 @@ from django.db.models.functions import Cast
 from django.db.models import CharField
 from django.contrib.postgres.search import SearchVector
 from django.core.files.storage import DefaultStorage
-import requests
+import requests, json, urllib, xlsxwriter, io, sys
 from bs4 import BeautifulSoup
-import json
-import urllib
+##import json
+##import urllib
+from urllib.parse import urlparse
 from django.contrib import messages
-import xlsxwriter
-import io
-import sys
+##import xlsxwriter
+##import io
+##import sys
+from django.core.files.base import ContentFile
 
 def view_file(request, name):
     storage = DefaultStorage()
@@ -548,18 +550,31 @@ def enter_digi_part(request):
             description = part['DetailedDescription']
             if not description:
                 description = part['ProductDescription']
-            number = part['ManufacturerPartNumber']
-            manufacturer = part['ManufacturerName']['Text']
-            manu, created = Manufacturer.objects.get_or_create(name=manufacturer)
-            exists = ManufacturerRelationship.objects.filter(manufacturer=manu, partNumber=number)
-            if exists:
-                messages.warning(request, ('Manufacturer Part Number already exists.'))
-                url = reverse('digi_part')
-                return HttpResponseRedirect(url)
+            try:
+                number = part['ManufacturerPartNumber']
+                manufacturer = part['ManufacturerName']['Text']
+            except(IndexError, KeyError, TypeError):
+                number = None
+                manufacturer = None
+            if manufacturer:
+                manu, created = Manufacturer.objects.get_or_create(name=manufacturer)
+                exists = ManufacturerRelationship.objects.filter(manufacturer=manu, partNumber=number)
+                if exists:
+                    messages.warning(request, ('Manufacturer Part Number already exists.'))
+                    url = reverse('digi_part')
+                    return HttpResponseRedirect(url)
                 #return HttpResponseNotFound('<h1>Part already exists!</h1> <a href="{% url \'list_product\' %}">Products</a>')
             new_part = Part.objects.create(partType=partType, description=description)
-
-            ManufacturerRelationship.objects.create(part=new_part, manufacturer=manu, partNumber=number)
+            if manufacturer:
+                ManufacturerRelationship.objects.create(part=new_part, manufacturer=manu, partNumber=number)
+            try:
+                datasheet_url = part['PrimaryDatasheet']
+                datasheet_name = urlparse(img_url).path.split('/')[-1]
+                response = requests.get(datasheet_url)
+                if response.status_code == 200:
+                    new_part.datasheet.save(datasheet_name, ContentFile(response.content), save=True)
+            except(IndexError, KeyError, TypeError):
+                pass
             for field in fields:
                 name = field.name
                 field_name = field.fields

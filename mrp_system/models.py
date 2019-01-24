@@ -82,7 +82,7 @@ class Part(models.Model):
     datasheet = models.FileField(upload_to='documents/', blank=True)
 
     def __str__(self):
-        return str(self.description)
+        return '%s - %s' % (self.engimusingPartNumber, self.description)
 
     def get_location(self):
         if self.location:
