@@ -706,14 +706,14 @@ def enter_digi_part(request):
                     try:
                         datasheet_name = urlparse(datasheet_url).path.split('/')[-1]
                         headers = {'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:35.0) Gecko/20100101 Firefox/35.0'}
-                        response = requests.get(datasheet_url, headers=headers, timeout=5)
+                        response = requests.get(datasheet_url, headers=headers, timeout=5, verify=False)
                         if response.status_code == 200:
                             new_part.datasheet.save(datasheet_name, ContentFile(response.content), save=True)
                     except (requests.exceptions.SSLError):
                         try:
                             datasheet_name = urlparse(datasheet_url).path.split('/')[-1]
                             headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36'}
-                            response = requests.get(datasheet_url, headers=headers, timeout=5)
+                            response = requests.get(datasheet_url, headers=headers, timeout=5, verify=False)
                             if response.status_code == 200:
                                 new_part.datasheet.save(datasheet_name, ContentFile(response.content), save=True)
                         except (requests.exceptions.SSLError):
