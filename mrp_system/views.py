@@ -681,24 +681,7 @@ def enter_digi_part(request):
             new_part = Part.objects.create(partType=partType, description=description)
             if manufacturer:
                 ManufacturerRelationship.objects.create(part=new_part, manufacturer=manu, partNumber=number)
-            try:
-                datasheet_url = part['PrimaryDatasheet']
-                if 'pdf' in datasheet_url:
-                    try:
-                        datasheet_name = urlparse(datasheet_url).path.split('/')[-1]
-                        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36'}
-                        response = requests.get(datasheet_url, headers=headers)
-                        if response.status_code == 200:
-                            new_part.datasheet.save(datasheet_name, ContentFile(response.content), save=True)
-                    except (requests.exceptions.SSLError):
-                        try:
-                            datasheet_name = urlparse(datasheet_url).path.split('/')[-1]
-                            headers = {'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:35.0) Gecko/20100101 Firefox/35.0'}
-                            response = requests.get(datasheet_url, headers=headers)
-                            if response.status_code == 200:
-                                new_part.datasheet.save(datasheet_name, ContentFile(response.content), save=True)
-                        except (requests.exceptions.SSLError):
-                            pass
+            
             except(IndexError, KeyError, TypeError):
                 pass
             for field in fields:
@@ -720,6 +703,26 @@ def enter_digi_part(request):
                     except(IndexError, KeyError):
                         pass
             new_part.save()
+            try:
+                datasheet_url = part['PrimaryDatasheet']
+                if 'pdf' in datasheet_url:
+                    try:
+                        datasheet_name = urlparse(datasheet_url).path.split('/')[-1]
+                        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36'}
+                        response = requests.get(datasheet_url, headers=headers, timeout=10)
+                        if response.status_code == 200:
+                            new_part.datasheet.save(datasheet_name, ContentFile(response.content), save=True)
+                    except (requests.exceptions.SSLError):
+                        try:
+                            datasheet_name = urlparse(datasheet_url).path.split('/')[-1]
+                            headers = {'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:35.0) Gecko/20100101 Firefox/35.0'}
+                            response = requests.get(datasheet_url, headers=headers, timeout=10)
+                            if response.status_code == 200:
+                                new_part.datasheet.save(datasheet_name, ContentFile(response.content), save=True)
+                        except (requests.exceptions.SSLError):
+                            pass
+                    except (requests.exceptions.Timeout):
+                            pass
             redirect_url = reverse('edit_part', args=[partType.pk, new_part.id])
             return HttpResponseRedirect(redirect_url)
     else:
