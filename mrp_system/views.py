@@ -601,24 +601,24 @@ def enter_digi_part(request):
             jstr = json.loads(string)
             f = open("data4.txt", "a")
             f.write(string)
-            if website == 'Digi-Key':
+##            if website == 'Digi-Key':
+            try:
+                part = jstr['ExactDigiKeyPart']
+                data = part['Parameters']
+            except(IndexError, KeyError, TypeError):
                 try:
-                    part = jstr['ExactDigiKeyPart']
-                    data = part['Parameters']
-                except(IndexError, KeyError, TypeError):
-                    try:
-                        part=jstr['ExactParts'][0]
-                        data = part['Parameters']
-                    except(IndexError, KeyError, TypeError):
-                        return HttpResponseNotFound('<h1>Invalid Part Number</h1>')
-            elif website == 'Mouser':
-                try:
-                    part = jstr['ExactParts'][0]
+                    part=jstr['ExactParts'][0]
                     data = part['Parameters']
                 except(IndexError, KeyError, TypeError):
                     return HttpResponseNotFound('<h1>Invalid Part Number</h1>')
-            else:
-                return HttpResponseNotFound('<h1>Must select a website</h1>')
+##            elif website == 'Mouser':
+##                try:
+##                    part = jstr['ExactParts'][0]
+##                    data = part['Parameters']
+##                except(IndexError, KeyError, TypeError):
+##                    return HttpResponseNotFound('<h1>Invalid Part Number</h1>')
+##            else:
+##                return HttpResponseNotFound('<h1>Must select a website</h1>')
             params = {}
             for value in data:
                 params[value['Parameter']] = value['Value']
