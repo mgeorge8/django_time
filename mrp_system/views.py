@@ -641,7 +641,7 @@ def enter_digi_part(request):
                     count = 1
                 for name, value in params.items():
                     #print("here")
-                    if count <= 21:
+                    if count <= 35:
                         field = "char" + str(count)
                         Field.objects.create(name=name, fields=field, typePart=partType)
                         count += 1
