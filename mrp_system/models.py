@@ -141,7 +141,7 @@ class Part(models.Model):
         if not self.id:
             partType = self.partType
             self.engimusingPartNumber = increment_engi_partnumber(partType)
-            self.partNumber = int(self.engimusingPartNumber[4:9])
+            self.partNumber = int(self.engimusingPartNumber[4:10])
             print(self.partNumber)
         super().save(*args, **kwargs)
 
