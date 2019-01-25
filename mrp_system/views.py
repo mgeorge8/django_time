@@ -377,7 +377,7 @@ def ListParts(request, type_id):
         parts = parts.distinct('id')
     else:
         parts = parts.annotate(search=SearchVector('manufacturer__name', 'location__name', 'description',
-                                                   'enigmusingPartNumber', 'manufacturerrelationship__partNumber',
+                                                   'engimusingPartNumber', 'manufacturerrelationship__partNumber',
                                                    'char1', 'char2')).filter(search=searchField)
         parts = parts.distinct('id')
     current_filters = ''
