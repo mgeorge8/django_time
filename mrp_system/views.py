@@ -23,7 +23,7 @@ from django.db.models.functions import Cast
 from django.db.models import CharField, Sum
 from django.contrib.postgres.search import SearchVector
 from django.core.files.storage import DefaultStorage
-import requests, json, urllib, xlsxwriter, io, sys
+import requests, json, urllib, xlsxwriter, io, sys, re
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse
 from django.contrib import messages
@@ -629,7 +629,16 @@ def enter_digi_part(request):
             f.write("$$$$" + typeName)
             f.write("!!!!!!!!!")
             f.write(json.dumps(params))
-            partType, created = Type.objects.get_or_create(name=typeName)
+            list_name = re.findall(r'\w+', typeName)
+            word_count = len(list_name)
+            prefix = ""
+            if word_count == 1:
+                prefix = typeName[:3].upper()
+            if word_count == 2:
+                prefix = (list_name[0][:1] + list_name[1][:2]).upper()
+            if word_count >= 3:
+                prefix = (list_name[0][:1] + list_name[1][:1] + list_name[2][:1]).upper()
+            partType, created = Type.objects.get_or_create(name=typeName,prefix=prefix)
             count = 1
             #print(params)
             if created:
