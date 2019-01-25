@@ -638,10 +638,12 @@ def enter_digi_part(request):
                 prefix = (list_name[0][:1] + list_name[1][:2]).upper()
             if word_count >= 3:
                 prefix = (list_name[0][:1] + list_name[1][:1] + list_name[2][:1]).upper()
-            partType, created = Type.objects.get_or_create(name=typeName,prefix=prefix)
+            partType, created = Type.objects.get_or_create(name=typeName)
             count = 1
             #print(params)
             if created:
+                setattr(partType,"prefix",prefix)
+                partType.save()
                 try:
                     part['Series']['Parameter']
                     Field.objects.create(name='Series',fields='char1', typePart=partType)

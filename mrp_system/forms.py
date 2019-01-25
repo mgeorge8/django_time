@@ -263,7 +263,7 @@ class CustomInlineFormset(BaseInlineFormSet):
 
                         
 
-FieldFormSet = inlineformset_factory(Type, Field, form=FieldForm, extra=21, max_num=21,
+FieldFormSet = inlineformset_factory(Type, Field, form=FieldForm, extra=35, max_num=35,
                                      formset=CustomInlineFormset)
 
 class EditFieldForm(ModelForm):
@@ -307,7 +307,7 @@ class EditCustomInlineFormset(BaseInlineFormSet):
 
                         
 
-EditFieldFormSet = inlineformset_factory(Type, Field, form=EditFieldForm, extra=21, max_num=21,
+EditFieldFormSet = inlineformset_factory(Type, Field, form=EditFieldForm, extra=35, max_num=35,
                                      formset=EditCustomInlineFormset)
 
 class QuickTypeForm(forms.Form):
