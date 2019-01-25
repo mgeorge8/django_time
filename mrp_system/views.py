@@ -681,9 +681,6 @@ def enter_digi_part(request):
             new_part = Part.objects.create(partType=partType, description=description)
             if manufacturer:
                 ManufacturerRelationship.objects.create(part=new_part, manufacturer=manu, partNumber=number)
-            
-            except(IndexError, KeyError, TypeError):
-                pass
             for field in fields:
                 name = field.name
                 field_name = field.fields
@@ -723,6 +720,8 @@ def enter_digi_part(request):
                             pass
                     except (requests.exceptions.Timeout):
                             pass
+            except(IndexError, KeyError, TypeError):
+                pass
             redirect_url = reverse('edit_part', args=[partType.pk, new_part.id])
             return HttpResponseRedirect(redirect_url)
     else:
