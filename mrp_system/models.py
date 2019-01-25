@@ -46,6 +46,20 @@ class Field(models.Model):
         ('char19', 'Character 19'),
         ('char20', 'Character 20'),
         ('char21', 'Character 21'),
+        ('char22', 'Character 22'),
+        ('char23', 'Character 23'),
+        ('char24', 'Character 24'),
+        ('char25', 'Character 25'),
+        ('char26', 'Character 26'),
+        ('char27', 'Character 27'),
+        ('char28', 'Character 28'),
+        ('char29', 'Character 29'),
+        ('char30', 'Character 30'),
+        ('char31', 'Character 31'),
+        ('char32', 'Character 32'),
+        ('char33', 'Character 33'),
+        ('char34', 'Character 34'),
+        ('char35', 'Character 35'),
     )
     name = models.CharField(max_length=50)
     fields = models.CharField(max_length=50, choices=FIELD_CHOICES)
@@ -81,6 +95,20 @@ class Part(models.Model):
     char19 = models.CharField(max_length=100, blank=True)
     char20 = models.CharField(max_length=100, blank=True)
     char21 = models.CharField(max_length=100, blank=True)
+    char22 = models.CharField(max_length=100, blank=True)
+    char23 = models.CharField(max_length=100, blank=True)
+    char24 = models.CharField(max_length=100, blank=True)
+    char25 = models.CharField(max_length=100, blank=True)
+    char26 = models.CharField(max_length=100, blank=True)
+    char27 = models.CharField(max_length=100, blank=True)
+    char28 = models.CharField(max_length=100, blank=True)
+    char29 = models.CharField(max_length=100, blank=True)
+    char30 = models.CharField(max_length=100, blank=True)
+    char31 = models.CharField(max_length=100, blank=True)
+    char32 = models.CharField(max_length=100, blank=True)
+    char33 = models.CharField(max_length=100, blank=True)
+    char34 = models.CharField(max_length=100, blank=True)
+    char35 = models.CharField(max_length=100, blank=True)
     datasheet = models.FileField(upload_to='documents/', blank=True)
 
     def __str__(self):

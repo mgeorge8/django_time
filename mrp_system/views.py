@@ -270,6 +270,20 @@ def ListParts(request, type_id):
         char19 = request.POST.getlist('char19')
         char20 = request.POST.getlist('char20')
         char21 = request.POST.getlist('char21')
+        char22 = request.POST.getlist('char22')
+        char23 = request.POST.getlist('char23')
+        char24 = request.POST.getlist('char24')
+        char25 = request.POST.getlist('char25')
+        char26 = request.POST.getlist('char26')
+        char27 = request.POST.getlist('char27')
+        char28 = request.POST.getlist('char28')
+        char29 = request.POST.getlist('char29')
+        char30 = request.POST.getlist('char30')
+        char31 = request.POST.getlist('char31')
+        char32 = request.POST.getlist('char32')
+        char33 = request.POST.getlist('char33')
+        char34 = request.POST.getlist('char34')
+        char35 = request.POST.getlist('char35')
         searchField = request.POST.get('search')
         if len(manufacturer) > 0:
             filters['manufacturer__in'] = manufacturer
@@ -317,6 +331,34 @@ def ListParts(request, type_id):
             filters['char20__in'] = char20
         if len(char21) > 0:
             filters['char21__in'] = char21
+        if len(char22) > 0:
+            filters['char22__in'] = char22
+        if len(char23) > 0:
+            filters['char23__in'] = char23
+        if len(char24) > 0:
+            filters['char24__in'] = char24
+        if len(char25) > 0:
+            filters['char25__in'] = char25
+        if len(char26) > 0:
+            filters['char26__in'] = char26
+        if len(char27) > 0:
+            filters['char27__in'] = char27
+        if len(char28) > 0:
+            filters['char28__in'] = char28
+        if len(char29) > 0:
+            filters['char29__in'] = char29
+        if len(char30) > 0:
+            filters['char30__in'] = char30
+        if len(char31) > 0:
+            filters['char31__in'] = char31
+        if len(char32) > 0:
+            filters['char32__in'] = char32
+        if len(char33) > 0:
+            filters['char33__in'] = char33
+        if len(char34) > 0:
+            filters['char34__in'] = char34
+        if len(char35) > 0:
+            filters['char35__in'] = char35
         form=FilterForm(models=models, type_id=type_id)
     else:
         form = FilterForm(models=models, type_id=type_id)

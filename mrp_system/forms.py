@@ -32,6 +32,20 @@ FIELD_TYPES = {
     'char19': forms.CharField,
     'char20': forms.CharField,
     'char21': forms.CharField,
+    'char22': forms.CharField,
+    'char23': forms.CharField,
+    'char24': forms.CharField,
+    'char25': forms.CharField,
+    'char26': forms.CharField,
+    'char27': forms.CharField,
+    'char28': forms.CharField,
+    'char29': forms.CharField,
+    'char30': forms.CharField,
+    'char31': forms.CharField,
+    'char32': forms.CharField,
+    'char33': forms.CharField,
+    'char34': forms.CharField,
+    'char35': forms.CharField,
     }
 FIELDS_F = {
     'char1': 'char1',
@@ -54,7 +68,21 @@ FIELDS_F = {
     'char18': 'char18',
     'char19': 'char19',
     'char20': 'char20',
-    'char21': 'char21'
+    'char21': 'char21',
+    'char22': 'char22',
+    'char23': 'char23',
+    'char24': 'char24',
+    'char25': 'char25',
+    'char26': 'char26',
+    'char27': 'char27',
+    'char28': 'char28',
+    'char29': 'char29',
+    'char30': 'char30',
+    'char31': 'char31',
+    'char32': 'char32',
+    'char33': 'char33',
+    'char34': 'char34',
+    'char35': 'char35',
     }
 
 class PartForm(ModelForm):
@@ -74,7 +102,9 @@ class PartForm(ModelForm):
             extra_fields = ('char1', 'char2', 'char3', 'char4', 'char5', 'char6',
                             'char7', 'char8','char9','char10','char11','char12',
                             'char13','char14','char15','char16','char17','char18',
-                            'char19','char20','char21')
+                            'char19','char20','char21','char22', 'char23', 'char24',
+                            'char25', 'char26','char27', 'char28','char29','char30',
+                            'char31','char32','char33','char34','char35')
             for field in extra_fields:
                 if field not in partType.field.values_list('fields', flat=True):
                     self.fields.pop(field)
