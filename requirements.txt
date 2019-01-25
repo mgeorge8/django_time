@@ -11,3 +11,4 @@ boto3==1.9.59
 requests==2.21.0
 beautifulsoup4==4.6.3
 XlsxWriter==1.1.2
+certifi==2018.11.29
