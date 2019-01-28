@@ -1,15 +1,8 @@
 from django import forms
-from django.contrib.auth.forms import UserCreationForm, UserChangeForm
 from django.contrib.auth.models import User
+from django.contrib.auth.forms import UserCreationForm, UserChangeForm
 from django.forms.models import inlineformset_factory
-
-#from selectable import forms as selectable
-
-#from timepiece.utils.search import SearchForm
-
-from timepiece.manager.models import (
-    Profile, Project, ProjectRelationship
-    )
+from timepiece.manager.models import Project, ProjectRelationship
 from timepiece.fields import UserModelMultipleChoiceField
 
 
@@ -18,21 +11,6 @@ class CreateEditProjectForm(forms.ModelForm):
     class Meta:
         model = Project
         fields = ('name', 'inactive') 
-
-
-class CreateUserForm(UserChangeForm):
-
-    def __init__(self, *args, **kwargs):
-        super(CreateUserForm, self).__init__(*args, **kwargs)
-        self.fields['email'].required = True
-        self.fields['first_name'].required = True
-        self.fields['last_name'].required = True
-
-
-class ProfileForm(forms.ModelForm):
-    class Meta:
-        model = Profile
-        fields = ('ssn', 'title')
 
 class EditProjectRelationshipForm(forms.ModelForm):
     user = forms.ModelMultipleChoiceField(widget=forms.CheckboxSelectMultiple(), queryset=User.objects.all())
@@ -104,7 +82,7 @@ class EditUserSettingsForm(forms.ModelForm):
         for name in self.fields:
             self.fields[name].required = True
 
-
+#used in Project detail view to assign to users
 class SelectMultipleUserForm(forms.Form):
     user = UserModelMultipleChoiceField(label='', queryset=None, required=False)
 

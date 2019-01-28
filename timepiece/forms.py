@@ -107,19 +107,9 @@ class UserYearMonthForm(YearMonthForm):
         from_date, to_date = super(UserYearMonthForm, self).save()
         return (from_date, to_date, self.cleaned_data.get('user', None))
 
-##class UserForm(forms.Form):
-##    user = UserModelChoiceField(label='', queryset=None, required=False,
-##                                widget=forms.Select(attrs={"onChange":'submit()'}))
-##
-##    def __init__(self, *args, **kwargs):
-##        super(UserForm, self).__init__(*args, **kwargs)
-##        queryset = User.objects.order_by('first_name')
-##        self.fields['user'].queryset = queryset
-##
-##    def save(self):
-##        return (self.cleaned_data.get('user', None))
-
+#used in management week timesheet view to select different users
 class UserForm(forms.Form):
+    #onChange attribute instead of using a submit button 
     user = UserModelChoiceField(label='', queryset=User.objects.order_by('first_name'),
                                 widget=forms.Select(attrs={"onChange":'this.form.submit()'}))
 

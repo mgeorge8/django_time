@@ -238,12 +238,12 @@ def to_do(request):
             messages.success(request, "Task '{}' has been deleted.".
                         format(todo.description))
             return redirect('/')
-    return render(request, "timepiece/todo.html", {"todos": todos})
+    return render(request, "timepiece/todo/todo.html", {"todos": todos})
 
 def todo_completed(request):
     user = request.user
     todos = ToDo.objects.filter(completed=True,)
-    return render(request, "timepiece/todo-complete.html", {"todos": todos})
+    return render(request, "timepiece/todo/todo-complete.html", {"todos": todos})
 
 def todo_edit(request, todo_id):
     user = request.user
@@ -257,7 +257,7 @@ def todo_edit(request, todo_id):
             return redirect('/')
     else:
         form = TodoForm(instance=todo)
-    return render(request, "timepiece/todo-edit.html", {'form': form})
+    return render(request, "timepiece/todo/todo-edit.html", {'form': form})
 
 def todo_delete(request, todo_id):
     todo = get_object_or_404(ToDo, id=todo_id)
@@ -273,7 +273,7 @@ def todo_admin_create(request):
         messages.success(request, "'{}' has been added for '{}'".
                         format(todo.description, todo.user))
         return redirect('todo_list')
-    return render(request, "timepiece/todo-create.html", {'form': form})
+    return render(request, "timepiece/todo/todo-create.html", {'form': form})
 
 def todo_admin_edit(request, todo_id):
     todo = get_object_or_404(ToDo, id=todo_id)
@@ -284,17 +284,17 @@ def todo_admin_edit(request, todo_id):
             return redirect('todo_list')
     else:
         form = TodoListForm(instance=todo)
-    return render(request, "timepiece/todo-edit.html", {'form': form})
+    return render(request, "timepiece/todo/todo-edit.html", {'form': form})
 
 
 class TodoAdminListView(ListView):
     queryset = ToDo.objects.filter(completed=False)
-    template_name = "timepiece/todo-list.html"
+    template_name = "timepiece/todo/todo-list.html"
 
 
 class TodoCompletedListView(ListView):
     queryset = ToDo.objects.filter(completed=True)
-    template_name = "timepiece/todo-complete-all.html"
+    template_name = "timepiece/todo/todo-complete-all.html"
 
 @permission_required('entries.can_clock_in')
 @transaction.atomic

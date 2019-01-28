@@ -31,7 +31,7 @@
                 <tbody>
                     {% for user in object_list %}
                         <tr>
-                            <td><a href='{% url 'view_user' user.pk %}'>{{ user.username }}</a></td>
+                            <td><a href='{% url 'admin:auth_user_change' user.pk %}'>{{ user.username }}</a></td>
                             <td>{{ user.first_name }}</td>
                             <td>{{ user.last_name }}</td>
                             <td>{{ user.email }}</td>

@@ -359,6 +359,9 @@ class APIForm(forms.Form):
         # check if more than one related fields was selected 
                 if len(related_fields_selected)>1: 
                    raise forms.ValidationError('Please enter only one of Barcode, Digi-Key Part Number, and Manufacturer Part Number!')
+                #check that if mouser is selected, a part number isn't input(no functionality for this)
+                if website == "Mouser" and partNumber:
+                    raise forms.ValidationError('Can\'t enter a mouser part number, must be a manufacturer number for Mouser.')
                 return self.cleaned_data
 
 class EnterTokensForm(forms.Form):

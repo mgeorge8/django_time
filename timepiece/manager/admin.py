@@ -7,7 +7,7 @@ from timepiece.manager.models import (
 
 from import_export import resources
 
-
+#needed for import/export to work
 class ProjectResource(resources.ModelResource):
 
     class Meta:
@@ -17,13 +17,8 @@ class ProjectResource(resources.ModelResource):
 from import_export.admin import ImportExportModelAdmin
         
 class ProjectAdmin(ImportExportModelAdmin):
-   # list_display = ('name',)
-    #search_fields = ('name',)
     resource_class = ProjectResource
 
-##class ProjectAdmin(admin.ModelAdmin):
-##    list_display = ('name', 'inactive')
-##    search_fields = ('name', 'inactive') 
 
 
 class UserProfileInline(admin.StackedInline):

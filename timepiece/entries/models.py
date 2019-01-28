@@ -41,7 +41,7 @@ class EntryQuerySet(models.query.QuerySet):
 
     def timespan(self, from_date, to_date=None, span=None, current=False):
         """
-        Takes a beginning date a filters entries. An optional to_date can be
+        Takes a beginning date and filters entries. An optional to_date can be
         specified, or a span, which is one of ('month', 'week', 'day').
         N.B. - If given a to_date, it does not include that date, only before.
         """
@@ -65,7 +65,6 @@ class EntryManager(models.Manager):
 
     def get_queryset(self):
         qs = EntryQuerySet(self.model)
-        #qs = qs.select_related('project__name')
 
         # ensure our select_related are added.  Without this line later calls
         # to select_related will void ours (not sure why - probably a bug
@@ -80,26 +79,12 @@ class EntryManager(models.Manager):
     def timespan(self, from_date, to_date=None, span='month'):
         return self.get_queryset().timespan(from_date, to_date, span)
 
-
-class ToDo(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE,)
-    priority = models.IntegerField()
-    description = models.CharField(max_length=500, blank=False)
-    completed = models.BooleanField(blank=False, default=False)
-
-    class Meta:
-        ordering = ["user", "priority"]
-
-    def __str__(self):
-        return self.description
-
 @python_2_unicode_compatible
 class Entry(models.Model):
     """
     This class is where all of the time logs are taken care of
     """
     user = models.ForeignKey(User, related_name='timepiece_entries', on_delete=models.CASCADE,)
-   # project = models.CharField(max_length=50, blank=False)
     project = models.ForeignKey('manager.Project', related_name='entries', on_delete=models.CASCADE,)    
     start_time = models.DateTimeField()
     end_time = models.DateTimeField(blank=True, null=True, db_index=True)
@@ -109,7 +94,6 @@ class Entry(models.Model):
     hours = models.DecimalField(max_digits=11, decimal_places=5, default=0)
 
     objects = EntryManager()
-    #worked = EntryWorkedManager()
     no_join = models.Manager()
 
     class Meta:
@@ -126,7 +110,8 @@ class Entry(models.Model):
 
     def check_overlap(self, entry_b, **kwargs):
         """Return True if the two entries overlap."""
-        consider_pause = False #kwargs.get('pause', True)
+        #used to be a pause feature that was taken out but now requires this
+        consider_pause = False 
         entry_a = self
         # if entries are open, consider them to be closed right now
         if not entry_a.end_time or not entry_b.end_time:
@@ -246,19 +231,19 @@ class Entry(models.Model):
 ##        if end2 < start.time():
 ##            raise ValidationError('Ending time must exceed the starting time')
             
-        delta = (end - start)
-        delta_secs = (delta.seconds + delta.days * 24 * 60 * 60)
-        limit_secs = 60 * 60 * 12
-        if delta_secs > limit_secs: 
-            err_msg = 'Ending time exceeds starting time by 12 hours or more '\
-                'for {0} on {1} at {2} to {3} at {4}.'.format(
-                    self.project,
-                    start.strftime('%m/%d/%Y'),
-                    start.strftime('%H:%M:%S'),
-                    end.strftime('%m/%d/%Y'),
-                    end.strftime('%H:%M:%S')
-                )
-            raise ValidationError(err_msg)
+##        delta = (end - start)
+##        delta_secs = (delta.seconds + delta.days * 24 * 60 * 60)
+##        limit_secs = 60 * 60 * 12
+##        if delta_secs > limit_secs: 
+##            err_msg = 'Ending time exceeds starting time by 12 hours or more '\
+##                'for {0} on {1} at {2} to {3} at {4}.'.format(
+##                    self.project,
+##                    start.strftime('%m/%d/%Y'),
+##                    start.strftime('%H:%M:%S'),
+##                    end.strftime('%m/%d/%Y'),
+##                    end.strftime('%H:%M:%S')
+##                )
+##            raise ValidationError(err_msg)
         return True
 
     def save(self, *args, **kwargs):
@@ -372,3 +357,15 @@ class ProjectHours(models.Model):
         verbose_name = 'project hours entry'
         verbose_name_plural = 'project hours entries'
         unique_together = ('week_start', 'project', 'user')
+
+class ToDo(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE,)
+    priority = models.IntegerField()
+    description = models.CharField(max_length=500, blank=False)
+    completed = models.BooleanField(blank=False, default=False)
+
+    class Meta:
+        ordering = ["user", "priority"]
+
+    def __str__(self):
+        return self.description

@@ -112,20 +112,6 @@ def get_max_hours(context):
     return max([0] + [max(p['worked'], p['assigned']) for p in progress])
 
 
-##@register.simple_tag
-##def get_uninvoiced_hours(entries, billable=None):
-##    """Given an iterable of entries, return the total hours that have
-##    not been invoiced. If billable is passed as 'billable' or 'nonbillable',
-##    limit to the corresponding entries.
-##    """
-##    statuses = ('invoiced', 'not-invoiced')
-##    if billable is not None:
-##        billable = (billable.lower() == u'billable')
-##        entries = [e for e in entries if e.activity.billable == billable]
-##    hours = sum([e.hours for e in entries if e.status not in statuses])
-##    return '{0:.2f}'.format(hours)
-
-
 @register.filter
 def humanize_hours(total_hours, frmt='{hours:02d}:{minutes:02d}:{seconds:02d}',
                    negative_frmt=None):
@@ -163,43 +149,6 @@ def multiply(a, b):
     """Return a * b."""
     return float(a) * float(b)
 
-
-##@register.simple_tag
-##def project_hours_for_contract(contract, project, billable=None):
-##    """Total billable hours worked on project for contract.
-##    If billable is passed as 'billable' or 'nonbillable', limits to
-##    the corresponding hours.  (Must pass a variable name first, of course.)
-##    """
-##    hours = contract.entries.filter(project=project)
-##    if billable is not None:
-##        if billable in (u'billable', u'nonbillable'):
-##            billable = (billable.lower() == u'billable')
-##            hours = hours.filter(activity__billable=billable)
-##        else:
-##            msg = '`project_hours_for_contract` arg 4 must be "billable" ' \
-##                  'or "nonbillable"'
-##            raise template.TemplateSyntaxError(msg)
-##    hours = hours.aggregate(s=Sum('hours'))['s'] or 0
-##    return hours
-##
-##
-##def _project_report_url_params(contract, project):
-##    return {
-##        'from_date': contract.start_date.strftime(DATE_FORM_FORMAT),
-##        'to_date': contract.end_date.strftime(DATE_FORM_FORMAT),
-##        'billable': 1,
-##        'non_billable': 0,
-##        'paid_leave': 0,
-##        'trunc': 'month',
-##        'projects_1': project.id,
-##    }
-##
-##
-##@register.simple_tag
-##def project_report_url_for_contract(contract, project):
-##    data = _project_report_url_params(contract, project)
-##    return '{0}?{1}'.format(reverse('report_hourly'), urlencode(data))
-##
 
 @register.simple_tag
 def project_timesheet_url(project_id, date=None):

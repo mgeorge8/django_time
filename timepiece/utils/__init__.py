@@ -84,8 +84,6 @@ def get_week_start(day=None):
     """Returns the Sunday of the given week."""
     day = add_timezone(day or datetime.date.today())
     #days_since_monday = day.weekday()
-    #if days_since_monday != 0:
-     #   day = day - relativedelta(days=days_since_monday)
     days_since_sunday = day.weekday() + 1
     if days_since_sunday != 7:
         day = day - relativedelta(days=days_since_sunday)

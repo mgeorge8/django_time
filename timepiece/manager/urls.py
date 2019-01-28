@@ -13,18 +13,6 @@ urlpatterns = [
     url(r'^user/$',
         views.ListUsers.as_view(),
         name='list_users'),
-    url(r'^user/create/$',
-        views.CreateUser,
-        name='create_user'),
-    url(r'^user/(?P<user_id>\d+)/$',
-        views.ViewUser.as_view(),
-        name='view_user'),
-    url(r'^user/(?P<user_id>\d+)/edit/$',
-        views.EditUser.as_view(),
-        name='edit_user'),
-    url(r'^user/(?P<user_id>\d+)/delete/$',
-        views.DeleteUser.as_view(),
-        name='delete_user'),
 
     url(r'^weektimesheetcsv/(?P<date>\d{4}-\d{2}-\d{2})/$',
         views.week_timesheet,
@@ -34,13 +22,6 @@ urlpatterns = [
         name='week_timesheet'),
     
 
-    # User timesheets
-    url(r'^user/(?P<user_id>\d+)/timesheet/$',
-        views.view_user_timesheet,
-        name='view_user_timesheet'),
-
-    
-
     # Projects
     url(r'^project/$',
         views.ListProjects.as_view(),
@@ -48,9 +29,6 @@ urlpatterns = [
     url(r'^project/inactive$',
         views.ListInactiveProjects.as_view(),
         name='inactive_projects'),
-##    url(r'^project/create/$',
-##        views.CreateProject.as_view(),
-##        name='create_project'),
     url(r'^project/create/$',
         views.ProjectCreate,
         name='create_project'),
@@ -58,7 +36,6 @@ urlpatterns = [
         views.ViewProject.as_view(),
         name='view_project'),
     url(r'^project/(?P<project_id>\d+)/edit/$',
-        #views.EditProject.as_view(),
         views.ProjectEdit,
         name='edit_project'),
     url(r'^project/(?P<project_id>\d+)/delete/$',
