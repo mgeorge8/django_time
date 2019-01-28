@@ -8,6 +8,8 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.urls import reverse, reverse_lazy
 from django.db.models import Sum
+from django.db.models.functions import Lower
+
 from django.http import HttpResponseRedirect, HttpResponseForbidden, Http404, HttpResponse
 from django.shortcuts import get_object_or_404, render, redirect
 from django.views.generic import (
@@ -223,8 +225,9 @@ class WeekTimesheet(WeekTimesheetMixin, TemplateView):
         project_entries = project_entries.annotate(sum=Sum('hours')).order_by('-sum')
         #add unique list of activities for each project entry
         for p in project_entries:
-            p['activities'] = ",".join(week['activities'] for week in week_entry.filter(project__name=p['project__name'])
-                                       .order_by('activities').values('activities').distinct())
+            p['activities'] = ",".join(week.lower_activities for week in week_entry.filter(project__name=p['project__name'])
+                                       .order_by().annotate(lower_activities=Lower('activities'))
+                                       .distinct('lower_activities'))
 
         context.update({
             'user': user,
