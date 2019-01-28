@@ -254,119 +254,7 @@ def ListParts(request, type_id):
         for n in list_fields:
             if request.POST.getlist(n):
                 filters[n + '__in'] = request.POST.getlist(n)
-        print(filters)
-##        manufacturer = request.POST.getlist('manufacturer')
-##        location = request.POST.getlist('location')
-##        char1 = request.POST.getlist('char1')
-##        char2 = request.POST.getlist('char2')
-##        char3 = request.POST.getlist('char3')
-##        char4 = request.POST.getlist('char4')
-##        char5 = request.POST.getlist('char5')
-##        char6 = request.POST.getlist('char6')
-##        char7 = request.POST.getlist('char7')
-##        char8 = request.POST.getlist('char8')
-##        char9 = request.POST.getlist('char9')
-##        char10 = request.POST.getlist('char10')
-##        char11 = request.POST.getlist('char11')
-##        char12 = request.POST.getlist('char12')
-##        char13 = request.POST.getlist('char13')
-##        char14 = request.POST.getlist('char14')
-##        char15 = request.POST.getlist('char15')
-##        char16 = request.POST.getlist('char16')
-##        char17 = request.POST.getlist('char17')
-##        char18 = request.POST.getlist('char18')
-##        char19 = request.POST.getlist('char19')
-##        char20 = request.POST.getlist('char20')
-##        char21 = request.POST.getlist('char21')
-##        char22 = request.POST.getlist('char22')
-##        char23 = request.POST.getlist('char23')
-##        char24 = request.POST.getlist('char24')
-##        char25 = request.POST.getlist('char25')
-##        char26 = request.POST.getlist('char26')
-##        char27 = request.POST.getlist('char27')
-##        char28 = request.POST.getlist('char28')
-##        char29 = request.POST.getlist('char29')
-##        char30 = request.POST.getlist('char30')
-##        char31 = request.POST.getlist('char31')
-##        char32 = request.POST.getlist('char32')
-##        char33 = request.POST.getlist('char33')
-##        char34 = request.POST.getlist('char34')
-##        char35 = request.POST.getlist('char35')
         searchField = request.POST.get('search')
-##        if len(manufacturer) > 0:
-##            filters['manufacturer__in'] = manufacturer
-##        if len(location) > 0:
-##            filters['location__in'] = location
-##        if len(char1) > 0:
-##            filters['char1__in'] = char1
-##        if len(char2) > 0:
-##            filters['char2__in'] = char2
-##        if len(char3) > 0:
-##            filters['char3__in'] = char3
-##        if len(char4) > 0:
-##            filters['char4__in'] = char4
-##        if len(char5) > 0:
-##            filters['char5__in'] = char5
-##        if len(char6) > 0:
-##            filters['char6__in'] = char6
-##        if len(char7) > 0:
-##            filters['char7__in'] = char7
-##        if len(char8) > 0:
-##            filters['char8__in'] = char8
-##        if len(char9) > 0:
-##            filters['char9__in'] = char9
-##        if len(char10) > 0:
-##            filters['char10__in'] = char10
-##        if len(char11) > 0:
-##            filters['char11__in'] = char11
-##        if len(char12) > 0:
-##            filters['char12__in'] = char12
-##        if len(char13) > 0:
-##            filters['char13__in'] = char13
-##        if len(char14) > 0:
-##            filters['char14__in'] = char14
-##        if len(char15) > 0:
-##            filters['char15__in'] = char15
-##        if len(char16) > 0:
-##            filters['char16__in'] = char16
-##        if len(char17) > 0:
-##            filters['char17__in'] = char17
-##        if len(char18) > 0:
-##            filters['char18__in'] = char18
-##        if len(char19) > 0:
-##            filters['char19__in'] = char19
-##        if len(char20) > 0:
-##            filters['char20__in'] = char20
-##        if len(char21) > 0:
-##            filters['char21__in'] = char21
-##        if len(char22) > 0:
-##            filters['char22__in'] = char22
-##        if len(char23) > 0:
-##            filters['char23__in'] = char23
-##        if len(char24) > 0:
-##            filters['char24__in'] = char24
-##        if len(char25) > 0:
-##            filters['char25__in'] = char25
-##        if len(char26) > 0:
-##            filters['char26__in'] = char26
-##        if len(char27) > 0:
-##            filters['char27__in'] = char27
-##        if len(char28) > 0:
-##            filters['char28__in'] = char28
-##        if len(char29) > 0:
-##            filters['char29__in'] = char29
-##        if len(char30) > 0:
-##            filters['char30__in'] = char30
-##        if len(char31) > 0:
-##            filters['char31__in'] = char31
-##        if len(char32) > 0:
-##            filters['char32__in'] = char32
-##        if len(char33) > 0:
-##            filters['char33__in'] = char33
-##        if len(char34) > 0:
-##            filters['char34__in'] = char34
-##        if len(char35) > 0:
-##            filters['char35__in'] = char35
         form=FilterForm(models=models, type_id=type_id)
     else:
         form = FilterForm(models=models, type_id=type_id)
@@ -607,9 +495,6 @@ def enter_digi_part(request):
             string = res.read().decode('utf-8')
             sys.stdout.flush()
             jstr = json.loads(string)
-            f = open("data4.txt", "a")
-            f.write(string)
-##            if website == 'Digi-Key':
             try:
                 part = jstr['ExactDigiKeyPart']
                 data = part['Parameters']
@@ -619,24 +504,10 @@ def enter_digi_part(request):
                     data = part['Parameters']
                 except(IndexError, KeyError, TypeError):
                     return HttpResponseNotFound('<h1>Invalid Part Number</h1>')
-##            elif website == 'Mouser':
-##                try:
-##                    part = jstr['ExactParts'][0]
-##                    data = part['Parameters']
-##                except(IndexError, KeyError, TypeError):
-##                    return HttpResponseNotFound('<h1>Invalid Part Number</h1>')
-##            else:
-##                return HttpResponseNotFound('<h1>Must select a website</h1>')
             params = {}
             for value in data:
                 params[value['Parameter']] = value['Value']
-            f.write("-----------------------")
-            for key, value in params.items():
-                f.write(key)
             typeName = part['Family']['Text']
-            f.write("$$$$" + typeName)
-            f.write("!!!!!!!!!")
-            f.write(json.dumps(params))
             list_name = re.findall(r'\w+', typeName)
             word_count = len(list_name)
             prefix = ""
@@ -648,7 +519,6 @@ def enter_digi_part(request):
                 prefix = (list_name[0][:1] + list_name[1][:1] + list_name[2][:1]).upper()
             partType, created = Type.objects.get_or_create(name=typeName)
             count = 1
-            #print(params)
             if created:
                 setattr(partType,"prefix",prefix)
                 partType.save()
@@ -685,7 +555,6 @@ def enter_digi_part(request):
                     messages.warning(request, ('Manufacturer Part Number already exists.'))
                     url = reverse('digi_part')
                     return HttpResponseRedirect(url)
-                #return HttpResponseNotFound('<h1>Part already exists!</h1> <a href="{% url \'list_product\' %}">Products</a>')
             new_part = Part.objects.create(partType=partType, description=description)
             if manufacturer:
                 ManufacturerRelationship.objects.create(part=new_part, manufacturer=manu, partNumber=number)
@@ -719,16 +588,6 @@ def enter_digi_part(request):
                             new_part.datasheet.save(datasheet_name, ContentFile(response.content), save=True)
                     except (requests.exceptions.SSLError):
                         pass
-##                        try:
-##                            datasheet_name = urlparse(datasheet_url).path.split('/')[-1]
-##                            headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36'}
-##                            response = requests.get(datasheet_url, headers=headers, timeout=5, verify=False)
-##                            if response.status_code == 200:
-##                                new_part.datasheet.save(datasheet_name, ContentFile(response.content), save=True)
-##                        except (requests.exceptions.SSLError):
-##                            pass
-##                    except (requests.exceptions.Timeout):
-##                            pass
             except(IndexError, KeyError, TypeError):
                 pass
             redirect_url = reverse('edit_part', args=[partType.pk, new_part.id])
@@ -740,12 +599,15 @@ def enter_digi_part(request):
 
 def get_parts(request):
     searchField = request.GET.get('search')
-    parts = Part.objects.annotate(search=SearchVector('partType__name', 'description', 'location__name',
+    if searchField:
+        parts = Part.objects.annotate(search=SearchVector('partType__name', 'description', 'location__name',
                                                       'engimusingPartNumber', 'manufacturer__name',
                                                       'manufacturerrelationship__partNumber'),).filter(search=searchField)
+    else:
+        parts = Part.objects.all()
     parts_dict = {}
     for part in parts:
-        parts_dict[part.id] = part.description
+        parts_dict[part.id] = part.engimusingPartNumber + " - " + part.description
     return JsonResponse(parts_dict)
 
 def CreateProduct(request):

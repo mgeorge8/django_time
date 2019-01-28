@@ -225,7 +225,7 @@ class WeekTimesheet(WeekTimesheetMixin, TemplateView):
         project_entries = project_entries.annotate(sum=Sum('hours')).order_by('-sum')
         #add unique list of activities for each project entry
         for p in project_entries:
-            p['activities'] = ",".join(week.lower_activities for week in week_entry.filter(project__name=p['project__name'])
+            p['activities'] = ", ".join(week.lower_activities for week in week_entry.filter(project__name=p['project__name'])
                                        .order_by().annotate(lower_activities=Lower('activities'))
                                        .distinct('lower_activities'))
 
