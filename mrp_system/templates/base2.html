@@ -31,7 +31,8 @@
                 href="//ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/smoothness/jquery-ui.css" />
     {% endblock css %}
 
-    
+    {% block extrajs %}
+    {% endblock %}
 
     {% block extracss %}
     {% endblock extracss %}
@@ -147,8 +148,7 @@
 <script src="{% static 'js/jquery-3.2.1.min.js' %}"></script>
     <script src="{% static 'js/popper.min.js' %}"></script>
     <script src="{% static 'js/bootstrap.min.js' %}"></script>
-    {% block extrajs %}
-    {% endblock extrajs %}
+    
 </body>
 
 </html>

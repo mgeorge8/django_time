@@ -1,9 +1,18 @@
 {% extends "base2.html" %}
+
+
 {% block extrajs %}
-
-{% endblock extrajs %}
-
-
+<script>
+function codeAddress() {
+var formidx = $('#id_partamount_set-TOTAL_FORMS').val();
+var i;
+for (i = 1; i < formidx; i++) {
+$('#part_script').append($("<sc" + "ript>$('#id_partamount_set-" + i + "-search').on('change', function () { console.log( $(this).val() ); var url = $('#formset').attr('data-parts-url'); var search = $(this).val(); $.ajax({ url: url, data: {'search': search}, success: function (data) { $('#id_partamount_set-" + i + "-part').empty(); $.each(data, function(key, value) { $('#id_partamount_set-" + i + "-part').append($('<option>', { value: key }).text(value)); }); } }); });</sc" + "ript>")[0]);
+}
+}
+window.onload = codeAddress;
+</script>
+{% endblock %}
 {% block title %}Product{% endblock title %}
 {% block crumbs %}
     {{ block.super }}
@@ -137,4 +146,5 @@ $('#part_script').append($("<sc" + "ript>$('#id_partamount_set-" + formidx + "-s
 <hr/>
         </div>
 {% endblock content %}
+
 
