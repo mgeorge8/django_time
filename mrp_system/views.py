@@ -735,11 +735,12 @@ def billOfMaterialsDetail(request, product_id):
         products = ProductAmount.objects.none()
         for pr in productList:
             partList2 = pr.to_product.partamount_set.all()
+            multiplier = pr.amount 
             for pa in partList2:
                 if parts.get(pa.part):
-                    parts[pa.part]+=pa.amount
+                    parts[pa.part]+= (pa.amount * multiplier)
                 else:
-                    parts[pa.part]=pa.amount
+                    parts[pa.part]= (pa.amount * multiplier)
             if products:
                 products = products.union(ProductAmount.objects.filter(from_product=pr.to_product))
             else:
