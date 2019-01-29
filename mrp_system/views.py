@@ -318,6 +318,7 @@ class LocationUpdate(UpdateView):
 
 def LocationRelationshipEdit(request, locationrelationship_id):
     rel = get_object_or_404(LocationRelationship, id=locationrelationship_id)
+    partType = Type.objects.get(part=rel.part)
     if request.method == "POST":
         form = LocationForm(request.POST, instance=rel)
         if form.is_valid():
@@ -326,10 +327,13 @@ def LocationRelationshipEdit(request, locationrelationship_id):
             return HttpResponseRedirect(nextUrl)
     else:
         form = LocationForm(instance=rel)
-    return render(request, 'update_loc_relationship.html', {'form': form})
+    return render(request, 'update_loc_relationship.html', {'form': form,
+                                                            'loc_rel': rel,
+                                                            'partType': partType})
 
 def LocationRelationshipAdd(request, part_id):
     part = get_object_or_404(Part, id=part_id)
+    partType = Type.objects.get(part=part)
     if request.method == "POST":
         form = LocationForm(request.POST)
         if form.is_valid():
@@ -340,7 +344,20 @@ def LocationRelationshipAdd(request, part_id):
             return HttpResponseRedirect(nextUrl)
     else:
         form = LocationForm()
-    return render(request, 'add_loc_relationship.html', {'form': form})
+    return render(request, 'add_loc_relationship.html', {'form': form, 'partType': partType})
+
+class LocationRelationshipDelete(DeleteView):
+    model = LocationRelationship
+    pk_url_kwarg = 'locationrelationship_id'
+    
+    template_name = 'delete_location.html'
+    #success_url = reverse_lazy('list_parts', args=[partType.pk])
+
+    def get_success_url(self):
+        loc_id=self.kwargs['locationrelationship_id']
+        rel = get_object_or_404(LocationRelationship, id=loc_id)
+        partType = Type.objects.get(part=rel.part)
+        return reverse_lazy('list_parts', kwargs={'type_id': partType.id})
 
 class ManufacturerDelete(DeleteView):
     model = Manufacturer

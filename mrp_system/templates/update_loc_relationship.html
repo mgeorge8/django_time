@@ -14,7 +14,9 @@
 {% csrf_token %}
 {{ form.as_p }}
 <input type="hidden" name="next" value="{{ request.GET.next }}">
-<input type="submit" value="Save"/>
+<input class="btn btn-primary" type="submit" value="Save"/>
+<a class="btn btn-primary" href="{% url 'delete_loc_rel' loc_rel.id %}">Delete</a>
+<a class="btn btn-primary" href="{% url 'list_parts' partType.id %}">Cancel</a>
 </form>
 
 </div>

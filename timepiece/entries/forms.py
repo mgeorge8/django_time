@@ -107,7 +107,6 @@ class ClockOutForm(forms.ModelForm):
 
     def save(self, commit=True):
         entry = super(ClockOutForm, self).save(commit=False)
-        #entry.unpause(entry.end_time)
         if commit:
             entry.save()
         return entry
@@ -153,41 +152,30 @@ class AddUpdateEntryForm(forms.ModelForm):
                         start_time=active.start_time.strftime('%H:%M:%S'),
                     ))
 
+##        start_date = start_time.date() if start_time else None
+##        end_date = end_time.date() if end_time else None
+##        if start_date and end_date:
+##            if end_date > start_date:
+                
         month_start = utils.get_month_start(start_time)
         next_month = month_start + relativedelta(months=1)
         entries = self.instance.user.timepiece_entries.filter(
-           # Q(status=Entry.APPROVED) | Q(status=Entry.INVOICED),
             start_time__gte=month_start,
             end_time__lt=next_month
         )
         entry = self.instance
-
-##        if not self.acting_user.is_superuser:
-##            if (entries.exists() and not entry.id or entry.id and entry.status == Entry.INVOICED):
-##                message = 'You cannot add/edit entries after a timesheet has been ' \
-##                    'approved or invoiced. Please correct the start and end times.'
-##                raise forms.ValidationError(message)
-
         return self.cleaned_data
 
 class EntryDashboardForm(forms.ModelForm):
     start_time = TimepieceSplitDateTimeField()
-    #end_time = TimepieceSplitDateTimeField(required=False)
     end = forms.TimeField(required=False)
-##    end_date = forms.DateField(required=False, label="End time:")
-##    time_end = forms.TimeField(required=False, label="")
 
     class Meta:
         model = Entry
-        exclude = ('user', 'site', 'hours', 'end_time')
-        
+        exclude = ('user', 'site', 'hours', 'end_time') 
         
 
-    def __init__(self, *args, **kwargs):
-        #kwargs['initial'] = kwargs.get('initial', None) or {}
-        #kwargs['initial']['start_time'] = datetime.datetime.now()
-        #kwargs['initial']['end_time'] = datetime.datetime.now()
-        
+    def __init__(self, *args, **kwargs):        
         self.user = kwargs.pop('user')
         self.acting_user = kwargs.pop('acting_user')
         super(EntryDashboardForm, self).__init__(*args, **kwargs)
@@ -210,16 +198,6 @@ class EntryDashboardForm(forms.ModelForm):
         """
         active = utils.get_active_entry(self.user)
         start_time = self.cleaned_data.get('start_time', None)
-##        time_end = self.cleaned_data.get('time_end', None)
-##        end_date = self.cleaned_data.get('end_date', None)
-##        if end_date and (time_end is None):
-##            raise forms.ValidationError("Must enter an end time.")
-##        if time_end and (end_date is None):
-##            raise forms.ValidationError("Must enter an end date.")
-##        if end_date and time_end:
-##            self.instance.end_time = datetime.datetime.combine(end_date, time_end)
-##        else:
-##            self.instance.end_time = None
         end = self.cleaned_data.get('end', None)
         #hours = end - start_time.time
         if(end != None and active != None):

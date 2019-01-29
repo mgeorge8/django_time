@@ -331,7 +331,27 @@ def clock_out(request):
     if request.POST:
         form = ClockOutForm(request.POST, instance=entry)
         if form.is_valid():
-            entry = form.save()
+            entry_user = entry.user
+            start = entry.start_time
+            end = form.cleaned_data['end_time']
+            project = entry.project
+            activities = entry.activities
+            start_date = start.date()
+            end_date = end.date()
+            if end_date > start_date:
+                end_of_day = start.replace(hour=23, minute=59, second=59, microsecond=999999)
+                entry.end_time = end_of_day
+                entry.save()
+##                entry1 = Entry(user=entry_user,project=project,start_time=start,
+##                               end_time=end_of_day,activities=activities)
+##                entry1.save()
+                start_of_next_day = end_of_day + datetime.timedelta(microseconds=1)
+                entry2 = Entry(user=entry_user, project=project,start_time=start_of_next_day,
+                               end_time=end,activities=activities)
+                entry2.save()
+            else:
+                entry=form.save()
+            #entry = form.save()
             message = 'You have clocked out of {0}.'.format(
                 entry.project)
             messages.info(request, message)
@@ -368,7 +388,29 @@ def create_edit_entry(request, entry_id=None):
                                   user=entry_user,
                                   acting_user=request.user)
         if form.is_valid():
-            entry = form.save()
+           # entry = form.save()
+            start = form.cleaned_data["start_time"]
+            end = form.cleaned_data["end_time"]
+            project = form.cleaned_data["project"]
+            activities = form.cleaned_data["activities"]
+            start_date = start.date()
+            end_date = end.date()
+            if end_date > start_date:
+                end_of_day = start.replace(hour=23, minute=59, second=59, microsecond=999999)
+                entry1 = Entry(user=entry_user,project=project,start_time=start,
+                               end_time=end_of_day,activities=activities)
+                entry1.save()
+                start_of_next_day = end_of_day + datetime.timedelta(microseconds=1)
+                entry2 = Entry(user=entry_user, project=project,start_time=start_of_next_day,
+                               end_time=end,activities=activities)
+                entry2.save()
+            else:
+                entry=form.save()
+##            Todo = ToDo(priority=priority, description=description, user=user)
+##            Todo.save()
+##            entry = form.save(commit=False)
+##            todo.user = request.user
+##            todo.save()
             if entry_id:
                 message = 'The entry has been updated successfully.'
             else:
