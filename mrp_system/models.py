@@ -2,8 +2,17 @@ from django.db import models
 import datetime
 #from django.contrib.sites.models import Site
 
-class Manufacturer(models.Model):
+class Vendor(models.Model):
+    TYPE_CHOICES = (
+        ('manufacturer', 'manufacturer'),
+        ('distributor', 'distrbutor'),
+        )
     name = models.CharField(max_length=128, unique=True)
+    vendor_type = models.CharField(max_length=12, choices=TYPE_CHOICES,
+                                   default='manufacturer')
+    address = models.CharField(max_length=300, blank=True)
+    phone = models.CharField(max_length=10, blank=True)
+    web_address = models.CharField(max_length=300, blank=True)
 
     def __str__(self):
         return self.name
@@ -72,7 +81,7 @@ class Part(models.Model):
     engimusingPartNumber = models.CharField(max_length=30, editable=False)
     description = models.CharField(max_length=300, blank=True)
     location = models.ManyToManyField(Location, through='LocationRelationship')
-    manufacturer = models.ManyToManyField(Manufacturer,
+    manufacturer = models.ManyToManyField(Vendor,
                                           through='ManufacturerRelationship')
     #all of the fields that could be tracked for a part type
     char1 = models.CharField(max_length=100, blank=True)
@@ -157,7 +166,8 @@ def increment_engi_partnumber(partType):
 
 class ManufacturerRelationship(models.Model):
     part = models.ForeignKey(Part, on_delete=models.CASCADE)
-    manufacturer = models.ForeignKey(Manufacturer, on_delete=models.CASCADE)
+    manufacturer = models.ForeignKey(Vendor, on_delete=models.CASCADE,
+                                     limit_choices_to={'vendor_type': 'manufacturer'},)
     partNumber = models.CharField(max_length=40, blank=True)
 
 class LocationRelationship(models.Model):
@@ -222,9 +232,10 @@ class PurchaseOrder(models.Model):
             today = str(datetime.datetime.now().date())
             new_number = "PO" + today
             if last_id:
-                last_date = str(last_id.number)[2:12]
+                str_number = str(last_id.number)
+                last_date = str_number[2:12]
                 if last_date == today:
-                    nn = str(last_id.number)[13:16] + 1
+                    nn = int(str_number[13:16]) + 1
                 else:
                     nn = 1
             else:
@@ -232,18 +243,6 @@ class PurchaseOrder(models.Model):
             new_number += "_" + str(nn).zfill(2)
             self.number = new_number
         super().save(*args, **kwargs)
-
-##def increment_po_number():
-##    #get greatest part number
-##    last_id = Part.objects.order_by('number').last()
-##    last_date = last_id.number[2:12]
-##    today = str(datetime.datetime.now().date())
-##    new_number = "PO" + today
-##    if last_date == today:
-##        nn = last_id.number[13:16] + 1
-##    else:
-##        nn = 1
-##    new_number += "_" + str(nn).zfill(2)
 
 """used to keep track of tokens, only one instance of this model named "DigiKey",
 don't create another instance of this as it can mess up the tokens"""

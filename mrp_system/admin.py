@@ -1,6 +1,6 @@
 from django.contrib import admin
 from mrp_system.models import (Part, Location, LocationRelationship,
-Manufacturer, ManufacturerRelationship, Type, Field)
+Vendor, ManufacturerRelationship, Type, Field)
 from import_export import resources
 from import_export.admin import ImportExportModelAdmin
 
@@ -14,12 +14,12 @@ class PartResource(resources.ModelResource):
 class PartAdmin(ImportExportModelAdmin):
     resource_class = PartResource
 
-class ManufacturerResource(resources.ModelResource):
+class VendorResource(resources.ModelResource):
     class Meta:
-        model = Manufacturer    
+        model = Vendor    
 
-class ManufacturerAdmin(ImportExportModelAdmin):
-    resource_class = ManufacturerResource
+class VendorAdmin(ImportExportModelAdmin):
+    resource_class = VendorResource
 
 class ManufacturerRelationshipResource(resources.ModelResource):
     class Meta:
@@ -58,7 +58,7 @@ class FieldAdmin(ImportExportModelAdmin):
 
     
 admin.site.register(Part, PartAdmin)
-admin.site.register(Manufacturer, ManufacturerAdmin)
+admin.site.register(Vendor, VendorAdmin)
 admin.site.register(ManufacturerRelationship, ManufacturerRelationshipAdmin)
 admin.site.register(Location, LocationAdmin)
 admin.site.register(LocationRelationship, LocationRelationshipAdmin)

@@ -1,10 +1,13 @@
 {% extends "base2.html" %}
 
 
-{% block title %}Manufacturer{% endblock title %}
-
+{% block title %}Vendor{% endblock title %}
+{% block crumbs %}
+    {{ block.super }}
+    <li><span class="divider">/</span> <a href="{% url 'list_vendors' %}"> Vendors</a></li>
+{% endblock crumbs %}
 {% block content %}
-<h3>Create Manufacturer</h3>
+<h3>Update Vendor</h3>
 <div class="container-fluid">
 <div class="form-horizontal">
 <form action="" method="post">
@@ -15,9 +18,5 @@
 
 </div>
 <hr/>
-<h4>Existing Manufacturers</h4>
-{% for manufacturer in manufacturers %}
-<li>{{ manufacturer.name }} </li>
-{% endfor %}
         </div>
 {% endblock content %}

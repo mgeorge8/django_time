@@ -1,0 +1,46 @@
+{% extends "base2.html" %}
+
+
+{% block title %}Vendors{% endblock title %}
+
+{% block content %}
+<div class="container-fluid">
+<h2>Vendors</h2>
+<a href="{% url 'create_vendor' %}"> Create New Vendor</a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="{% url 'merge_vendors' %}">Merge Vendors</a>
+<hr>           
+<br> 
+<table class='table table-bordered table-striped table-condensed'>
+                <thead>
+                    <tr>
+                        <th>Manufacturers</th>
+                        <th>Edit</th>
+                        <th>Delete</th>
+                    </tr>
+                </thead>
+                <tbody>
+                                {% for vendor in all_manufacturers %}
+
+                        <tr>
+                            <td>{{ vendor.name }}</td>
+                            <td><a href="{% url 'edit_vendor' vendor.id %}">Edit</a></td>
+                            <td><a href="{% url 'delete_vendor' vendor.id %}">Delete</a></td>
+                        </tr>
+                    {% endfor %}
+			<tr>
+			<th>Distributors</th>
+			</tr>
+{% for vendor in distributors %}
+
+                        <tr>
+                            <td>{{ vendor.name }}</td>
+                            <td><a href="{% url 'edit_vendor' vendor.id %}">Edit</a></td>
+                            <td><a href="{% url 'delete_vendor' vendor.id %}">Delete</a></td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            
+     
+    </div>
+{% endblock content %}

@@ -1,6 +1,6 @@
 from django import forms
 from mrp_system.models import (Location, LocationRelationship,
-Part, Manufacturer, ManufacturerRelationship, Field, Type, Product,
+Part, Vendor, ManufacturerRelationship, Field, Type, Product,
                                PartAmount, ProductAmount, ProductLocation,
                                MOProduct, ManufacturingOrder)
 from django.forms import ModelForm, BaseInlineFormSet
@@ -32,8 +32,8 @@ class PartForm(ModelForm):
             exclude = ('manufacturer', 'location', 'partType')
             
 
-class ManufacturerForm(ModelForm):
-    manufacturer = forms.ModelChoiceField(queryset=Manufacturer.objects.order_by('name'))
+class VendorForm(ModelForm):
+    manufacturer = forms.ModelChoiceField(queryset=Vendor.objects.filter(vendor_type='manufacturer').order_by('name'))
     class Meta:
         model = ManufacturerRelationship
         exclude = ('part',)
@@ -52,14 +52,14 @@ class CustomFormset(BaseInlineFormSet):
                     pass
                 
                 if not mr:
-                        #check if another part with same manufacturer number exists to prevent duplicates
+                        #check if another part with same number exists to prevent duplicates
                         exists = ManufacturerRelationship.objects.filter(partNumber=partNumber)
                         if exists:
                             raise forms.ValidationError('Manufacturer part number already exists!')
         return self.cleaned_data
     
 ManufacturerFormSet = inlineformset_factory(Part, ManufacturerRelationship,
-                                            form=ManufacturerForm, extra=1,
+                                            form=VendorForm, extra=1,
                                             formset=CustomFormset)
 
 class LocationForm(ModelForm):
@@ -222,11 +222,11 @@ class QuickTypeForm(forms.Form):
         fields = forms.CharField()
 
 #used in case duplicate manufacturers are created        
-class MergeManufacturersForm(forms.Form):
-        primary = forms.ModelChoiceField(label='Primary Manufacturer',
-                                         queryset = Manufacturer.objects.order_by('name'))
-        alias = forms.ModelChoiceField(label='Manufacturer To Delete',
-                                         queryset = Manufacturer.objects.order_by('name'))
+class MergeVendorsForm(forms.Form):
+        primary = forms.ModelChoiceField(label='Primary Vendor',
+                                         queryset = Vendor.objects.order_by('name'))
+        alias = forms.ModelChoiceField(label='Vendor To Delete',
+                                         queryset = Vendor.objects.order_by('name'))
 
 class MergeLocationsForm(forms.Form):
         primary = forms.ModelChoiceField(label='Primary Location',
@@ -242,14 +242,14 @@ class FilterForm(forms.Form):
                 partType = Type.objects.get(id=type_id)
                 super(FilterForm, self).__init__(*args, **kwargs)
                 self.fields['location'].queryset = Location.objects.filter(part__partType=partType).distinct()
-                self.fields['manufacturer'].queryset = Manufacturer.objects.filter(part__partType=partType).distinct()
+                self.fields['manufacturer'].queryset = Vendor.objects.filter(part__partType=partType).distinct()
                 for field, name in models.items():
                         self.fields[field] = forms.ModelMultipleChoiceField(Part.objects.filter(partType=partType).values_list(field, flat=True).distinct(), required=False)
                         self.fields[field].label = name
                 
         search = forms.CharField(required=False)
         location = forms.ModelMultipleChoiceField(required=False, queryset = Location.objects.none())
-        manufacturer = forms.ModelMultipleChoiceField(required=False, queryset = Manufacturer.objects.none())                    
+        manufacturer = forms.ModelMultipleChoiceField(required=False, queryset = Vendor.objects.none())                    
 
 class APIForm(forms.Form):
         website = forms.ChoiceField(choices = ([('Digi-Key','Digi-Key'),('Mouser','Mouser')]), required=True)

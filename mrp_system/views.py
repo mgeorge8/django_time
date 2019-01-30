@@ -2,14 +2,14 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.http import (HttpResponse, HttpResponseRedirect, HttpResponseNotFound,
                          JsonResponse)
 from django.views.generic import ListView, TemplateView
-from mrp_system.models import (Part, Type, Field, Manufacturer,
+from mrp_system.models import (Part, Type, Field, Vendor,
                                ManufacturerRelationship, Location,
                                LocationRelationship, DigiKeyAPI,
                                PartAmount, Product, ProductAmount, ManufacturingOrder,
                                MOProduct, ProductLocation)
 from mrp_system.forms import (FilterForm, PartForm, LocationForm, LocationFormSet,
-                              MergeLocationsForm, ManufacturerForm, ManufacturerFormSet,
-                              MergeManufacturersForm, FieldFormSet, TypeForm, APIForm,
+                              MergeLocationsForm, ManufacturerFormSet,
+                              MergeVendorsForm, FieldFormSet, TypeForm, APIForm,
                               ProductForm, PartToProductFormSet, PartToProductForm,
                               ProductToProductFormSet, ProductLocationFormSet,
                               ManufacturingOrderForm, ManufacturingProductFormSet,
@@ -250,7 +250,7 @@ def ListParts(request, type_id):
             locations = Location.objects.filter(id__in=value)
             string_filters += ", ".join(l.name for l in locations) + '; '
         elif key == 'manufacturer__in':
-            manufacturers = Manufacturer.objects.filter(id__in=value)
+            manufacturers = Vendor.objects.filter(id__in=value)
             string_filters += ", ".join(m.name for m in manufacturers) + '; '
         else:
             string_filters += ", ".join(v for v in value) + '; '
@@ -279,26 +279,33 @@ class DeletePart(DeleteView):
     pk_url_kwarg = 'part_id'
     template_name = 'delete_part.html'
     
-class ManufacturerListView(ListView):
-    model = Manufacturer
-    template_name = 'manufacturer_list.html'
-    ordering = ['name']
+class VendorListView(ListView):
+    template_name = 'vendor_list.html'
+    context_object_name = 'all_manufacturers'
+
+    def get_queryset(self):
+        return Vendor.objects.filter(vendor_type='manufacturer').order_by('name')
+
+    def get_context_data(self, **kwargs):
+        context = super(VendorListView, self).get_context_data(**kwargs)
+        context['distributors'] = Vendor.objects.filter(vendor_type='distributor').order_by('name')
+        return context
 
 class LocationListView(ListView):
     model = Location
     template_name = 'location_list.html'
     ordering = ['name']
 
-class CreateManufacturer(CreateView):
-    model = Manufacturer
-    fields = ['name']
-    template_name = 'manufacturer_form.html'
-    success_url = reverse_lazy('list_manufacturers')
+class CreateVendor(CreateView):
+    model = Vendor
+    fields = ['name','vendor_type','address','phone','web_address']
+    template_name = 'vendor_form.html'
+    success_url = reverse_lazy('list_vendors')
 
     def get_context_data(self, **kwargs):
         #pass list of already created manufacturer to template to list under form
-        kwargs['manufacturers'] = Manufacturer.objects.order_by('name')
-        return super(CreateManufacturer, self).get_context_data(**kwargs)
+        kwargs['vendors'] = Vendor.objects.order_by('name')
+        return super(CreateVendor, self).get_context_data(**kwargs)
 
 class CreateLocation(CreateView):
     model = Location
@@ -310,12 +317,12 @@ class CreateLocation(CreateView):
         kwargs['locations'] = Location.objects.order_by('name')
         return super(CreateLocation, self).get_context_data(**kwargs)
 
-class ManufacturerUpdate(UpdateView):
-    model = Manufacturer
-    fields = ['name']
-    pk_url_kwarg = 'manufacturer_id'
-    template_name = 'update_manufacturer.html'
-    success_url = reverse_lazy('list_manufacturers')
+class VendorUpdate(UpdateView):
+    model = Vendor
+    fields = ['name','vendor_type','address','phone','web_address']
+    pk_url_kwarg = 'vendor_id'
+    template_name = 'update_vendor.html'
+    success_url = reverse_lazy('list_vendors')
 
 class LocationUpdate(UpdateView):
     model = Location
@@ -367,11 +374,11 @@ class LocationRelationshipDelete(DeleteView):
         partType = Type.objects.get(part=rel.part)
         return reverse_lazy('list_parts', kwargs={'type_id': partType.id})
 
-class ManufacturerDelete(DeleteView):
-    model = Manufacturer
-    pk_url_kwarg = 'manufacturer_id'
-    template_name = 'delete_manufacturer.html'
-    success_url = reverse_lazy('list_manufacturers')
+class VendorDelete(DeleteView):
+    model = Vendor
+    pk_url_kwarg = 'vendor_id'
+    template_name = 'delete_vendor.html'
+    success_url = reverse_lazy('list_vendors')
 
 class LocationDelete(DeleteView):
     model = Location
@@ -379,43 +386,46 @@ class LocationDelete(DeleteView):
     template_name = 'delete_location.html'
     success_url = reverse_lazy('list_locations')
 
-#takes in 2 objects and passes to mergeManufacturer function
-def MergeManufacturerView(request):
+#takes in 2 objects and passes to mergeVendor function
+def MergeVendorView(request):
     if request.method == "POST":
-        form = MergeManufacturersForm(request.POST)
+        form = MergeVendorsForm(request.POST)
         if form.is_valid():
             primary_object = form.cleaned_data['primary']
             alias_object = form.cleaned_data['alias']
-            MergeManufacturer(primary_object, alias_object)
-            return redirect('list_manufacturers')
-    else: form = MergeManufacturersForm()
-    return render(request, "merge_manufacturers.html", {"form":form})
+            if not isinstance(alias_object, Vendor):
+                raise TypeError('Only Vendor instances can be merged')
+            
+            if not isinstance(primary_object, Vendor):
+                raise TypeError('Only Vendor instances can be merged')
 
-#delete alias_object and move all parts assigned to it to primary_object
-def MergeManufacturer(primary_object, alias_object):
-    #ensure objects are of type Manufacturer
-    if not isinstance(alias_object, Manufacturer):
-        raise TypeError('Only Manufacturer instances can be merged')
-    
-    if not isinstance(primary_object, Manufacturer):
-        raise TypeError('Only Manufacturer instances can be merged')
+            type_alias = alias_object.vendor_type
+            type_primary = primary_object.vendor_type
+            if type_alias != "manufacturer" or type_primary != "manufacturer":
+                messages.warning(request,'Vendors must be of manufacturer type to be merged.')
+                return redirect(reverse('merge_vendors'))
 
-    parts = alias_object.part_set.all()
-    partNumber = []
-    partSet = []
-    #get all needed information from alias_object
-    for part in parts:
-        m = ManufacturerRelationship.objects.get(part=part, manufacturer=alias_object)
-        partNumber.append(m.partNumber)
-        partSet.append(m.part)
-    alias_object.part_set.clear()
-    length = len(partSet)
-    #set all alias_object relationships to primary object
-    for x in range(length):
-        ManufacturerRelationship.objects.create(part=partSet[x],
-                                                manufacturer=primary_object,
-                                                partNumber=partNumber[x])
-    alias_object.delete()
+            #replace all instance of alias vendor with primary vendor
+            parts = alias_object.part_set.all()
+            partNumber = []
+            partSet = []
+            #get all needed information from alias_object
+            for part in parts:
+                m = ManufacturerRelationship.objects.get(part=part, manufacturer=alias_object)
+                partNumber.append(m.partNumber)
+                partSet.append(m.part)
+            alias_object.part_set.clear()
+            length = len(partSet)
+            #set all alias_object relationships to primary object
+            for x in range(length):
+                ManufacturerRelationship.objects.create(part=partSet[x],
+                                                        manufacturer=primary_object,
+                                                        partNumber=partNumber[x])
+            alias_object.delete()
+            return redirect('list_vendors')
+    else: form = MergeVendorsForm()
+    return render(request, "merge_vendors.html", {"form":form})
+
 
 def MergeLocationView(request):
     if request.method == "POST":
@@ -464,8 +474,10 @@ def enter_digi_part(request):
             partNumber = form.cleaned_data['partNumber']
             manuPartNumb = form.cleaned_data['manuPartNumber']
             website = form.cleaned_data['website']
+            #this model holds the access and refresh token for digikey API
             digi = DigiKeyAPI.objects.get(name="DigiKey")
-
+            
+            #get new access token with refresh token
             API_ENDPOINT = "https://sso.digikey.com/as/token.oauth2"
 
             data = {'client_id': '73432ca9-e8ba-4965-af17-a22107f63b35',
@@ -482,12 +494,13 @@ def enter_digi_part(request):
                 url = reverse('digi_part')
                 return HttpResponseRedirect(url)
 
+            #set access and refresh token from tokens returned with API
             accessToken = response['access_token']
             setattr(digi,"refresh_token",refreshToken)
             setattr(digi,"access_token",accessToken)
             digi.save()
+            #if digikey barcode, use barcode api to get part number
             if website == 'Digi-Key' and barcode:
-            #partNumber = 'H10247-ND'
                 conn = http.client.HTTPSConnection("api.digikey.com")
 
                 headers = {
@@ -504,6 +517,7 @@ def enter_digi_part(request):
                 partNumber = part['DigiKeyPartNumber']
                 search = partNumber
 
+            #if mouser barcode, its a manufacturer number
             elif website == 'Mouser' and barcode:
                 search = barcode
                 
@@ -515,6 +529,7 @@ def enter_digi_part(request):
             else:
                 return HttpResponseNotFound('<h1>Must select a website and enter a field!</h1>')
 
+            #get part information from part number or manufacturer part number
             conn = http.client.HTTPSConnection("api.digikey.com")
 
             payload = "{\"SearchOptions\":[\"ManufacturerPartSearch\"],\"Keywords\":\"" + search + "\",\"RecordCount\":\"10\",\"RecordStartPosition\":\"0\",\"Filters\":{\"CategoryIds\":[27442628],\"FamilyIds\":[81316194],\"ManufacturerIds\":[88520800],\"ParametricFilters\":[{\"ParameterId\":\"725\",\"ValueId\":\"7\"}]},\"Sort\":{\"Option\":\"SortByUnitPrice\",\"Direction\":\"Ascending\",\"SortParameterId\":\"50\"},\"RequestedQuantity\":\"50\"}"
@@ -543,25 +558,46 @@ def enter_digi_part(request):
                     part=jstr['ExactParts'][0]
                     data = part['Parameters']
                 except(IndexError, KeyError, TypeError):
-                    return HttpResponseNotFound('<h1>Invalid Part Number</h1>')
+                    if website == 'Mouser' and barcode:
+                        return HttpResponseNotFound('<h1>Invalid part number. Ensure the manufacturer part number exists on digi-key.</h1>')
+                    else:
+                        return HttpResponseNotFound('<h1>Invalid Part Number.</h1>')
+            #grab all parameters returned from api
             params = {}
             for value in data:
                 params[value['Parameter']] = value['Value']
             typeName = part['Family']['Text']
-            list_name = re.findall(r'\w+', typeName)
-            word_count = len(list_name)
-            prefix = ""
-            if word_count == 1:
-                prefix = typeName[:3].upper()
-            if word_count == 2:
-                prefix = (list_name[0][:1] + list_name[1][:2]).upper()
-            if word_count >= 3:
-                prefix = (list_name[0][:1] + list_name[1][:1] + list_name[2][:1]).upper()
+##            #get all words in type name, exclude -'s
+##            list_name = re.findall(r'\w+', typeName)
+##            #get word count
+##            word_count = len(list_name)
+##            #assign prefix based on amount of words in type name
+##            prefix = ""
+##            if word_count == 1:
+##                prefix = typeName[:3].upper()
+##            if word_count == 2:
+##                prefix = (list_name[0][:1] + list_name[1][:2]).upper()
+##            if word_count >= 3:
+##                prefix = (list_name[0][:1] + list_name[1][:1] + list_name[2][:1]).upper()
             partType, created = Type.objects.get_or_create(name=typeName)
             count = 1
+            #if new part type, assign prefix
             if created:
+                #get all words in type name, exclude -'s
+                list_name = re.findall(r'\w+', typeName)
+                #get word count
+                word_count = len(list_name)
+                #assign prefix based on amount of words in type name
+                prefix = ""
+                if word_count == 1:
+                    prefix = typeName[:3].upper()
+                if word_count == 2:
+                    prefix = (list_name[0][:1] + list_name[1][:2]).upper()
+                if word_count >= 3:
+                    prefix = (list_name[0][:1] + list_name[1][:1] + list_name[2][:1]).upper()
                 setattr(partType,"prefix",prefix)
                 partType.save()
+                #series is always separate from the other parameters 
                 try:
                     part['Series']['Parameter']
                     Field.objects.create(name='Series',fields='char1', typePart=partType)
@@ -574,6 +610,7 @@ def enter_digi_part(request):
                         field = "char" + str(count)
                         Field.objects.create(name=name, fields=field, typePart=partType)
                         count += 1
+                    #part model only allows for 35 fields currently
                     else:
                         messages.warning(request, ('Can\'t create type, too many fields.'))
                         url = reverse('digi_part')
@@ -589,7 +626,8 @@ def enter_digi_part(request):
                 number = None
                 manufacturer = None
             if manufacturer:
-                manu, created = Manufacturer.objects.get_or_create(name=manufacturer)
+                manu, created = Vendor.objects.get_or_create(name=manufacturer, vendor_type="manufacturer")
+                #this is our way of checking for duplicates
                 exists = ManufacturerRelationship.objects.filter(manufacturer=manu, partNumber=number)
                 if exists:
                     messages.warning(request, ('Manufacturer Part Number already exists.'))
@@ -601,6 +639,7 @@ def enter_digi_part(request):
             for field in fields:
                 name = field.name
                 field_name = field.fields
+                #composition parameter is formatted differently
                 if field.name == "Composition":
                     try:
                         value = part['Family']['Text']
@@ -617,6 +656,7 @@ def enter_digi_part(request):
                     except(IndexError, KeyError):
                         pass
             new_part.save()
+            #assign datasheet if it exists
             try:
                 datasheet_url = part['PrimaryDatasheet']
                 if 'pdf' in datasheet_url:
