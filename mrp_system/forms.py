@@ -263,6 +263,7 @@ class APIForm(forms.Form):
                 barcode = self.cleaned_data.get('barcode', None)
                 partNumber = self.cleaned_data.get('partNumber', None)
                 manuPartNumber = self.cleaned_data.get('manuPartNumber', None)
+                website = self.cleaned_data.get('website', None)
                 related_fields = [barcode, partNumber, manuPartNumber]
                 related_fields_selected = [field for field in related_fields if field]
 
