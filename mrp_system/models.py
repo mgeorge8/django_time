@@ -5,7 +5,7 @@ import datetime
 class Vendor(models.Model):
     TYPE_CHOICES = (
         ('manufacturer', 'manufacturer'),
-        ('distributor', 'distrbutor'),
+        ('distributor', 'distributor'),
         )
     name = models.CharField(max_length=128, unique=True)
     vendor_type = models.CharField(max_length=12, choices=TYPE_CHOICES,
