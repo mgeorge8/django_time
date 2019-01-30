@@ -33,6 +33,7 @@
     });
     </script>
 <script>
+//can be used with button to populate an end_date field with current //date
 function myFunction() {
 var d = new Date();
 var date = d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate();
@@ -78,7 +79,7 @@ document.getElementById("id_end_date").value = date;
                                 on {{ active_entry.start_time|date:"l" }}
                             {% endif %}
                         {% endifnotequal %}
-                        ({{ active_entry.get_total_seconds|humanize_seconds }} time clocked{% if active_entry.seconds_paused or active_entry.is_paused %} and {{ active_entry.get_paused_seconds|humanize_seconds }} paused{% endif %}).
+                        ({{ active_entry.get_total_seconds|humanize_seconds }} time clocked).
     
 
                     {% else %}

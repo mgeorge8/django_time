@@ -7,8 +7,8 @@
     <li><span class="divider">/</span> <a href="{% url 'list_parts'  partType.id %}">Parts</a></li>
 {% endblock crumbs %}
 {% block content %}
-{% if part_formset.non_form_errors %}
-        {% for error in part_formset.non_form_errors %}
+{% if manu_formset.non_form_errors %}
+        {% for error in manu_formset.non_form_errors %}
             <p><font color="red"><big>{{ error }}</big></font> </p>
         {% endfor %}
     {% endif %}
@@ -46,9 +46,9 @@
     });
 </script>
 
-{{ part_formset.management_form }}
+{{ manu_formset.management_form }}
 <div id="form_set">
-{% for form in part_formset.forms %}
+{% for form in manu_formset.forms %}
 <table class='no_error'>
 {{ form.as_table }}
 </table>
@@ -57,7 +57,7 @@
 <input type="button" value="Add" id="add_more">
 <div id="empty_form" style="display:none">
     <table class='no_error'>
-        {{ part_formset.empty_form.as_table }}
+        {{ manu_formset.empty_form.as_table }}
     </table>
 </div>
 <script>

@@ -4,8 +4,11 @@ from django.conf.urls import url
 from . import views
 
 urlpatterns = [
+    #part types
     path('', views.TypeListView.as_view(), name='list_types'),
-    path('type/create/', views.TypeCreate.as_view(), name='create_type'),
+    path('type/create/',
+         views.TypeCreate.as_view(),
+         name='create_type'),
     url(r'^type/edit/(?P<type_id>\d+)/$',
         views.EditType.as_view(),
         name='edit_type'),
@@ -15,9 +18,10 @@ urlpatterns = [
     url(r'^type/quick_create/$',
         views.quick_type_create,
         name='quick_type'),
-    
+
+    #parts
     url(r'^parts/(?P<type_id>\d+)/$',
-        views.ListParts,#.as_view(),
+        views.ListParts,
         name='list_parts'),
     url(r'^part/create/(?P<type_id>\d+)/$',
         views.PartCreate,
@@ -25,10 +29,11 @@ urlpatterns = [
     url(r'^part/edit/(?P<type_id>\d+)/(?P<id>\d+)$',
         views.PartEdit,
         name='edit_part'),
-    url('part/delete/(?P<part_id>\d+)/$',
+    url(r'^part/delete/(?P<part_id>\d+)/$',
         views.DeletePart.as_view(),
         name='delete_part'),
-    
+
+    #manufacturers and locations
     path('manufacturer/create/',
          views.CreateManufacturer.as_view(),
          name='create_manufacturer'),
@@ -59,9 +64,6 @@ urlpatterns = [
     url('location/merge/',
         views.MergeLocationView,
         name='merge_locations'),
-    url('file/(?P<name>\d+)/$',
-        views.view_file,
-        name='view_file'),
     url('location/relationship/(?P<locationrelationship_id>\d+)/$',
         views.LocationRelationshipEdit,
         name='edit_loc_rel'),
@@ -71,6 +73,8 @@ urlpatterns = [
     url('location/relationship/delete/(?P<locationrelationship_id>\d+)/$',
         views.LocationRelationshipDelete.as_view(),
         name='delete_loc_rel'),
+
+    #api enter part and access urls
     url('digikey/enter/$',
         views.enter_digi_part,
         name='digi_part'),
@@ -81,6 +85,7 @@ urlpatterns = [
         views.enter_tokens,
         name='enter_tokens'),
 
+    #products
     url('product/create/$',
         views.CreateProduct,
         name='create_product'),
@@ -99,14 +104,11 @@ urlpatterns = [
     url('bom/(?P<product_id>\d+)/$',
         views.billOfMaterialsDetail,
         name='bom_detail'),
-##    url('get_parts/(?P<searchField>\d+)/$',
-##        views.get_parts,
-##        name='get_parts'),
     path('ajax/load-parts/',
          views.get_parts,
          name='ajax_load_parts'),
 
-
+    #Manufacturing Orders
     url('mo/create/$',
         views.CreateMO,
         name='create_mo'),

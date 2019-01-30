@@ -1,7 +1,5 @@
-from collections import OrderedDict
 from decimal import Decimal
 import datetime
-
 from dateutil.relativedelta import relativedelta
 
 from django.contrib.auth.models import User
@@ -93,6 +91,7 @@ class Entry(models.Model):
     date_updated = models.DateTimeField(auto_now=True)
     hours = models.DecimalField(max_digits=11, decimal_places=5, default=0)
 
+    #uses EntryManager for querysets
     objects = EntryManager()
     no_join = models.Manager()
 
@@ -119,25 +118,12 @@ class Entry(models.Model):
         # Check the two entries against each other
         start_inside = entry_a.start_time > entry_b.start_time \
             and entry_a.start_time < entry_b.end_time
-        """end_inside = entry_a.end_time > entry_b.start_time \
-            and entry_a.end_time < entry_b.end_time"""
         a_is_inside = entry_a.start_time > entry_b.start_time \
             and entry_a.end_time < entry_b.end_time
         b_is_inside = entry_a.start_time < entry_b.start_time \
             and entry_a.end_time > entry_b.end_time
-        overlap = start_inside or """end_inside""" or a_is_inside or b_is_inside
-        if not consider_pause:
-            return overlap
-        else:
-            if overlap:
-                max_end = max(entry_a.end_time, entry_b.end_time)
-                min_start = min(entry_a.start_time, entry_b.start_time)
-                diff = max_end - min_start
-                diff = diff.seconds + diff.days * 86400
-                total = entry_a.get_total_seconds() + entry_b.get_total_seconds() - 1
-                if total >= diff:
-                    return True
-            return False
+        overlap = start_inside or a_is_inside or b_is_inside
+        return overlap
 
     def is_overlapping(self):
         if self.start_time and self.end_time:
@@ -171,18 +157,15 @@ class Entry(models.Model):
             raise ValidationError('Please enter a valid start time')
         start = self.start_time
 
+        #if regular end time (clock out and add entry)
         if self.end_time:
             end = self.end_time - relativedelta(seconds=1)
-        # Current entries have no end_time
+        #this end time is used on homescreen, must grab date from start
         elif self.end:
             end = datetime.datetime.combine(self.start_time.date(), self.end)
+        #if no end time at all
         else:
             end = start + relativedelta(seconds=1)
-
-##        if self.end:
-##            end2 = self.end
-##        else:
-##            end2 = start.time()
 
         entries = self.user.timepiece_entries.filter(
             end_time__gt=start, start_time__lte=end)
@@ -194,7 +177,7 @@ class Entry(models.Model):
             entry_data = {
                 'project': entry.project,
                 'start_time': entry.start_time,
-                'end_time': entry.end_time, #- relativedelta(seconds=1)
+                'end_time': entry.end_time,
                 'endTime': entry.end,
             }
             # Conflicting saved entries
@@ -214,36 +197,10 @@ class Entry(models.Model):
                         '%H:%M:%S on %m\%d\%Y')
                     raise ValidationError(
                         'Start time overlaps with {project} '
-                        'from {start_time} to {end_time}.'.format(**entry_data))
-##            elif entry.end:
-##                entry_data['start_time'] = entry.start_time.strftime(
-##                    '%H:%M:%S')
-##                entry_data['endTime'] = entry.end.strftime(
-##                    '%H:%M:%S')
-##                raise ValidationError('Start time overlaps with '
-##                                      '{project} from {start_time} to '
-##                                      '{endTime}.'.format(**entry_data))
-                
-                
+                        'from {start_time} to {end_time}.'.format(**entry_data))                
         
         if end <= start:
             raise ValidationError('Ending time must exceed the starting time')
-##        if end2 < start.time():
-##            raise ValidationError('Ending time must exceed the starting time')
-            
-##        delta = (end - start)
-##        delta_secs = (delta.seconds + delta.days * 24 * 60 * 60)
-##        limit_secs = 60 * 60 * 12
-##        if delta_secs > limit_secs: 
-##            err_msg = 'Ending time exceeds starting time by 12 hours or more '\
-##                'for {0} on {1} at {2} to {3} at {4}.'.format(
-##                    self.project,
-##                    start.strftime('%m/%d/%Y'),
-##                    start.strftime('%H:%M:%S'),
-##                    end.strftime('%m/%d/%Y'),
-##                    end.strftime('%H:%M:%S')
-##                )
-##            raise ValidationError(err_msg)
         return True
 
     def save(self, *args, **kwargs):
@@ -253,9 +210,7 @@ class Entry(models.Model):
     def get_total_seconds(self):
         """
         Determines the total number of seconds between the starting and
-        ending times of this entry. If the entry is paused, the end_time is
-        assumed to be the pause time. If the entry is active but not paused,
-        the end_time is assumed to be now.
+        ending times of this entry. 
         """
         start = self.start_time
         end = self.end_time
@@ -272,17 +227,16 @@ class Entry(models.Model):
         Determined the total number of hours worked in this entry
         """
         total = self.get_total_seconds() / 3600.0
-        # in case seconds paused are greater than the elapsed time
         if total < 0:
             total = 0
         return total
 
-    @property
-    def is_paused(self):
-        """
-        Determine whether or not this entry is paused
-        """
-        return False
+##    @property
+##    def is_paused(self):
+##        """
+##        Determine whether or not this entry is paused
+##        """
+##        return False
 
     @property
     def is_closed(self):
@@ -300,8 +254,8 @@ class Entry(models.Model):
         """
         Make it a little more interesting for deleting logs
         """
-        salt = '%i-%i-apple-%s-sauce' \
-            % (self.id, self.is_paused, self.is_closed)
+        salt = '%i-apple-%s-sauce' \
+            % (self.id, self.is_closed)
         try:
             import hashlib
         except ImportError:
@@ -315,11 +269,7 @@ class Entry(models.Model):
     def summary(user, date, end_date):
         """
         Returns a summary of hours worked in the given time frame, for this
-        user.  The setting TIMEPIECE_PAID_LEAVE_PROJECTS can be used to
-        separate out hours for paid leave that should not be included in the
-        total worked (e.g., sick time, vacation time, etc.).  Those hours will
-        be added to the summary separately using the dictionary key set in
-        TIMEPIECE_PAID_LEAVE_PROJECTS.
+        user.
         """
         entries = user.timepiece_entries.filter(
             end_time__gt=date, end_time__lt=end_date)
@@ -348,7 +298,7 @@ class ProjectHours(models.Model):
             self.project, self.week_start.strftime('%B %d, %Y'))
 
     def save(self, *args, **kwargs):
-        # Ensure that week_start is the Monday of a given week.
+        # Ensure that week_start is the Sunday of a given week.
         self.week_start = utils.get_week_start(self.week_start)
         return super(ProjectHours, self).save(*args, **kwargs)
 

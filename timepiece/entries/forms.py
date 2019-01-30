@@ -5,10 +5,9 @@ from django import forms
 from django.db.models import Q
 
 from timepiece import utils
-from timepiece.manager.models import Project, ProjectRelationship
-from timepiece.entries.models import Entry, ProjectHours, ToDo
-from timepiece.forms import (
-    INPUT_FORMATS, TimepieceSplitDateTimeField, TimepieceDateInput)
+from timepiece.manager.models import Project
+from timepiece.entries.models import Entry, ToDo
+from timepiece.forms import TimepieceSplitDateTimeField
 
 
 class ClockInForm(forms.ModelForm):
@@ -29,14 +28,6 @@ class ClockInForm(forms.ModelForm):
         self.active = kwargs.pop('active', None)
 
         initial = kwargs.get('initial', {})
-##        default_loc = utils.get_setting('TIMEPIECE_DEFAULT_LOCATION_SLUG')
-##        if default_loc:
-##            try:
-##                loc = Location.objects.get(slug=default_loc)
-##            except Location.DoesNotExist:
-##                loc = None
-##            if loc:
-##                initial['location'] = loc.pk
         project = initial.get('project', None)
         try:
             last_project_entry = Entry.objects.filter(
@@ -151,11 +142,6 @@ class AddUpdateEntryForm(forms.ModelForm):
                         project=active.project,
                         start_time=active.start_time.strftime('%H:%M:%S'),
                     ))
-
-##        start_date = start_time.date() if start_time else None
-##        end_date = end_time.date() if end_time else None
-##        if start_date and end_date:
-##            if end_date > start_date:
                 
         month_start = utils.get_month_start(start_time)
         next_month = month_start + relativedelta(months=1)
@@ -168,6 +154,7 @@ class AddUpdateEntryForm(forms.ModelForm):
 
 class EntryDashboardForm(forms.ModelForm):
     start_time = TimepieceSplitDateTimeField()
+    #just time for end time, gets date from start time
     end = forms.TimeField(required=False)
 
     class Meta:
@@ -182,12 +169,9 @@ class EntryDashboardForm(forms.ModelForm):
         self.instance.user = self.user
         self.fields['project'].queryset = Project.trackable.filter(
             users=self.user)
-        #self.fields['end_time'].
         initial = kwargs.get('initial', {})
-        #self.fields['start_time'].initial = datetime.datetime.now()
         # If editing the active entry, remove the end_time field.
         if self.instance.start_time and not self.instance.end_time:
-            #self.fields['end_time'].initial = datetime.datetime.now()
             self.fields.pop('start_time')
 
 
@@ -199,7 +183,6 @@ class EntryDashboardForm(forms.ModelForm):
         active = utils.get_active_entry(self.user)
         start_time = self.cleaned_data.get('start_time', None)
         end = self.cleaned_data.get('end', None)
-        #hours = end - start_time.time
         if(end != None and active != None):
             end_time = datetime.datetime.combine(active.start_time.date(), end)
         elif (end != None and active == None):
@@ -220,7 +203,6 @@ class EntryDashboardForm(forms.ModelForm):
         month_start = utils.get_month_start(start_time)
         next_month = month_start + relativedelta(months=1)
         entries = self.instance.user.timepiece_entries.filter(
-            #Q(status=Entry.APPROVED) | Q(status=Entry.INVOICED),
             start_time__gte=month_start,
             end_time__lt=next_month
         )
@@ -237,37 +219,16 @@ class EntryDashboardForm(forms.ModelForm):
         return entry
     
 
-class TodoListForm(forms.ModelForm):
+class TodoAdminForm(forms.ModelForm):
     class Meta:
         model = ToDo
         fields = '__all__'
 
+#for signed in user, don't need to select user
 class TodoForm(forms.ModelForm):
     class Meta:
         model = ToDo
         fields = ['priority', 'description']
         exclude = ['user']
 
-class ProjectHoursForm(forms.ModelForm):
 
-    class Meta:
-        model = ProjectHours
-        fields = ['week_start', 'project', 'user', 'hours', 'published']
-
-    def save(self, commit=True):
-        ph = super(ProjectHoursForm, self).save()
-        # since hours are being assigned to a user, add the user
-        # to the project if they are not already in it so they can track time
-        ProjectRelationship.objects.get_or_create(user=self.cleaned_data['user'],
-                                                  project=self.cleaned_data['project'])
-        return ph
-
-
-class ProjectHoursSearchForm(forms.Form):
-    week_start = forms.DateField(
-        label='Week of', required=False,
-        input_formats=INPUT_FORMATS, widget=TimepieceDateInput())
-
-    def clean_week_start(self):
-        week_start = self.cleaned_data.get('week_start', None)
-        return utils.get_week_start(week_start, False) if week_start else None

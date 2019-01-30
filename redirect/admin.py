@@ -3,7 +3,7 @@ from redirect.models import Redirect
 from import_export import resources
 from import_export.admin import ImportExportModelAdmin
 
-
+#can use to import/export redirects through .xlsx or csv files
 class RedirectResource(resources.ModelResource):
     class Meta:
         model = Redirect

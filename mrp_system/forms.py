@@ -6,106 +6,24 @@ Part, Manufacturer, ManufacturerRelationship, Field, Type, Product,
 from django.forms import ModelForm, BaseInlineFormSet
 from django.forms.models import inlineformset_factory
 from timepiece.forms import TimepieceSplitDateTimeField
-from django.contrib.postgres.search import SearchVector
 from django.utils.safestring import mark_safe
 
-
-FIELD_TYPES = {
-    'char1': forms.CharField,
-    'char2': forms.CharField,
-    'char3': forms.CharField,
-    'char4': forms.CharField,
-    'char5': forms.CharField,
-    'char6': forms.CharField,
-    'char7': forms.CharField,
-    'char8': forms.CharField,
-    'char9': forms.CharField,
-    'char10': forms.CharField,
-    'char11': forms.CharField,
-    'char12': forms.CharField,
-    'char13': forms.CharField,
-    'char14': forms.CharField,
-    'char15': forms.CharField,
-    'char16': forms.CharField,
-    'char17': forms.CharField,
-    'char18': forms.CharField,
-    'char19': forms.CharField,
-    'char20': forms.CharField,
-    'char21': forms.CharField,
-    'char22': forms.CharField,
-    'char23': forms.CharField,
-    'char24': forms.CharField,
-    'char25': forms.CharField,
-    'char26': forms.CharField,
-    'char27': forms.CharField,
-    'char28': forms.CharField,
-    'char29': forms.CharField,
-    'char30': forms.CharField,
-    'char31': forms.CharField,
-    'char32': forms.CharField,
-    'char33': forms.CharField,
-    'char34': forms.CharField,
-    'char35': forms.CharField,
-    }
-FIELDS_F = {
-    'char1': 'char1',
-    'char2': 'char2',
-    'char3': 'char3',
-    'char4': 'char4',
-    'char5': 'char5',
-    'char6': 'char6',
-    'char7': 'char7',
-    'char8': 'char8',
-    'char9': 'char9',
-    'char10': 'char10',
-    'char11': 'char11',
-    'char12': 'char12',
-    'char13': 'char13',
-    'char14': 'char14',
-    'char15': 'char15',
-    'char16': 'char16',
-    'char17': 'char17',
-    'char18': 'char18',
-    'char19': 'char19',
-    'char20': 'char20',
-    'char21': 'char21',
-    'char22': 'char22',
-    'char23': 'char23',
-    'char24': 'char24',
-    'char25': 'char25',
-    'char26': 'char26',
-    'char27': 'char27',
-    'char28': 'char28',
-    'char29': 'char29',
-    'char30': 'char30',
-    'char31': 'char31',
-    'char32': 'char32',
-    'char33': 'char33',
-    'char34': 'char34',
-    'char35': 'char35',
-    }
-
-class PartForm(ModelForm):
-##    class Meta:
-##        model = Part
-##        exclude = ('manufacturer',)  
+class PartForm(ModelForm): 
 
         def __init__(self, type_id, *args, **kwargs):
             super(PartForm, self).__init__(*args, **kwargs)
-            #type_id = kwargs.pop('type_id', 0)
             partType = Type.objects.get(id=type_id)
-
+            """take label from Type/Field models and assign it to the
+            correct field"""
             for field in partType.field.all():
-                #self.fields[field.name] = FIELD_TYPES[field.fields](label = field.name)
-                self.fields[FIELDS_F[field.fields]].label = field.name
-            #parts = partType.field.all()
-            extra_fields = ('char1', 'char2', 'char3', 'char4', 'char5', 'char6',
-                            'char7', 'char8','char9','char10','char11','char12',
-                            'char13','char14','char15','char16','char17','char18',
-                            'char19','char20','char21','char22', 'char23', 'char24',
-                            'char25', 'char26','char27', 'char28','char29','char30',
-                            'char31','char32','char33','char34','char35')
-            for field in extra_fields:
+                self.fields[field.fields].label = field.name
+            field_options = []
+            """generate a list of all possible fields"""
+            for x in range(1,36):
+                field_options.append('char' + str(x))
+            for field in field_options:
+                """if field hasn't been assigned to this type, don't include
+                it in the form"""
                 if field not in partType.field.values_list('fields', flat=True):
                     self.fields.pop(field)
             
@@ -127,16 +45,14 @@ class CustomFormset(BaseInlineFormSet):
         for form in self.forms:
             if form.cleaned_data:
                 partNumber = form.cleaned_data['partNumber']
-        #password2 = self.cleaned_data.get('password2', None)
+                #exclude self
                 try:
-                        mr = ManufacturerRelationship.objects.get(part=self.instance, partNumber=partNumber)
+                        mr = ManufacturerRelationship.objects.filter(part=self.instance, partNumber=partNumber)
                 except ManufacturerRelationship.DoesNotExist:
-                    mr = None
-                    number = None
+                    pass
                 
-                if mr:
-                        pass
-                else:
+                if not mr:
+                        #check if another part with same manufacturer number exists to prevent duplicates
                         exists = ManufacturerRelationship.objects.filter(partNumber=partNumber)
                         if exists:
                             raise forms.ValidationError('Manufacturer part number already exists!')
@@ -162,7 +78,7 @@ class ProductForm(ModelForm):
     def clean(self):
         super(ProductForm, self).clean()
         url = self.cleaned_data.get('url', None)
-
+        #redirecting to product url in template requires it to include http:// or https://
         if url:
             if 'http' not in url: 
                 raise forms.ValidationError('Please enter url prefaced with http://')
@@ -171,11 +87,12 @@ class ProductForm(ModelForm):
         return self.cleaned_data
         
 class PartToProductForm(ModelForm):
+    #used to narrow down part selection dropdown with javascript
+    #mark_safe - lets you added html elements to text
     search = forms.CharField(required=False, help_text=mark_safe('(Can search part type,' +
                              ' description, engimusing part number, manufacturer part number, ' +
                              'or manufacturer name) <br> Type in search value, then click out of field '+
                              'and the part dropdown will be filtered.'))
-    #part = forms.ModelChoiceField(queryset=Part.objects.none())
     class Meta:
         model = PartAmount
         exclude = ('product',)
@@ -189,6 +106,7 @@ class ProductToProductForm(ModelForm):
         model = ProductAmount
         exclude = ('from_product',)
 
+#include fk_name because m2m relationship between self (products)
 ProductToProductFormSet = inlineformset_factory(Product, ProductAmount, fk_name='from_product',
                                                 form=ProductToProductForm, extra=1)
         
@@ -237,35 +155,25 @@ class CustomInlineFormset(BaseInlineFormSet):
             return
 
         names = []
-        #fields = []
         duplicates = False
         
         for form in self.forms:
            if form.cleaned_data:
                name = form.cleaned_data['name']
-               #field = form.cleaned_data['fields']
 
-               if name: #and field:
+               if name:
                    if name in names:
                        duplicates = True
                    names.append(name)
-
-##                   if field in fields:
-##                       duplicates = True
-##                   fields.append(field)
-
+                #ensure no 2 fields are named the same
                if duplicates:
                    raise forms.ValidationError('Fields must have unique names and types.')
-##               if name and not field:
-##                   raise forms.ValidationError('All field names must have an associated type.')
-##               elif field and not name:
-##                   raise forms.ValidationError('All field names must have an associated type.')
-
                         
 
 FieldFormSet = inlineformset_factory(Type, Field, form=FieldForm, extra=35, max_num=35,
                                      formset=CustomInlineFormset)
 
+#edit part type requires field types to be selected
 class EditFieldForm(ModelForm):
     class Meta:
         model = Field
@@ -297,7 +205,8 @@ class EditCustomInlineFormset(BaseInlineFormSet):
                    if field in fields:
                        duplicates = True
                    fields.append(field)
-
+                   
+                #ensure no duplicate names or fields
                if duplicates:
                    raise forms.ValidationError('Fields must have unique names and types.')
                if name and not field:
@@ -306,13 +215,13 @@ class EditCustomInlineFormset(BaseInlineFormSet):
                    raise forms.ValidationError('All field names must have an associated type.')
 
                         
-
 EditFieldFormSet = inlineformset_factory(Type, Field, form=EditFieldForm, extra=35, max_num=35,
                                      formset=EditCustomInlineFormset)
 
 class QuickTypeForm(forms.Form):
         fields = forms.CharField()
-        
+
+#used in case duplicate manufacturers are created        
 class MergeManufacturersForm(forms.Form):
         primary = forms.ModelChoiceField(label='Primary Manufacturer',
                                          queryset = Manufacturer.objects.order_by('name'))
@@ -325,6 +234,7 @@ class MergeLocationsForm(forms.Form):
         alias = forms.ModelChoiceField(label='Location To Delete',
                                          queryset = Location.objects.order_by('name'))
 
+#used in part list view to filter parts displayed in table
 class FilterForm(forms.Form):
         def __init__(self,*args,**kwargs):
                 models = kwargs.pop('models')
@@ -356,7 +266,7 @@ class APIForm(forms.Form):
                 related_fields = [barcode, partNumber, manuPartNumber]
                 related_fields_selected = [field for field in related_fields if field]
 
-        # check if more than one related fields was selected 
+                #check if more than one related fields was selected
                 if len(related_fields_selected)>1: 
                    raise forms.ValidationError('Please enter only one of Barcode, Digi-Key Part Number, and Manufacturer Part Number!')
                 #check that if mouser is selected, a part number isn't input(no functionality for this)
@@ -364,11 +274,10 @@ class APIForm(forms.Form):
                     raise forms.ValidationError('Can\'t enter a mouser part number, must be a manufacturer number for Mouser.')
                 return self.cleaned_data
 
+"""api requires tokens to operate, can save them here to make it easier to switch b/w
+production and development since they share tokens"""
 class EnterTokensForm(forms.Form):
         access_token = forms.CharField()
         refresh_token = forms.CharField()
-
-##class MouserForm(forms.Form):
-##        partNumber = forms.CharField(label='Part Number')
-##        partType = forms.ModelChoiceField(queryset=Type.objects.order_by('name'))        
+     
         

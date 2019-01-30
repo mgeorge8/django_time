@@ -1,29 +1,30 @@
 from django.db import models
+import datetime
 #from django.contrib.sites.models import Site
 
 class Manufacturer(models.Model):
-    name = models.CharField(max_length=128)
+    name = models.CharField(max_length=128, unique=True)
 
     def __str__(self):
         return self.name
 
 class Location(models.Model):
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=100, unique=True)
 
     def __str__(self):
         return self.name
 
+#used to track different part types
 class Type(models.Model):
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=100, unique=True)
     prefix = models.CharField(max_length=4)
-    #field = models.ForeignKey(Field, on_delete=models.CASCADE,
-     #                         related_name="type", null=True)
 
     def __str__(self):
         return self.name
 
-
+#names of fields for each part type tracked with field model
 class Field(models.Model):
+
     FIELD_CHOICES = (
         ('char1', 'Character 1'),
         ('char2', 'Character 2'),
@@ -63,17 +64,17 @@ class Field(models.Model):
     )
     name = models.CharField(max_length=50)
     fields = models.CharField(max_length=50, choices=FIELD_CHOICES)
-    #mouser_name = models.CharField(max_length=100, blank=True)
     typePart = models.ForeignKey(Type, on_delete=models.CASCADE, related_name="field", null=True)
 
 class Part(models.Model):
+    #used to keep track of part type and fields
     partType = models.ForeignKey(Type, on_delete=models.CASCADE, related_name="part")
-    partNumber = models.IntegerField(blank=True, null=True, editable=False)
     engimusingPartNumber = models.CharField(max_length=30, editable=False)
     description = models.CharField(max_length=300, blank=True)
     location = models.ManyToManyField(Location, through='LocationRelationship')
     manufacturer = models.ManyToManyField(Manufacturer,
                                           through='ManufacturerRelationship')
+    #all of the fields that could be tracked for a part type
     char1 = models.CharField(max_length=100, blank=True)
     char2 = models.CharField(max_length=100, blank=True)
     char3 = models.CharField(max_length=100, blank=True)
@@ -114,17 +115,14 @@ class Part(models.Model):
     def __str__(self):
         return '%s - %s' % (self.engimusingPartNumber, self.description)
 
+    #can call these 4 functions from template to get related fields
     def get_location(self):
         if self.location:
-            #return self.location.all()
-            #return '%s' % "-" % '%s' % " / ".join([location.name for location in self.location.all()])
             return [LocationRelationship.location.name for LocationRelationship
                                      in self.locationrelationship_set.order_by('id')]
 
     def get_stock(self):
         if self.location:
-            #return '\n'.join([str(LocationRelationship.stock) for LocationRelationship
-             #                            in self.locationrelationship_set.all()])
             return [LocationRelationship for LocationRelationship in
                     self.locationrelationship_set.order_by('id')]
 
@@ -137,20 +135,22 @@ class Part(models.Model):
             return [str(ManufacturerRelationship.partNumber) for ManufacturerRelationship
                                       in self.manufacturerrelationship_set.all()] #.objects.get(part=self)])
 
+    #auto assign engimusingPartNumber with prefix and auto incremented number
     def save(self, *args, **kwargs):
         if not self.id:
             partType = self.partType
             self.engimusingPartNumber = increment_engi_partnumber(partType)
-            self.partNumber = int(self.engimusingPartNumber[4:10])
-            print(self.partNumber)
         super().save(*args, **kwargs)
 
 def increment_engi_partnumber(partType):
-    last_id = Part.objects.filter(partType=partType).order_by('partNumber').last()
+    #get greatest part number
+    last_id = Part.objects.filter(partType=partType).order_by('engimusingPartNumber').last()
     prefix = partType.prefix
+    #if no parts yet
     if not last_id:
         return prefix + '000001'
-    partNumber = last_id.partNumber
+    length = len(prefix)
+    partNumber = int(last_id.engimusingPartNumber[length:10])
     new_partNumber = partNumber + 1
     new_engi_partNumber = prefix + str(new_partNumber).zfill(6)
     return new_engi_partNumber
@@ -171,6 +171,7 @@ class Product(models.Model):
     url = models.CharField(max_length=500, blank=True)
     location = models.ManyToManyField(Location, through='ProductLocation')
     part = models.ManyToManyField(Part, through='PartAmount')
+    #sub products, must not be symmetrical for relationship to be onesided
     component_product = models.ManyToManyField('self', symmetrical=False,
                                                through='ProductAmount',
                                                through_fields=('from_product', 'to_product'),)
@@ -200,7 +201,6 @@ class ProductLocation(models.Model):
 
 
 class ManufacturingOrder(models.Model):
-    #name = models.CharField(max_length=50, blank=True)
     product = models.ManyToManyField(Product, through='MOProduct')
     number = models.CharField(max_length=50)
     date_created = models.DateTimeField(auto_now_add=True)
@@ -212,7 +212,41 @@ class MOProduct(models.Model):
     manufacturing_order = models.ForeignKey(ManufacturingOrder, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     amount = models.IntegerField(blank=True, null=True)
+
+class PurchaseOrder(models.Model):
+    number = models.CharField(max_length=20, editable=False)
     
+    def save(self, *args, **kwargs):
+        if not self.id:
+            last_id = PurchaseOrder.objects.order_by('number').last()
+            today = str(datetime.datetime.now().date())
+            new_number = "PO" + today
+            if last_id:
+                last_date = str(last_id.number)[2:12]
+                if last_date == today:
+                    nn = str(last_id.number)[13:16] + 1
+                else:
+                    nn = 1
+            else:
+                nn = 1
+            new_number += "_" + str(nn).zfill(2)
+            self.number = new_number
+        super().save(*args, **kwargs)
+
+##def increment_po_number():
+##    #get greatest part number
+##    last_id = Part.objects.order_by('number').last()
+##    last_date = last_id.number[2:12]
+##    today = str(datetime.datetime.now().date())
+##    new_number = "PO" + today
+##    if last_date == today:
+##        nn = last_id.number[13:16] + 1
+##    else:
+##        nn = 1
+##    new_number += "_" + str(nn).zfill(2)
+
+"""used to keep track of tokens, only one instance of this model named "DigiKey",
+don't create another instance of this as it can mess up the tokens"""
 class DigiKeyAPI(models.Model):
     name = models.CharField(max_length=100)
     refresh_token = models.CharField(max_length=150)

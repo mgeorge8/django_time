@@ -1,35 +1,25 @@
-from copy import deepcopy
 import datetime
 from dateutil.relativedelta import relativedelta
 from decimal import Decimal
-from itertools import groupby
 import json
-
-from six.moves.urllib.parse import urlencode
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.models import User, Permission
-from django.contrib.contenttypes.models import ContentType
-from django.core import exceptions
 from django.urls import reverse
 from django.db import transaction
 from django.db.models import Q, Sum
-from django.http import HttpResponse, HttpResponseRedirect, Http404
+from django.http import HttpResponseRedirect, Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.decorators import method_decorator
-from django.views.generic import ListView, TemplateView, View
-from django.views.generic.edit import FormMixin
+from django.views.generic import ListView, TemplateView
 
 from timepiece import utils
-from timepiece.forms import DATE_FORM_FORMAT
-#from timepiece.utils.csv import DecimalEncoder
-from timepiece.utils.views import cbv_decorator
 
 from timepiece.manager.models import Project, Profile
-from timepiece.entries.forms import (
-    ClockInForm, ClockOutForm, AddUpdateEntryForm, EntryDashboardForm, ProjectHoursForm,
-    ProjectHoursSearchForm, TodoListForm, TodoForm)
+from timepiece.entries.forms import (ClockInForm, ClockOutForm,
+                                     AddUpdateEntryForm, EntryDashboardForm,
+                                     TodoAdminForm, TodoForm)
 from timepiece.entries.models import Entry, ProjectHours, ToDo
 
 class DashboardMixin(object):
@@ -64,33 +54,22 @@ class DashboardMixin(object):
 
 class Dashboard(DashboardMixin, TemplateView):
     template_name = 'timepiece/dashboard.html'
-    #form_class = EntryDashboardForm(self.request.POST, user=self.user, acting_user=self.user)
 
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
-        #self.active_tab = active_tab or 'progress'
         self.user = request.user
-        
+        #set start time field value on load/refresh
         initial = {'start_time': datetime.datetime.now()}
         form = EntryDashboardForm(self.request.GET, initial=initial, user=self.user, acting_user=self.user)
         return super(Dashboard, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
         context = self.get_context_data()
-##        if "entryAdd" in request.POST:
-##            if context['form'].is_valid():
-##                entry = context['form'].save()
         entry = context['form']
-        
-       # if "entryNoEnd" in request.POST:
-##        updated_data = request.POST.copy()
-##        updated_data['end_time'] = None
-##        #updated_data.update({'end_time': None})
-##        request.POST = updated_data
-            #entry = EntryDashboardForm(data=updated_data, user=self.user, acting_user=self.user)
-            #entry.end_time= None   
+        #for the add entry clock in form on home page
         if entry.is_valid():
             entry.save()
+            #redirect to same page with entry added
             url = request.GET.get('next', reverse('dashboard'))
             return HttpResponseRedirect(url)
         return super(Dashboard, self).render_to_response(context)
@@ -99,17 +78,12 @@ class Dashboard(DashboardMixin, TemplateView):
         context = super(Dashboard, self).get_context_data(**kwargs)
         week_start = self.week_start
         week_end = week_start + relativedelta(days=7)
-        #initial = {'start_time': datetime.datetime.now(), 'end_time': datetime.datetime.now()}
-        #initial = {}
-        #initial = dict([(k, request.GET[k]) for k in request.GET.keys()])
-        #form = ProjectHoursSearchForm(initial=initial)
-        
+    
         entry = utils.get_active_entry(self.user)
         if(entry == None):
-            initial = {'start_time': datetime.datetime.now(),}# 'end_time': datetime.datetime.now()}
+            initial = {'start_time': datetime.datetime.now(),}
         else:
             initial = None
-            #initial = {'end_time': datetime.datetime.now()}
         form = EntryDashboardForm(self.request.POST or None, instance=entry, initial=initial, user=self.user, acting_user=self.user)
 
         # Query for the user's active entry if it exists.
@@ -124,13 +98,7 @@ class Dashboard(DashboardMixin, TemplateView):
         project_progress = self.process_progress(week_entries, assignments)
 
         # Total hours that the user is expected to clock this week.
-        #total_assigned = self.get_hours_per_week(self.user)
         total_worked = sum([p['worked'] for p in project_progress])
-
-        # Others' active entries.
-        others_active_entries = Entry.objects.filter(end_time__isnull=True)
-        others_active_entries = others_active_entries.exclude(user=self.user)
-        others_active_entries = others_active_entries.select_related('user', 'project')
 
         project_entries = week_entries.order_by().values(
         'project__name').annotate(sum=Sum('hours')).order_by('-sum')
@@ -138,13 +106,11 @@ class Dashboard(DashboardMixin, TemplateView):
         todos = ToDo.objects.filter(user=self.user, completed=False)
 
         context.update({
-            #'active_tab': self.active_tab,
             'form': form,
             'active_entry': active_entry,
             'total_worked': total_worked,
             'project_progress': project_progress,
             'week_entries': week_entries,
-            'others_active_entries': others_active_entries,
             'week': self.week_start,
             'prev_week': self.week_start - relativedelta(days=7),
             'next_week': self.week_start + relativedelta(days=7),
@@ -186,115 +152,6 @@ class Dashboard(DashboardMixin, TemplateView):
 
         return project_progress
 
-##def entryForm(request):
-##    if request.method == "POST":
-##        entry = utils.get_active_entry(request.user)
-##        if(entry == None):
-##            initial = {'start_time': datetime.datetime.now(), 'end_time': datetime.datetime.now()}
-##        else:
-##            initial = {'end_time': datetime.datetime.now()}
-##        form = EntryDashboardForm(request.POST or None, instance=entry, initial=initial, user=request.user, acting_user=request.user)
-##        #form = EntryDashboardForm(request.POST, user=request.user)
-##        if form.is_valid():
-##            if "entryNoEnd" in request.POST:
-##                entry = form.save(commit=False)
-##                entry.end_time = None
-##                #entry.user = request.user
-##                entry.save()
-##                return redirect('/')
-##            if "entryAdd" in request.POST:
-##                entry = form.save(commit=False)
-##                #entry.user = request.user
-##                entry.save()
-##                return redirect('/')
-##    else:
-##        form = EntryDashboardForm()
-##    return redirect(reverse('dashboard')#, "timepiece/dashboard.html", {'form': form})
-
-def to_do(request):
-    user = request.user
-    todos = ToDo.objects.filter(user=user, completed=False)
-    if request.method == "POST":
-        if "taskAdd" in request.POST:
-            priority = request.POST["priority"]
-            description = request.POST["description"]
-            Todo = ToDo(priority=priority, description=description, user=user)
-            Todo.save()
-            messages.success(request, "Task '{}' has been added.".
-                        format(Todo.description))
-            return redirect('/')
-        if "taskComplete" in request.POST:
-            todo_id = request.POST["taskComplete"]            
-            todo = ToDo.objects.get(id=int(todo_id))
-            todo.completed = True
-            todo.save()
-            messages.success(request, "Task '{}' has been marked completed".
-                             format(todo.description))
-            return redirect('/')
-        if "taskDelete" in request.POST:
-            todo_id = request.POST["taskDelete"]
-            todo = ToDo.objects.get(id=int(todo_id))
-            todo.delete()
-            messages.success(request, "Task '{}' has been deleted.".
-                        format(todo.description))
-            return redirect('/')
-    return render(request, "timepiece/todo/todo.html", {"todos": todos})
-
-def todo_completed(request):
-    user = request.user
-    todos = ToDo.objects.filter(completed=True,)
-    return render(request, "timepiece/todo/todo-complete.html", {"todos": todos})
-
-def todo_edit(request, todo_id):
-    user = request.user
-    todo = get_object_or_404(ToDo, id=todo_id)
-    if request.method == "POST": 
-        form = TodoForm(request.POST, instance=todo)
-        if form.is_valid():
-            todo = form.save(commit=False)
-            todo.user = request.user
-            todo.save()
-            return redirect('/')
-    else:
-        form = TodoForm(instance=todo)
-    return render(request, "timepiece/todo/todo-edit.html", {'form': form})
-
-def todo_delete(request, todo_id):
-    todo = get_object_or_404(ToDo, id=todo_id)
-    todo.delete()
-        #return redirect('/')
-    return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
-
-def todo_admin_create(request):
-    data = request.POST or None
-    form = TodoListForm(data)
-    if form.is_valid():
-        todo = form.save()
-        messages.success(request, "'{}' has been added for '{}'".
-                        format(todo.description, todo.user))
-        return redirect('todo_list')
-    return render(request, "timepiece/todo/todo-create.html", {'form': form})
-
-def todo_admin_edit(request, todo_id):
-    todo = get_object_or_404(ToDo, id=todo_id)
-    if request.method == "POST": 
-        form = TodoListForm(request.POST, instance=todo)
-        if form.is_valid():
-            form.save()
-            return redirect('todo_list')
-    else:
-        form = TodoListForm(instance=todo)
-    return render(request, "timepiece/todo/todo-edit.html", {'form': form})
-
-
-class TodoAdminListView(ListView):
-    queryset = ToDo.objects.filter(completed=False)
-    template_name = "timepiece/todo/todo-list.html"
-
-
-class TodoCompletedListView(ListView):
-    queryset = ToDo.objects.filter(completed=True)
-    template_name = "timepiece/todo/todo-complete-all.html"
 
 @permission_required('entries.can_clock_in')
 @transaction.atomic
@@ -331,34 +188,42 @@ def clock_out(request):
     if request.POST:
         form = ClockOutForm(request.POST, instance=entry)
         if form.is_valid():
+            #get end_time from form
+            end = form.cleaned_data.get('end_time')
+            #get all other fields from active entry
             entry_user = entry.user
             start = entry.start_time
-            end = form.cleaned_data['end_time']
             project = entry.project
             activities = entry.activities
             start_date = start.date()
             end_date = end.date()
-            if end_date > start_date:
+            delta = end_date - start_date
+            #start and end dates are the same
+            if delta.days == 0:
+                entry=form.save()
+            #if end date is one day after start date, split up for 2 entries
+            elif delta.days == 1:
+                #make end be the end of start time day
                 end_of_day = start.replace(hour=23, minute=59, second=59, microsecond=999999)
                 entry.end_time = end_of_day
                 entry.save()
-##                entry1 = Entry(user=entry_user,project=project,start_time=start,
-##                               end_time=end_of_day,activities=activities)
-##                entry1.save()
+                #start of second entry is one microsecond after end of 1st entry
                 start_of_next_day = end_of_day + datetime.timedelta(microseconds=1)
                 entry2 = Entry(user=entry_user, project=project,start_time=start_of_next_day,
                                end_time=end,activities=activities)
                 entry2.save()
+            #end date is before start date or more than one day apart
             else:
-                entry=form.save()
-            #entry = form.save()
+                message = 'Dates can only be one day apart at most.'
+                messages.warning(request, message)
+                return HttpResponseRedirect(reverse('clock_out'))
             message = 'You have clocked out of {0}.'.format(
                 entry.project)
             messages.info(request, message)
             return HttpResponseRedirect(reverse('dashboard'))
         else:
             message = 'Please correct the errors below.'
-            messages.error(request, message)
+            messages.warning(request, message)
     else:
         form = ClockOutForm(instance=entry)
     return render(request, 'timepiece/entry/clock_out.html', {
@@ -369,6 +234,7 @@ def clock_out(request):
 
 @permission_required('entries.change_entry')
 def create_edit_entry(request, entry_id=None):
+    #get current entry if editing
     if entry_id:
         try:
             entry = Entry.no_join.get(pk=entry_id)
@@ -388,29 +254,47 @@ def create_edit_entry(request, entry_id=None):
                                   user=entry_user,
                                   acting_user=request.user)
         if form.is_valid():
-           # entry = form.save()
-            start = form.cleaned_data["start_time"]
-            end = form.cleaned_data["end_time"]
-            project = form.cleaned_data["project"]
-            activities = form.cleaned_data["activities"]
-            start_date = start.date()
-            end_date = end.date()
-            if end_date > start_date:
-                end_of_day = start.replace(hour=23, minute=59, second=59, microsecond=999999)
-                entry1 = Entry(user=entry_user,project=project,start_time=start,
-                               end_time=end_of_day,activities=activities)
-                entry1.save()
-                start_of_next_day = end_of_day + datetime.timedelta(microseconds=1)
-                entry2 = Entry(user=entry_user, project=project,start_time=start_of_next_day,
-                               end_time=end,activities=activities)
-                entry2.save()
+            start = form.cleaned_data.get("start_time")
+            project = form.cleaned_data.get("project")
+            activities = form.cleaned_data.get("activities")
+            end = form.cleaned_data.get("end_time")
+            #make sure not editing active entry and there's an end time
+            if end:
+                start_date = start.date()
+                end_date = end.date()
+                #time between
+                delta = end_date - start_date
+
+                #start and end dates are the same
+                if delta.days == 0:
+                    entry=form.save()
+                #if end date is after start date (next day)
+                elif delta.days == 1:
+                    end_of_day = start.replace(hour=23, minute=59, second=59, microsecond=999999)
+                    #if editing entry, update all fields from form
+                    if entry_id:
+                        entry.end_time = end_of_day
+                        entry.project = project
+                        entry.activities
+                        entry.start_time=start
+                        entry.save()
+                    else:
+                        entry1 = Entry(user=entry_user,project=project,start_time=start,
+                                   end_time=end_of_day,activities=activities)
+                        entry1.save()
+                    start_of_next_day = end_of_day + datetime.timedelta(microseconds=1)
+                    entry2 = Entry(user=entry_user, project=project,start_time=start_of_next_day,
+                                   end_time=end,activities=activities)
+                    entry2.save()
+                else:
+                    message = 'Dates can only be one day apart at most.'
+                    messages.warning(request, message)
+                    return render(request, 'timepiece/entry/create_edit.html', {
+                            'form': form,
+                            'entry': entry,
+                            })
             else:
-                entry=form.save()
-##            Todo = ToDo(priority=priority, description=description, user=user)
-##            Todo.save()
-##            entry = form.save(commit=False)
-##            todo.user = request.user
-##            todo.save()
+                entry = form.save()
             if entry_id:
                 message = 'The entry has been updated successfully.'
             else:
@@ -420,7 +304,7 @@ def create_edit_entry(request, entry_id=None):
             return HttpResponseRedirect(url)
         else:
             message = 'Please fix the errors below.'
-            messages.error(request, message)
+            messages.warning(request, message)
     else:
         initial = dict([(k, request.GET[k]) for k in request.GET.keys()])
         form = AddUpdateEntryForm(instance=entry,
@@ -459,9 +343,101 @@ def delete_entry(request, entry_id):
             return HttpResponseRedirect(url)
         else:
             message = 'You are not authorized to delete this entry!'
-            messages.error(request, message)
+            messages.warning(request, message)
 
     return render(request, 'timepiece/entry/delete.html', {
         'entry': entry,
     })
+
+#used to process todo's on home page
+def to_do(request):
+    user = request.user
+    todos = ToDo.objects.filter(user=user, completed=False)
+    if request.method == "POST":
+        #the different buttons in todo section have names to direct to correct action
+        if "taskAdd" in request.POST:
+            priority = request.POST["priority"]
+            description = request.POST["description"]
+            Todo = ToDo(priority=priority, description=description, user=user)
+            Todo.save()
+            messages.success(request, "Task '{}' has been added.".
+                        format(Todo.description))
+            return redirect('/')
+        if "taskComplete" in request.POST:
+            #taskComplete is value assigned to button
+            todo_id = request.POST["taskComplete"]            
+            todo = ToDo.objects.get(id=int(todo_id))
+            todo.completed = True
+            todo.save()
+            messages.success(request, "Task '{}' has been marked completed".
+                             format(todo.description))
+            return redirect('/')
+        if "taskDelete" in request.POST:
+            todo_id = request.POST["taskDelete"]
+            todo = ToDo.objects.get(id=int(todo_id))
+            todo.delete()
+            messages.success(request, "Task '{}' has been deleted.".
+                        format(todo.description))
+            return redirect('/')
+    return render(request, "timepiece/todo/todo.html", {"todos": todos})
+
+#user can view their todo's that have been marked completed
+def todo_completed(request):
+    user = request.user
+    todos = ToDo.objects.filter(completed=True,)
+    return render(request, "timepiece/todo/todo-complete.html", {"todos": todos})
+
+#user can edit their todo's
+def todo_edit(request, todo_id):
+    user = request.user
+    todo = get_object_or_404(ToDo, id=todo_id)
+    if request.method == "POST": 
+        form = TodoForm(request.POST, instance=todo)
+        if form.is_valid():
+            todo = form.save(commit=False)
+            todo.user = request.user
+            todo.save()
+            return redirect('/')
+    else:
+        form = TodoForm(instance=todo)
+    return render(request, "timepiece/todo/todo-edit.html", {'form': form})
+
+#works for user or admin
+def todo_delete(request, todo_id):
+    todo = get_object_or_404(ToDo, id=todo_id)
+    todo.delete()
+    #get previous url
+    return redirect('/')
+
+#separate todo create for admin to add todo's to any user
+def todo_admin_create(request):
+    data = request.POST or None
+    form = TodoAdminForm(data)
+    if form.is_valid():
+        todo = form.save()
+        messages.success(request, "'{}' has been added for '{}'".
+                        format(todo.description, todo.user))
+        return redirect('todo_list')
+    return render(request, "timepiece/todo/todo-create.html", {'form': form})
+
+def todo_admin_edit(request, todo_id):
+    todo = get_object_or_404(ToDo, id=todo_id)
+    if request.method == "POST": 
+        form = TodoLAdminForm(request.POST, instance=todo)
+        if form.is_valid():
+            form.save()
+            return redirect('todo_list')
+    else:
+        form = TodoAdminForm(instance=todo)
+    return render(request, "timepiece/todo/todo-edit.html", {'form': form})
+
+#admin can see todo list for all users
+class TodoAdminListView(ListView):
+    queryset = ToDo.objects.filter(completed=False)
+    template_name = "timepiece/todo/todo-list.html"
+
+#admin can see completed todo's for all users
+class TodoCompletedListView(ListView):
+    queryset = ToDo.objects.filter(completed=True)
+    template_name = "timepiece/todo/todo-complete-all.html"
 

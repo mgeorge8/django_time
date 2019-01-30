@@ -4,14 +4,12 @@ Manufacturer, ManufacturerRelationship, Type, Field)
 from import_export import resources
 from import_export.admin import ImportExportModelAdmin
 
+"""these were made to allow models to be imported via excel or csv files but
+they haven't been used"""
 class PartResource(resources.ModelResource):
     class Meta:
         model = Part
         exclude = ('manufacturer','location')
-
-    def dehydrate_char2(self, part):
-        if part.char2 == 'null':
-            return ''
 
 class PartAdmin(ImportExportModelAdmin):
     resource_class = PartResource
