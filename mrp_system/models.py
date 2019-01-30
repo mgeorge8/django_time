@@ -7,7 +7,7 @@ class Vendor(models.Model):
         ('manufacturer', 'manufacturer'),
         ('distributor', 'distrbutor'),
         )
-    name = models.CharField(max_length=128)
+    name = models.CharField(max_length=128, unique=True)
     vendor_type = models.CharField(max_length=12, choices=TYPE_CHOICES,
                                    default='manufacturer')
     address = models.CharField(max_length=300, blank=True)
