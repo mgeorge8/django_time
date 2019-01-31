@@ -2,7 +2,8 @@ from django import forms
 from mrp_system.models import (Location, LocationRelationship,
 Part, Vendor, ManufacturerRelationship, Field, Type, Product,
                                PartAmount, ProductAmount, ProductLocation,
-                               MOProduct, ManufacturingOrder)
+                               MOProduct, ManufacturingOrder, PurchaseOrder,
+                               PurchaseOrderParts)
 from django.forms import ModelForm, BaseInlineFormSet
 from django.forms.models import inlineformset_factory
 from timepiece.forms import TimepieceSplitDateTimeField
@@ -31,8 +32,7 @@ class PartForm(ModelForm):
             model = Part
             exclude = ('manufacturer', 'location', 'partType')
             
-
-class VendorForm(ModelForm):
+class ManufacturerForm(ModelForm):
     manufacturer = forms.ModelChoiceField(queryset=Vendor.objects.filter(vendor_type='manufacturer').order_by('name'))
     class Meta:
         model = ManufacturerRelationship
@@ -59,7 +59,7 @@ class CustomFormset(BaseInlineFormSet):
         return self.cleaned_data
     
 ManufacturerFormSet = inlineformset_factory(Part, ManufacturerRelationship,
-                                            form=VendorForm, extra=1,
+                                            form=ManufacturerForm, extra=1,
                                             formset=CustomFormset)
 
 class LocationForm(ModelForm):
@@ -70,6 +70,26 @@ class LocationForm(ModelForm):
         
 LocationFormSet = inlineformset_factory(Part, LocationRelationship,
                                         form=LocationForm, extra=1)
+
+class VendorForm(ModelForm):
+    class Meta:
+        model = Vendor
+        exclude = ()
+        help_texts = {
+            "phone": "(10 digit number)"
+        }
+
+    def clean(self):
+        super(VendorForm, self).clean()
+        url = self.cleaned_data.get('web_address', None)
+        #redirecting to url in template requires it to include http:// or https://
+        if url:
+            if 'http' not in url: 
+                raise forms.ValidationError('Please enter url prefaced with http://')
+        else:
+            pass
+        return self.cleaned_data
+        
 class ProductForm(ModelForm):
     class Meta:
         model = Product
@@ -250,6 +270,25 @@ class FilterForm(forms.Form):
         search = forms.CharField(required=False)
         location = forms.ModelMultipleChoiceField(required=False, queryset = Location.objects.none())
         manufacturer = forms.ModelMultipleChoiceField(required=False, queryset = Vendor.objects.none())                    
+
+class PurchaseOrderForm(ModelForm):
+    class Meta:
+        model = PurchaseOrder
+        exclude = ('part',)
+
+class POPartForm(ModelForm):
+    #used to narrow down part selection dropdown with javascript
+    #mark_safe - lets you added html elements to text
+    search = forms.CharField(required=False, help_text=mark_safe('(Can search part type,' +
+                             ' description, engimusing part number, manufacturer part number, ' +
+                             'or manufacturer name) <br> Type in search value, then click out of field '+
+                             'and the part dropdown will be filtered.'))
+    class Meta:
+        model = PurchaseOrderParts
+        exclude = ('purchase_order',)
+        
+       
+POPartFormSet = inlineformset_factory(PurchaseOrder, PurchaseOrderParts, form=POPartForm, extra=1)
 
 class APIForm(forms.Form):
         website = forms.ChoiceField(choices = ([('Digi-Key','Digi-Key'),('Mouser','Mouser')]), required=True)

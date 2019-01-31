@@ -1,0 +1,41 @@
+{% extends "base2.html" %}
+
+
+{% block title %}Purchase Order{% endblock title %}
+
+{% block content %}
+<div class="container-fluid">
+<h2> Purchase Orders </h2>
+<a href="{% url 'create_po' %}"> Create New Purchase Order</a>
+<hr>
+Can search for part description, engimusing part number, and vendors.
+<form action="" method="post">
+{%csrf_token %}
+<input type="text" name="search" required>
+     <button class="btn btn-primary" type="submit">Search</button>
+ </form>          
+<br> 
+<table class='table table-bordered table-striped table-condensed'>
+                <thead>
+                    <tr>
+                        <th>PO Number</th>
+			<th>Edit</th>
+			<th>Delete</th>
+                    </tr>
+                </thead>
+                <tbody>
+                                {% for po in purchase_orders %}
+
+                        <tr>
+			    <td><a href="{% url 'detail_po' po.id %}">{{ po.number}}</td>
+                            <td><a href="{% url 'edit_po' po.id%}">Edit</a></td>
+			    <td><a href="{% url 'delete_po' po.id%}">Delete</a></td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            
+     
+    </div>
+{% endblock content %}

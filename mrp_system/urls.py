@@ -52,7 +52,7 @@ urlpatterns = [
     url('location/(?P<location_id>\d+)/$',
         views.LocationUpdate.as_view(),
         name='edit_location'),
-    url('vendor/delete/(?P<vendorr_id>\d+)/$',
+    url('vendor/delete/(?P<vendor_id>\d+)/$',
         views.VendorDelete.as_view(),
         name='delete_vendor'),
     url('location/delete/(?P<location_id>\d+)/$',
@@ -124,5 +124,26 @@ urlpatterns = [
     url('mo/(?P<mo_id>\d+)/$',
         views.MODetailView,
         name='detail_mo'),
+
+    #purchase orders
+    url('purchase_order/$',
+        views.po_list_view,
+        name='list_po'),
+    url('purchase_order/create/$',
+        views.create_purchase_order,
+        name='create_po'),
+    url(r'^purchase_order/edit/(?P<id>\d+)/$',
+        views.edit_purchase_order,
+        name='edit_po'),
+    url('purchase_order/delete/(?P<purchaseorder_id>\d+)/$',
+        views.DeletePurchaseOrder.as_view(),
+        name='delete_po'),
+    url('purchase_order/(?P<purchaseorder_id>\d+)/$',
+        views.purchase_order_detail,
+        name='detail_po'),
+    url('purchase_order/part/(?P<part_id>\d+)/$',
+        views.get_po_from_part,
+        name='part_po'),
+    
     
 ]

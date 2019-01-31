@@ -79,10 +79,6 @@ class ProjectTimesheet(DetailView):
         user_entries = user_entries.annotate(sum=Sum('hours')).order_by('-sum')
         if user_entries:
             format_totals(user_entries)
-##        activity_entries = entries_qs.order_by().values('activity__name')
-##        activity_entries = activity_entries.annotate(sum=Sum('hours')).order_by('-sum')
-##        if activity_entries:
-##            format_totals(activity_entries)
 
         context.update({
             'project': project,
@@ -92,7 +88,6 @@ class ProjectTimesheet(DetailView):
             'entries': month_entries,
             'total': total,
             'user_entries': user_entries,
-            #'activity_entries': activity_entries,
         })
         return context
 

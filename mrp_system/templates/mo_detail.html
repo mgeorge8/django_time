@@ -10,11 +10,17 @@
 <h3>Manufacturing Order for {{ mo.number }}</h3>
 <p>Created on: {{ mo.date_created }}</p>
 <hr/>
-<h5>Parts Needed to Make</h5>
+<h4>Parts Needed to Make</h4>
+
+<form action="" method="post">
+{% csrf_token %}
+<button name="addPO" formnovalidate="" type="submit" onclick="$('input#sublist').click();"><i class="fa fa-trash-o icon"></i>Add Parts to PO</button>
+<br><br>
 
 <table class='table table-bordered table-striped table-condensed'>
                 <thead>
                     <tr>
+			<th>Add to Purchase Order</th>
 			<th>Amount to Order</th>
 			<th>Total Quantity Needed</th>
 			<th>Quantity In Stock</th>
@@ -26,24 +32,6 @@
 						
                     </tr>
                 </thead>
-{% comment %}
-<tbody>
-                                {% for p in partList %}
-
-                        <tr>
-			    <td></td>
-			    <td>{{ p }}</td>
-                            <td>{% for stock in p.part.get_stock %}{{ stock.stock }}</br>{% endfor %}</td>
-			    <td>{% for location in p.part.get_location %}{{ location }}</br>{% endfor %}</td>
-			    <td>{{ p.part.engimusingPartNumber }}</td>
-			    <td>{% for manu in p.part.get_manufacturers %}{{ manu }}</br>{% endfor %}</td>
-			<td>{% for number in p.part.get_related %}{{ number }}</br>{% endfor %} </td>
-			<td>{{ p.part.description }}</td>
-                        </tr>
-                    {% endfor %}
-			
-                </tbody>
-{% endcomment %}
                 <tbody>
 <tr>
 <th colspan="8">Parts</th>
@@ -51,6 +39,7 @@
                                 {% for key, value in parts.items %}
 
                         <tr>
+			    <td><input type="checkbox" name="checkedbox" id="{{ key }}" value="{{ key }}"></td>
 			    <td>{{value.1}}</td>
 			    <td>{{ value.0 }}</td>
                             <td>{% for stock in key.get_stock %}{{ stock.stock }}</br>{% endfor %}</td>
@@ -67,6 +56,7 @@
 </tr>
 {% for key, value in products.items %}
 <tr>
+<td></td>
 <td>{{ value.1 }}</td>
 <td>{{ value.0 }}</td>
 <td>{% for stock in  key.get_stock %}{{ stock.stock }}<br>{% endfor %}</td>
@@ -80,5 +70,5 @@
                 </tbody>
 
             </table>
-
+</form>
 {% endblock content %}

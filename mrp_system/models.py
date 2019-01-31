@@ -13,6 +13,8 @@ class Vendor(models.Model):
     address = models.CharField(max_length=300, blank=True)
     phone = models.CharField(max_length=10, blank=True)
     web_address = models.CharField(max_length=300, blank=True)
+    #purchase_order = models.ForeignKey('mrp_system.PurchaseOrder', on_delete=models.CASCADE,
+                                       #null=True, blank=True)
 
     def __str__(self):
         return self.name
@@ -225,6 +227,11 @@ class MOProduct(models.Model):
 
 class PurchaseOrder(models.Model):
     number = models.CharField(max_length=20, editable=False)
+    vendor = models.ForeignKey(Vendor, on_delete=models.CASCADE, null=True)
+    part = models.ManyToManyField(Part, through='PurchaseOrderParts')
+
+    def __str__(self):
+        return self.number
     
     def save(self, *args, **kwargs):
         if not self.id:
@@ -242,6 +249,28 @@ class PurchaseOrder(models.Model):
                 nn = 1
             new_number += "_" + str(nn).zfill(2)
             self.number = new_number
+        super().save(*args, **kwargs)
+
+
+class PurchaseOrderParts(models.Model):
+    part = models.ForeignKey(Part, on_delete=models.CASCADE)
+    purchase_order = models.ForeignKey(PurchaseOrder, on_delete=models.CASCADE)
+    unit_price = models.DecimalField(max_digits=6, decimal_places=2, blank=True, null=True)
+    quantity = models.IntegerField(blank=True, null=True)
+    total = models.DecimalField(max_digits=6, decimal_places=2, editable=False, blank=True, null=True)
+    item_number = models.IntegerField(editable=False, default=0)
+
+    def save(self, *args, **kwargs):
+        if not self.id:
+            last_id = PurchaseOrderParts.objects.filter(purchase_order=self.purchase_order).order_by('item_number').last()
+            if not last_id:
+                self.item_number = 1
+            else:
+                self.item_number = last_id.item_number + 1
+        if self.unit_price and self.quantity:
+            self.total = self.unit_price * self.quantity
+        else:
+            self.total = 0
         super().save(*args, **kwargs)
 
 """used to keep track of tokens, only one instance of this model named "DigiKey",

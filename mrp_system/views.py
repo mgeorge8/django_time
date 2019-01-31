@@ -6,14 +6,15 @@ from mrp_system.models import (Part, Type, Field, Vendor,
                                ManufacturerRelationship, Location,
                                LocationRelationship, DigiKeyAPI,
                                PartAmount, Product, ProductAmount, ManufacturingOrder,
-                               MOProduct, ProductLocation)
+                               MOProduct, ProductLocation, PurchaseOrder, PurchaseOrderParts)
 from mrp_system.forms import (FilterForm, PartForm, LocationForm, LocationFormSet,
                               MergeLocationsForm, ManufacturerFormSet,
                               MergeVendorsForm, FieldFormSet, TypeForm, APIForm,
                               ProductForm, PartToProductFormSet, PartToProductForm,
                               ProductToProductFormSet, ProductLocationFormSet,
                               ManufacturingOrderForm, ManufacturingProductFormSet,
-                              EditFieldFormSet, QuickTypeForm, EnterTokensForm)
+                              EditFieldFormSet, QuickTypeForm, EnterTokensForm,
+                              VendorForm, PurchaseOrderForm, POPartFormSet)
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.forms.models import inlineformset_factory
 from django.urls import reverse, reverse_lazy
@@ -298,7 +299,7 @@ class LocationListView(ListView):
 
 class CreateVendor(CreateView):
     model = Vendor
-    fields = ['name','vendor_type','address','phone','web_address']
+    form_class = VendorForm
     template_name = 'vendor_form.html'
     success_url = reverse_lazy('list_vendors')
 
@@ -318,8 +319,10 @@ class CreateLocation(CreateView):
         return super(CreateLocation, self).get_context_data(**kwargs)
 
 class VendorUpdate(UpdateView):
+    
+##    fields = ['name','vendor_type','address','phone','web_address']
+    form_class = VendorForm
     model = Vendor
-    fields = ['name','vendor_type','address','phone','web_address']
     pk_url_kwarg = 'vendor_id'
     template_name = 'update_vendor.html'
     success_url = reverse_lazy('list_vendors')
@@ -567,18 +570,6 @@ def enter_digi_part(request):
             for value in data:
                 params[value['Parameter']] = value['Value']
             typeName = part['Family']['Text']
-##            #get all words in type name, exclude -'s
-##            list_name = re.findall(r'\w+', typeName)
-##            #get word count
-##            word_count = len(list_name)
-##            #assign prefix based on amount of words in type name
-##            prefix = ""
-##            if word_count == 1:
-##                prefix = typeName[:3].upper()
-##            if word_count == 2:
-##                prefix = (list_name[0][:1] + list_name[1][:2]).upper()
-##            if word_count >= 3:
-##                prefix = (list_name[0][:1] + list_name[1][:1] + list_name[2][:1]).upper()
             partType, created = Type.objects.get_or_create(name=typeName)
             count = 1
             #if new part type, assign prefix
@@ -880,13 +871,11 @@ class DeleteMO(DeleteView):
 
 def MODetailView(request, mo_id):
     mo = get_object_or_404(ManufacturingOrder, id=mo_id)
-    #parts = {}
     mos = mo.moproduct_set.all()
     products = {}
     parts = {}
     for m in mos:
         partList = m.product.partamount_set.all()
-        #mo_product = MOProduct.objects.get(manufacturing_order=m, product=m.product).values('amount')
         multiplier = m.amount
         for p in partList:
             if parts.get(p.part):
@@ -899,10 +888,6 @@ def MODetailView(request, mo_id):
                 products[pr.to_product][0] += (pr.amount * multiplier)
             else:
                 products[pr.to_product]= [pr.amount * multiplier]
-##        if products:
-##            products = products.union(ProductAmount.objects.filter(from_product=m.product))
-##        else:
-##            products = ProductAmount.objects.filter(from_product=m.product)
     for key, value in parts.items():
         locs = LocationRelationship.objects.filter(part=key)
         amount = 0
@@ -921,11 +906,104 @@ def MODetailView(request, mo_id):
         if needed <= 0:
             needed = 0
         products[key].append(needed)
-##    pro_list = products.values_list('from_product', flat=True)
-##    print(pro_list)
+    if request.method == "POST":
+        print("Post")
+        if "addPO" in request.POST:
+            checkedlist = request.POST.getlist("checkedbox")
+            po_partlist = {}
+            for part in checkedlist:
+                number = part.split("-",1)[0].strip()
+                description = part.split("-",1)[1].strip()
+                print(number)
+                print(description)
+                if number and description:
+                    part_obj = Part.objects.filter(description=description, engimusingPartNumber=number).first()
+                    po_partlist[part_obj] = parts[part_obj]
+                else:
+                    messages.warning(request, ('Part must have an engimusing part number and description to be added.'))
+                    url = reverse('detail_mo')
+                    return HttpResponseRedirect(url)
+            print(po_partlist)
+            po_id = generate_po_from_mo(po_partlist)
+            return HttpResponseRedirect(reverse('edit_po', args=[po_id]))
     return render(request, 'mo_detail.html', {'parts': parts, 'products': products,
                                               'mo': mo})
 
+def generate_po_from_mo(partList):
+    print("!!!!")
+    print( partList)
+    po = PurchaseOrder.objects.create()
+    for key, value in partList.items():
+        PurchaseOrderParts.objects.create(purchase_order=po, part=key, quantity=value[1])
+    return po.id   
+
+def po_list_view(request):
+    purchase_orders = PurchaseOrder.objects.all()
+    if request.method == 'POST':
+        search = request.POST["search"]
+        purchase_orders = purchase_orders.annotate(search=SearchVector('part__engimusingPartNumber',
+                                                                       'part__description',
+                                                                       'vendor__name')).filter(search=search)
+        purchase_orders = purchase_orders.distinct('number')
+        print(purchase_orders)
+    return render(request, 'purchase_order_list.html',
+                  {'purchase_orders': purchase_orders})
+    
+def create_purchase_order(request):
+    if request.method == 'POST':
+        form = PurchaseOrderForm(request.POST)
+        part_formset = POPartFormSet(request.POST)
+        if form.is_valid() and part_formset.is_valid():
+            self_object = form.save()
+            #assign purchase order to POPart relationship
+            part_formset.instance = self_object
+            part_formset.save()
+            url = reverse('list_po')
+            return HttpResponseRedirect(url)
+    else:
+        form = PurchaseOrderForm()
+        part_formset = POPartFormSet()
+    return render(request,'purchase_order_form.html',{'form': form,
+                                                      'part_formset': part_formset})
+
+def edit_purchase_order(request, id):
+    instance = get_object_or_404(PurchaseOrder, id=id)
+    if request.method == 'POST':
+        form = PurchaseOrderForm(request.POST, instance=instance)
+        part_formset = POPartFormSet(request.POST, instance=instance)
+        if form.is_valid() and part_formset.is_valid():
+            self_object = form.save()
+            part_formset.instance = self_object
+            part_formset.save()
+            url = reverse('list_po')
+            return HttpResponseRedirect(url)
+    else:
+        form = PurchaseOrderForm(instance=instance)
+        part_formset = POPartFormSet(instance=instance)
+    return render(request,'purchase_order_form.html',{'form': form,
+                                                 'part_formset': part_formset})
+
+class DeletePurchaseOrder(DeleteView):
+    model = PurchaseOrder
+    success_url = reverse_lazy('list_po')
+    pk_url_kwarg = 'purchaseorder_id'
+    template_name = 'delete_purchase_order.html'
+
+def purchase_order_detail(request, purchaseorder_id):
+    purchase_order = get_object_or_404(PurchaseOrder, id=purchaseorder_id)
+    parts = purchase_order.purchaseorderparts_set.all()
+    return render(request, 'purchase_order_detail.html',
+                  {'purchase_order': purchase_order,
+                   'parts': parts})
+
+def get_po_from_part(request, part_id):
+    part = Part.objects.get(id=part_id)
+    purchase_orders = part.purchaseorderparts_set.all()
+    return render(request, 'part_po_list.html',
+                  {'purchase_orders': purchase_orders,
+                   'part': part})
+    
+    
 def print_tokens_digi(request):
     digi = DigiKeyAPI.objects.get(name="DigiKey")
     access = digi.access_token

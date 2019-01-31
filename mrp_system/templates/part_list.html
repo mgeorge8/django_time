@@ -50,9 +50,9 @@
 			<th>{{ field.name }}</th>
 			{% endif %}
 			{% endfor %}
-
 			<th>Edit</th>
 			<th>Delete</th>
+			<th>Purchase Orders</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -80,6 +80,7 @@
 			
 			    <td><a class="btn btn-primary btn-sm" href="{% url 'edit_part' type.id part.id %}">Edit</a></td>
 			<td><a class="btn btn-primary btn-sm" href="{% url 'delete_part' part.id %}">Delete</a></td>
+			<td><a class="btn btn-primary btn-sm" href="{% url 'part_po' part.id %}">Purchase Orders</a></td>
                         </tr>
                     {% endfor %}
                 </tbody>

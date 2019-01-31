@@ -1,0 +1,92 @@
+{% extends "base2.html" %}
+
+{% block extrajs %}
+<script>
+function codeAddress() {
+var formidx = $('#id_purchaseorderparts_set-TOTAL_FORMS').val();
+var i;
+for (i = 1; i < formidx; i++) {
+$('#part_script').append($("<sc" + "ript>$('#id_purchaseorderparts_set-" + i + "-search').on('change', function () { console.log( $(this).val() ); var url = $('#formset').attr('data-parts-url'); var search = $(this).val(); $.ajax({ url: url, data: {'search': search}, success: function (data) { $('#id_purchaseorderparts_set-" + i + "-part').empty(); $.each(data, function(key, value) { $('#id_purchaseorderparts_set-" + i + "-part').append($('<option>', { value: key }).text(value)); }); } }); });</sc" + "ript>")[0]);
+}
+}
+window.onload = codeAddress;
+</script>
+{% endblock %}
+{% block title %}Purchase Orders{% endblock title %}
+{% block crumbs %}
+    {{ block.super }}
+    <li><span class="divider">/</span> <a href="{% url 'list_po' %}">Purchase Orders</a></li>
+{% endblock crumbs %}
+{% block content %}
+<div class="container-fluid">
+<h3> Create New Purchase Order</h3>
+
+<br><br>
+<div class="form-horizontal">
+<form action="" method="post" enctype='multipart/form-data'>{% csrf_token %}
+<div class="section">
+{{ form.as_p }}
+</div>
+<hr><br>
+{{ part_formset.management_form }}
+<div id="formset" data-parts-url="{% url 'ajax_load_parts' %}">
+{% for form in part_formset.forms %}
+<table class='no_error'>
+{{ form.as_table }}
+</table>
+{% endfor %}
+</div>
+<input type="button" value="Add" id="addmore">
+<div id="emptyform" style="display:none">
+    <table class='no_error'>
+        {{ part_formset.empty_form.as_table }}
+    </table>
+</div>
+<div id="part_script">
+<script>
+
+    $('#id_purchaseorderparts_set-0-search').change(function () {
+	console.log( $(this).val() );
+      var url = $("#formset").attr("data-parts-url");  
+      var search = $(this).val(); 
+
+      $.ajax({                       
+        url: url,                    
+        data: {
+          'search': search       
+        },
+        success: function (data) {   
+          $("#id_purchaseorderparts_set-0-part").empty(); 
+	  $.each(data, function(key, value) {
+		$("#id_purchaseorderparts_set-0-part").append($('<option>', { value: key }).text(value));
+		});
+        }
+      });
+
+    });
+
+  </script>
+</div>
+<script>
+    $('#addmore').click(function() {
+         var formidx = $('#id_purchaseorderparts_set-TOTAL_FORMS').val();
+        $('#formset').append($('#emptyform').html().replace(/__prefix__/g, formidx));
+
+        $('#id_purchaseorderparts_set-TOTAL_FORMS').val(parseInt(formidx) + 1);
+
+});
+</script>
+<script>
+$('#addmore').click(function() {
+  var formidx = $('#id_purchaseorderparts_set-TOTAL_FORMS').val() - 1;
+$('#part_script').append($("<sc" + "ript>$('#id_purchaseorderparts_set-" + formidx + "-search').on('change', function () { console.log( $(this).val() ); var url = $('#formset').attr('data-parts-url'); var search = $(this).val(); $.ajax({ url: url, data: {'search': search}, success: function (data) { $('#id_purchaseorderparts_set-" + formidx + "-part').empty(); $.each(data, function(key, value) { $('#id_purchaseorderparts_set-" + formidx + "-part').append($('<option>', { value: key }).text(value)); }); } }); });</sc" + "ript>")[0]);
+});
+</script>
+<input class="btn btn-primary" type="submit" value="Save"/>
+</form>
+
+</div>
+<hr/>
+        </div>
+{% endblock content %}
+

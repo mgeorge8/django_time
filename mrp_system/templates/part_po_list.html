@@ -1,0 +1,42 @@
+{% extends "base2.html" %}
+
+
+{% block title %}Purchase Order{% endblock title %}
+{% block crumbs %}
+    {{ block.super }}
+    <li><span class="divider">/</span> <a href="{% url 'list_parts' part.partType.id %}"> {{ part.partType }}</a></li>
+<li><span class="divider">/</span> <a href="{% url 'list_po' %}"> Purchase Orders</a></li>
+{% endblock crumbs %}
+{% block content %}
+<div class="container-fluid">
+<h2> Purchase Orders for {{ part.description }}</h2>
+<hr>        
+<br> 
+<table class='table table-bordered table-striped table-condensed'>
+                <thead>
+                    <tr>
+                        <th>PO Number</th>
+			<th>Vendor</th>
+			<th>Quantity</th>
+			<th>Unit Price</th>
+			<th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                                {% for po in purchase_orders %}
+
+                        <tr>
+			    <td><a href="{% url 'detail_po' po.purchase_order.id %}">{{ po.purchase_order}}</td>
+                            <td>{% if po.purchase_order.vendor %}{{ po.purchase_order.vendor.name }}{% endif %}</td>
+			    <td>{{ po.quantity }}</td>
+			    <td>{{ po.unit_price }}</td>
+			    <td>{{ po.total }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            
+     
+    </div>
+{% endblock content %}
