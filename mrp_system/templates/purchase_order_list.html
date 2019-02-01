@@ -8,7 +8,7 @@
 <h2> Purchase Orders </h2>
 <a href="{% url 'create_po' %}"> Create New Purchase Order</a>
 <hr>
-Can search for part description, engimusing part number, and vendors.
+Can search for Purchase Orders that contain a specific part description, engimusing part number, or vendor.
 <form action="" method="post">
 {%csrf_token %}
 <input type="text" name="search" required>

@@ -637,6 +637,7 @@ def enter_digi_part(request):
                         setattr(new_part, field.fields, value)
                     except(IndexError, KeyError):
                         pass
+                #try to get each value and assign it to the part
                 try:
                     value = part[name]['Value']
                     setattr(new_part, field.fields, value)
@@ -667,7 +668,8 @@ def enter_digi_part(request):
         form = APIForm()
     return render(request, "oauth.html", {'form': form})
 
-
+"""used in create/edit product form to filter parts in dropdown
+called in template with javascript"""
 def get_parts(request):
     searchField = request.GET.get('search')
     if searchField:
@@ -706,12 +708,6 @@ def CreateProduct(request):
     return render(request,'product_create.html',{'form': form, 'part_formset': part_formset,
                                             'product_formset': product_formset, 'location_formset':
                                                  location_formset})
-
-
-class ProductListView(ListView):
-    model = Product
-    template_name = 'product_list.html'
-    ordering = ['description']
     
         
 def EditProduct(request, id):
@@ -741,6 +737,11 @@ def EditProduct(request, id):
                                             'product_formset': product_formset,
                                                  'location_formset': location_formset})
 
+class ProductListView(ListView):
+    model = Product
+    template_name = 'product_list.html'
+    ordering = ['description']
+    
 class DeleteProduct(DeleteView):
     model = Product
     success_url = reverse_lazy('list_product')
@@ -754,15 +755,15 @@ def ProductDetailView(request, product_id):
     component_products = ProductAmount.objects.filter(from_product=product)
     return render(request, 'product_detail.html', {'product': product,
                                                    'locations': locations,
-                                               'parts': parts,
+                                                   'parts': parts,
                                                    'component_products': component_products})
+
+#used to gather Bill of material details into a downloadable excel sheet
 def bomExcel(parts, description):
     output = io.BytesIO()
     title = "BOM-%s.xlsx" % description
     workbook = xlsxwriter.Workbook(output, {'in_memory': True})
     worksheet = workbook.add_worksheet()
-##    partDetail = ()
-##    listDetail = []
     row = 0
     col = 0
     worksheet.write(row, col, 'Quantity')
@@ -785,6 +786,7 @@ def bomExcel(parts, description):
 
     output.seek(0)
 
+    #need this so that file will be downloaded
     response = HttpResponse(output, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         )
     response['Content-Disposition'] = 'attachment; filename=%s' % title
@@ -794,32 +796,36 @@ def bomExcel(parts, description):
 def billOfMaterialsDetail(request, product_id):
     product = get_object_or_404(Product, id=product_id)
     parts = {}
-##    mos = mo.moproduct_set.all()
-##    products = ProductAmount.objects.none()   
-##    for m in mos:
+    #get all parts assigned to product
     partList = product.partamount_set.all()
+    #create dictionary to group parts and assign value of total amount for duplicate parts
     for p in partList:
         if parts.get(p.part):
             parts[p.part]+=p.amount
         else:
             parts[p.part]=p.amount
+    #get all sub products
     products = ProductAmount.objects.filter(from_product=product)
     while products:
-        productList=products
+        #copy over products and then clear queryset so it can be reassigned
+        productList = products
         products = ProductAmount.objects.none()
         for pr in productList:
             partList2 = pr.to_product.partamount_set.all()
+            #multiplier needed to get total part amount(amount * number of products)
             multiplier = pr.amount 
             for pa in partList2:
                 if parts.get(pa.part):
                     parts[pa.part]+= (pa.amount * multiplier)
                 else:
                     parts[pa.part]= (pa.amount * multiplier)
+            #if product list has multiple sub products, combine for one big product list
             if products:
                 products = products.union(ProductAmount.objects.filter(from_product=pr.to_product))
             else:
                 products = ProductAmount.objects.filter(from_product=pr.to_product)
-    if(request.GET.get('mybtn')):
+    #download BOM button has been pressed, call bomExcel function to download excel file
+    if(request.GET.get('downloadBtn')):
         return bomExcel(parts, product.description)
     return render(request, 'bom_detail.html', {'parts': parts, 'product': product}) 
 
@@ -827,8 +833,6 @@ def CreateMO(request):
     if request.method == 'POST':
         form = ManufacturingOrderForm(request.POST)
         manu_formset = ManufacturingProductFormSet(request.POST)
-        #product_formset = ProductToProductFormSet(request.POST)
-        #location_formset = ProductLocationFormSet(request.POST)
         if (form.is_valid() and manu_formset.is_valid()):
             self_object = form.save()
             manu_formset.instance = self_object
@@ -850,8 +854,6 @@ def EditMO(request, id):
     if request.method == 'POST':
         form = ManufacturingOrderForm(request.POST, instance=instance)
         manu_formset = ManufacturingProductFormSet(request.POST, instance=instance)
-        #product_formset = ProductToProductFormSet(request.POST)
-        #location_formset = ProductLocationFormSet(request.POST)
         if (form.is_valid() and manu_formset.is_valid()):
             self_object = form.save()
             manu_formset.instance = self_object
@@ -871,32 +873,43 @@ class DeleteMO(DeleteView):
 
 def MODetailView(request, mo_id):
     mo = get_object_or_404(ManufacturingOrder, id=mo_id)
+    #get all manufacturing order products
     mos = mo.moproduct_set.all()
     products = {}
     parts = {}
     for m in mos:
+        #get all parts in product
         partList = m.product.partamount_set.all()
         multiplier = m.amount
+        #assign parts to dictionary and get amount needed (product amount * part amount)
         for p in partList:
+            #if multiple of same part, combine amount needed
             if parts.get(p.part):
+                #value of dictionary will be list to hold total amount needed and amount needed minus what we have
                 parts[p.part][0] += (p.amount * multiplier)
             else:
                 parts[p.part]= [p.amount * multiplier]
+        #get sub products
         product_amounts = ProductAmount.objects.filter(from_product=m.product)
+        #dictionary of sub products with their total amounts
         for pr in product_amounts:
             if products.get(pr.to_product):
                 products[pr.to_product][0] += (pr.amount * multiplier)
             else:
                 products[pr.to_product]= [pr.amount * multiplier]
+    #get stock for parts
     for key, value in parts.items():
         locs = LocationRelationship.objects.filter(part=key)
         amount = 0
         for l in locs:
             amount += l.stock
+        #checked if we need more of the part then we have
         needed = value[0] - amount
         if needed <= 0:
             needed = 0
+        #add amount to order to value list
         parts[key].append(needed)
+    #do the same with product stock as with part stock
     for key, value in products.items():
         locs = ProductLocation.objects.filter(product=key)
         amount = 0
@@ -906,46 +919,51 @@ def MODetailView(request, mo_id):
         if needed <= 0:
             needed = 0
         products[key].append(needed)
+    #used to add parts to a Purchase Order
     if request.method == "POST":
-        print("Post")
         if "addPO" in request.POST:
+            #get all checked parts
             checkedlist = request.POST.getlist("checkedbox")
             po_partlist = {}
             for part in checkedlist:
+                #strip of engimusing part number
                 number = part.split("-",1)[0].strip()
+                #strip part description
                 description = part.split("-",1)[1].strip()
-                print(number)
-                print(description)
                 if number and description:
+                    #get part from description and number
                     part_obj = Part.objects.filter(description=description, engimusingPartNumber=number).first()
+                    #add part and quantity needed to dictionary
                     po_partlist[part_obj] = parts[part_obj]
                 else:
                     messages.warning(request, ('Part must have an engimusing part number and description to be added.'))
                     url = reverse('detail_mo')
                     return HttpResponseRedirect(url)
-            print(po_partlist)
+            #pass dictionary of selected parts to save a Purchase Order object
             po_id = generate_po_from_mo(po_partlist)
             return HttpResponseRedirect(reverse('edit_po', args=[po_id]))
     return render(request, 'mo_detail.html', {'parts': parts, 'products': products,
                                               'mo': mo})
 
 def generate_po_from_mo(partList):
-    print("!!!!")
-    print( partList)
+    #create purchase order, PO number will be assigned
     po = PurchaseOrder.objects.create()
+    #assign all parts from parts dictionary to the purchase order
     for key, value in partList.items():
         PurchaseOrderParts.objects.create(purchase_order=po, part=key, quantity=value[1])
     return po.id   
 
+
 def po_list_view(request):
     purchase_orders = PurchaseOrder.objects.all()
     if request.method == 'POST':
+        #used to filter POs by part or vendor
         search = request.POST["search"]
         purchase_orders = purchase_orders.annotate(search=SearchVector('part__engimusingPartNumber',
                                                                        'part__description',
                                                                        'vendor__name')).filter(search=search)
+        #need this otherwise a purchase order may be listed several times
         purchase_orders = purchase_orders.distinct('number')
-        print(purchase_orders)
     return render(request, 'purchase_order_list.html',
                   {'purchase_orders': purchase_orders})
     
@@ -996,6 +1014,7 @@ def purchase_order_detail(request, purchaseorder_id):
                   {'purchase_order': purchase_order,
                    'parts': parts})
 
+#in part list table, can click Purchase Orders to get list of all purchase orders that contain this part
 def get_po_from_part(request, part_id):
     part = Part.objects.get(id=part_id)
     purchase_orders = part.purchaseorderparts_set.all()
@@ -1003,13 +1022,14 @@ def get_po_from_part(request, part_id):
                   {'purchase_orders': purchase_orders,
                    'part': part})
     
-    
+#used to show current tokens for digikey model, useful to switch the access tokens from production to development
 def print_tokens_digi(request):
     digi = DigiKeyAPI.objects.get(name="DigiKey")
     access = digi.access_token
     refresh = digi.refresh_token
     return render(request, 'print_tokens.html', {'access':access, 'refresh':refresh})
 
+#form to enter correct access tokens 
 def enter_tokens(request):
     if request.method == 'POST':
         form = EnterTokensForm(request.POST)
@@ -1024,6 +1044,8 @@ def enter_tokens(request):
     else:
         form = EnterTokensForm()
     return render(request,'enter_tokens.html',{'form': form})
+
+#was used to get part information from digikey through the long url, kept just in case we need it again
 
 ##def enter_part(request):
 ##    if request.method == "POST":
@@ -1073,6 +1095,9 @@ def enter_tokens(request):
 ##        form = EnterPartForm()
 ##    return render(request, "enter_part.html", {"form":form})
 
+
+#this connects to octopart which we haven't been approved to use
+
 ##def mouser_api(request):
 ##    if request.method == "POST":
 ##        form = MouserForm(request.POST)
@@ -1116,7 +1141,10 @@ def enter_tokens(request):
 ##    else:
 ##        form = MouserForm()
 ##    return render(request, "mouser.html", {'form': form})
-##
+
+
+#used to gather what information is returned from octopart api to add to field object to get correct info
+
 ##def mouser_details(request):
 ##    response = ''
 ##    if request.method == "POST":
